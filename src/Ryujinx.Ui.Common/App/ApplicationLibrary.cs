@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -61,7 +60,7 @@ namespace Ryujinx.Ui.App.Common
 
         private static byte[] GetResourceBytes(string resourceName)
         {
-            Stream resourceStream = Assembly.GetCallingAssembly().GetManifestResourceStream(resourceName);
+            Stream resourceStream = typeof(ApplicationLibrary).Assembly.GetManifestResourceStream(resourceName);
             byte[] resourceByteArray = new byte[resourceStream.Length];
 
             resourceStream.Read(resourceByteArray);
