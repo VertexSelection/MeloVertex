@@ -15,10 +15,7 @@
   </PropertyGroup>
     <PropertyGroup>
         <PublishAot>true</PublishAot>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
         <InvariantGlobalization>true</InvariantGlobalization>
-        <TrimmerSingleWarn>true</TrimmerSingleWarn>
     </PropertyGroup>
     <ItemGroup>
         <RdXmlFile Include="rd.xml" />
