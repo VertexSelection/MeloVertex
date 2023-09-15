@@ -36,9 +36,9 @@ namespace Ryujinx.Ava.UI.Windows
             }
         }
 
-        public static Color GetFilteredColor(Image<Bgra32> image)
+        public static Color GetFilteredColor(Span<Bgra32> image, int width, int height)
         {
-            var color = GetColor(image).ToPixel<Bgra32>();
+            var color = GetColor(image, width, height).ToPixel<Bgra32>();
 
             // We don't want colors that are too dark.
             // If the color is too dark, make it brighter by reducing the range
@@ -55,18 +55,16 @@ namespace Ryujinx.Ava.UI.Windows
             return color;
         }
 
-        public static Color GetColor(Image<Bgra32> image)
+        public static Color GetColor(Span<Bgra32> image, int width, int height)
         {
             var colors = new PaletteColor[TotalColors];
 
             var dominantColorBin = new Dictionary<int, int>();
 
-            var buffer = GetBuffer(image);
-
-            int w = image.Width;
+            int w = width;
 
             int w8 = w << 8;
-            int h8 = image.Height << 8;
+            int h8 = height << 8;
 
 #pragma warning disable IDE0059 // Unnecessary assignment
             int xStep = w8 / ColorsPerLine;
@@ -76,17 +74,17 @@ namespace Ryujinx.Ava.UI.Windows
             int i = 0;
             int maxHitCount = 0;
 
-            for (int y = 0; y < image.Height; y++)
+            for (int y = 0; y < height; y++)
             {
-                int yOffset = y * image.Width;
+                int yOffset = y * width;
 
-                for (int x = 0; x < image.Width && i < TotalColors; x++)
+                for (int x = 0; x < width && i < TotalColors; x++)
                 {
                     int offset = x + yOffset;
 
-                    byte cb = buffer[offset].B;
-                    byte cg = buffer[offset].G;
-                    byte cr = buffer[offset].R;
+                    byte cb = image[offset].B;
+                    byte cg = image[offset].G;
+                    byte cr = image[offset].R;
 
                     var qck = GetQuantizedColorKey(cr, cg, cb);
 

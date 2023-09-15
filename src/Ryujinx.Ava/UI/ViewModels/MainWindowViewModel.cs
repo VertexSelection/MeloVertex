@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using DynamicData;
@@ -37,6 +38,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Image = SixLabors.ImageSharp.Image;
@@ -1141,12 +1143,19 @@ namespace Ryujinx.Ava.UI.ViewModels
             }));
         }
 
-        private void PrepareLoadScreen()
+        private unsafe void PrepareLoadScreen()
         {
             using MemoryStream stream = new(SelectedIcon);
-            using var gameIconBmp = Image.Load<Bgra32>(stream);
+            using var bitmap = WriteableBitmap.Decode(stream);
 
-            var dominantColor = IconColorPicker.GetFilteredColor(gameIconBmp).ToPixel<Bgra32>();
+            using var l = bitmap.Lock();
+            var buffer = new byte[l.RowBytes * l.Size.Height];
+
+            Marshal.Copy(l.Address, buffer, 0, buffer.Length);
+
+            var pixels = MemoryMarshal.Cast<byte, Bgra32>(buffer.AsSpan());
+
+            var dominantColor = IconColorPicker.GetFilteredColor(pixels, l.Size.Width, l.Size.Height).ToPixel<Bgra32>();
 
             const float ColorMultiple = 0.5f;
 
