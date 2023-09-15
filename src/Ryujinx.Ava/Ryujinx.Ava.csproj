@@ -15,7 +15,9 @@
   </PropertyGroup>
     <PropertyGroup>
         <PublishAot>true</PublishAot>
+        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
         <InvariantGlobalization>true</InvariantGlobalization>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
     </PropertyGroup>
     <ItemGroup>
         <RdXmlFile Include="rd.xml" />
