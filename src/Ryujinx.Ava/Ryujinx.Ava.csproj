@@ -16,7 +16,7 @@
   <PropertyGroup>
     <PublishAot>true</PublishAot>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <InvariantGlobalization>false</InvariantGlobalization>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <OptimizationPreference>Speed</OptimizationPreference>
   </PropertyGroup>

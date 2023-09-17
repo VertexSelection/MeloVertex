@@ -24,6 +24,20 @@
             <Type Name="Silk.NET.Vulkan.Extensions.KHR.KhrSwapchain" 
                   Dynamic="Required All"/>
         </Assembly>
+        <Assembly Name="Ryujinx.Ava">
+            <Type Name="Ryujinx.Ava.UI.Views.User.UserSelectorViews" 
+                  Dynamic="Required All"/>
+            <Type Name="Ryujinx.Ava.UI.Views.User.UserSaveManagerView" 
+                  Dynamic="Required All"/>
+            <Type Name="Ryujinx.Ava.UI.Views.User.UserRecovererView" 
+                  Dynamic="Required All"/>
+            <Type Name="Ryujinx.Ava.UI.Views.User.UserProfileImageSelectorView"
+                  Dynamic="Required All"/>
+            <Type Name="Ryujinx.Ava.UI.Views.User.UserFirmwareAvatarSelectorView"
+                  Dynamic="Required All"/>
+            <Type Name="Ryujinx.Ava.UI.Views.User.UserEditorView"
+                  Dynamic="Required All"/>
+        </Assembly>
         <Assembly Name="Ryujinx.HLE">
             <Type Name="Ryujinx.HLE.HOS.Services.Nv.NvDrvServices.NvHostChannel.NvHostGpuDeviceFile"
                   Dynamic="Required All" />
