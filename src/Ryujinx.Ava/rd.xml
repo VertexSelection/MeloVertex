@@ -197,8 +197,6 @@
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Usb.IPdCradleManager"
                   Dynamic="Required All" />
-            <Type Name="Ryujinx.HLE.HOS.Services.Lbl.LblControllerServer"
-                  Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Audio.IAudioOutManagerForApplet"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Am.AppletAE.AllSystemAppletProxiesService.ISystemAppletProxy"
