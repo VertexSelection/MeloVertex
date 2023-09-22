@@ -1,8 +1,10 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.VisualTree;
 using Ryujinx.Ava.Common.Locale;
 using Ryujinx.Ava.UI.Helpers;
 using Ryujinx.Ava.UI.Models;
@@ -26,14 +28,34 @@ namespace Ryujinx.Ava.UI.Views.Input
             DataContext = ViewModel = new ControllerInputViewModel(this);
 
             InitializeComponent();
+        }
 
-            foreach (ILogical visual in SettingButtons.GetLogicalDescendants())
+        private void SettingButtons_PropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)
+        {
+            if(e.Property == ContentProperty)
+            {
+                RebindEvents();
+            }
+        }
+
+        public void RebindEvents()
+        {
+            foreach (var visual in SettingButtons.GetLogicalDescendants())
             {
                 if (visual is ToggleButton button && visual is not CheckBox)
                 {
                     button.IsCheckedChanged += Button_IsCheckedChanged;
                 }
             }
+        }
+
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+
+            RebindEvents();
+
+            SettingButtons.PropertyChanged += SettingButtons_PropertyChanged;
         }
 
         protected override void OnPointerReleased(PointerReleasedEventArgs e)

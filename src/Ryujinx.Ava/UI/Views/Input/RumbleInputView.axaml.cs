@@ -19,7 +19,7 @@ namespace Ryujinx.Ava.UI.Views.Input
 
         public RumbleInputView(ControllerInputViewModel viewModel)
         {
-            var config = viewModel.Configuration as InputConfiguration<GamepadInputId, StickInputId>;
+            var config = viewModel.Configuration.Config as InputConfiguration<GamepadInputId, StickInputId>;
 
             _viewModel = new RumbleInputViewModel
             {
@@ -47,7 +47,7 @@ namespace Ryujinx.Ava.UI.Views.Input
 
             contentDialog.PrimaryButtonClick += (sender, args) =>
             {
-                var config = viewModel.Configuration as InputConfiguration<GamepadInputId, StickInputId>;
+                var config = viewModel.Configuration.Config as InputConfiguration<GamepadInputId, StickInputId>;
                 config.StrongRumble = content._viewModel.StrongRumble;
                 config.WeakRumble = content._viewModel.WeakRumble;
             };

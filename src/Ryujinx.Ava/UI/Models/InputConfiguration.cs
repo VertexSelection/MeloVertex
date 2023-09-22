@@ -7,7 +7,7 @@ using System;
 
 namespace Ryujinx.Ava.UI.Models
 {
-    internal class InputConfiguration<TKey, TStick> : BaseModel
+    public class InputConfiguration<TKey, TStick> : BaseModel
     {
         private float _deadzoneRight;
         private float _triggerThreshold;
