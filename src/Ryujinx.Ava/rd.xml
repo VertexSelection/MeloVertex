@@ -257,8 +257,6 @@
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Audio.AudioOut.AudioOut"
                   Dynamic="Required All" />
-            <Type Name="Ryujinx.HLE.HOS.Services.Wlan.ISocketManager"
-                  Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Ncm.Lr.LocationResolverManager.ILocationResolver"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Mii.IStaticService"
@@ -347,10 +345,6 @@
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Ins.ISenderManager"
                   Dynamic="Required All" />
-            <Type Name="Ryujinx.HLE.HOS.Services.Wlan.ILocalGetFrame"
-                  Dynamic="Required All" />
-            <Type Name="Ryujinx.HLE.HOS.Services.Wlan.IUnknown1"
-                  Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Ldn.IUserServiceCreator"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Spl.IRandomInterface"
@@ -365,8 +359,6 @@
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.SurfaceFlinger.HOSBinderDriverServer"
                   Dynamic="Required All" />
-            <Type Name="Ryujinx.HLE.HOS.Services.Wlan.ILocalManager"
-                  Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Ncm.IContentManager"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Vi.ISystemRootService"
@@ -380,8 +372,6 @@
             <Type Name="Ryujinx.HLE.HOS.Services.Nfc.Nfp.INfp"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Ns.IVulnerabilityManagerInterface"
-                  Dynamic="Required All" />
-            <Type Name="Ryujinx.HLE.HOS.Services.Wlan.IInfraManager"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Caps.IAlbumApplicationService"
                   Dynamic="Required All" />
@@ -458,8 +448,6 @@
             <Type Name="Ryujinx.HLE.HOS.Services.Ssl.SslService.ISslConnection"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.SurfaceFlinger.BufferItemConsumer"
-                  Dynamic="Required All" />
-            <Type Name="Ryujinx.HLE.HOS.Services.Wlan.ISocketGetFrame"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Nv.NvDrvServices.NvHostCtrl.NvHostCtrlDeviceFile"
                   Dynamic="Required All" />
@@ -550,8 +538,6 @@
             <Type Name="Ryujinx.HLE.HOS.Services.Ncm.Lr.ILocationResolverManager"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Time.StaticService.ITimeZoneServiceForGlue"
-                  Dynamic="Required All" />
-            <Type Name="Ryujinx.HLE.HOS.Services.Wlan.ILocalGetActionFrame"
                   Dynamic="Required All" />
             <Type Name="Ryujinx.HLE.HOS.Services.Notification.INotificationServicesForSystem"
                   Dynamic="Required All" />
