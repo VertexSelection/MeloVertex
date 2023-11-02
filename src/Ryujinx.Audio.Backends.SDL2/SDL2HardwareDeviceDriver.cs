@@ -23,7 +23,7 @@ namespace Ryujinx.Audio.Backends.SDL2
         // TODO: Add this to SDL2-CS
         // NOTE: We use a DllImport here because of marshaling issue for spec.
 #pragma warning disable SYSLIB1054
-        [DllImport("SDL2")]
+        [DllImport("SDL2.framework/SDL2")]
         private static extern int SDL_GetDefaultAudioInfo(IntPtr name, out SDL_AudioSpec spec, int isCapture);
 #pragma warning restore SYSLIB1054
 

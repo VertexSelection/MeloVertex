@@ -101,7 +101,7 @@ namespace Ryujinx.Graphics.Vulkan
             Textures = new HashSet<ITexture>();
             Samplers = new HashSet<SamplerHolder>();
 
-            if (OperatingSystem.IsMacOS())
+            if (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())
             {
                 MVKInitialization.Initialize();
 

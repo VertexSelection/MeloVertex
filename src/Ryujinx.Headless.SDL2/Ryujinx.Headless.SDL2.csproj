@@ -2,21 +2,88 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
-    <OutputType>Exe</OutputType>
+    <RuntimeIdentifiers>ios-arm64</RuntimeIdentifiers>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Version>1.0.0-dirty</Version>
     <DefineConstants Condition=" '$(ExtraDefineConstants)' != '' ">$(DefineConstants);$(ExtraDefineConstants)</DefineConstants>
     <SigningCertificate Condition=" '$(SigningCertificate)' == '' ">-</SigningCertificate>
     <TieredPGO>true</TieredPGO>
+
+    <PublishAot>true</PublishAot>
+    <PublishAotUsingRuntimePack>true</PublishAotUsingRuntimePack>
+    <UseNativeAOTRuntime>true</UseNativeAOTRuntime>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
   </PropertyGroup>
+
+  <!-- iOS linking stuff from godot -->
+
+  <PropertyGroup>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <LinkStandardCPlusPlusLibrary>true</LinkStandardCPlusPlusLibrary>
+    <FindXCode Condition=" '$(XCodePath)' == '' and '$([MSBuild]::IsOsPlatform(OSX))' ">true</FindXCode>
+    <XCodePath Condition=" '$(XCodePath)' == '' ">/Applications/Xcode.app/Contents/Developer</XCodePath>
+    <XCodePath>$([MSBuild]::EnsureTrailingSlash('$(XCodePath)'))</XCodePath>
+  </PropertyGroup>
+
+  <Target Name="PrepareBeforeIlcCompile"
+          BeforeTargets="IlcCompile">
+
+    <Copy SourceFiles="%(ResolvedRuntimePack.PackageDirectory)/runtimes/$(RuntimeIdentifier)/native/icudt.dat" DestinationFolder="$(PublishDir)"/>
+
+    <!-- We need to find the path to Xcode so we can set manual linker args to the correct SDKs
+        Once https://github.com/dotnet/runtime/issues/88737 is released, we can take this out
+    -->
+
+    <Exec Command="xcrun xcode-select -p" ConsoleToMSBuild="true" Condition=" '$(FindXCode)' == 'true' ">
+      <Output TaskParameter="ConsoleOutput" PropertyName="XcodeSelect" />
+    </Exec>
+
+    <PropertyGroup Condition=" '$(FindXCode)' == 'true' ">
+      <XCodePath>$(XcodeSelect)</XCodePath>
+      <XCodePath>$([MSBuild]::EnsureTrailingSlash('$(XCodePath)'))</XCodePath>
+    </PropertyGroup>
+
+    <Message Importance="normal" Text="Found XCode at $(XcodeSelect)"  Condition=" '$(FindXCode)' == 'true' "/>
+
+    <ItemGroup>
+      <LinkerArg Include="-Wl,-ld_classic" />
+      <LinkerArg Include="-isysroot %22$(XCodePath)Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk%22"
+                 Condition=" $(RuntimeIdentifier.Contains('simulator')) "/>
+      <LinkerArg Include="-isysroot %22$(XCodePath)Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk%22"
+                 Condition=" !$(RuntimeIdentifier.Contains('simulator')) "/>
+    </ItemGroup>
+
+  </Target>
+
+  <Target Name="FixDylib"
+          AfterTargets="Publish">
+    <!-- The dylib id needs to be changed to have @rpath -->
+
+    <Exec Command="install_name_tool -id @rpath/$(TargetName).dylib $(NativeBinary)" ConsoleToMSBuild="true" />
+  </Target>
+
+  <Target Name="FixSymbols"
+          AfterTargets="Publish">
+
+    <RemoveDir Directories="$(PublishDir)$(TargetName).framework.dSYM"/>
+
+    <!-- create-xcframework (called from the export plugin wants the symbol files in a directory
+    with a slightly different name from the one created by dotnet publish, so we copy them over
+    to the correctly-named directory -->
+    <ItemGroup>
+      <SymbolFiles Include="$(NativeBinary).dsym\**\*.*"/>
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(PublishDir)$(TargetName).framework.dSYM"/>
+  </Target>
+
+  <!-- end iOS linking stuff from godot -->
 
   <ItemGroup>
     <PackageReference Include="OpenTK.Core" />
     <PackageReference Include="Ryujinx.Graphics.Nvdec.Dependencies" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="false">
     <Exec Command="codesign --entitlements '$(ProjectDir)..\..\distribution\macos\entitlements.xml' -f --deep -s $(SigningCertificate) '$(TargetDir)$(TargetName)'" />
   </Target>
 
@@ -65,7 +132,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
-    <PublishSingleFile>true</PublishSingleFile>
+    <PublishSingleFile>false</PublishSingleFile>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
   </PropertyGroup>

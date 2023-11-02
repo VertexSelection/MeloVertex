@@ -3,6 +3,7 @@ using ARMeilleure.CodeGen.Linking;
 using ARMeilleure.CodeGen.Unwinding;
 using ARMeilleure.Common;
 using ARMeilleure.Memory;
+using ARMeilleure.Translation.Cache;
 using Ryujinx.Common;
 using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Logging;
@@ -744,7 +745,7 @@ namespace ARMeilleure.Translation.PTC
             bool highCq)
         {
             var cFunc = new CompiledFunction(code, unwindInfo, RelocInfo.Empty);
-            var gFunc = cFunc.MapWithPointer<GuestFunction>(out IntPtr gFuncPointer);
+            var gFunc = cFunc.MapWithPointer<GuestFunction>(out IntPtr gFuncPointer, true);
 
             return new TranslatedFunction(gFunc, gFuncPointer, callCounter, guestSize, highCq);
         }
@@ -826,7 +827,7 @@ namespace ARMeilleure.Translation.PTC
 
                     Debug.Assert(Profiler.IsAddressInStaticCodeRange(address));
 
-                    TranslatedFunction func = translator.Translate(address, item.funcProfile.Mode, item.funcProfile.HighCq);
+                    TranslatedFunction func = translator.Translate(address, item.funcProfile.Mode, item.funcProfile.HighCq, deferProtect: true);
 
                     bool isAddressUnique = translator.Functions.TryAdd(address, func.GuestSize, func);
 
@@ -1004,6 +1005,7 @@ namespace ARMeilleure.Translation.PTC
             osPlatform |= (OperatingSystem.IsLinux()   ? 1u : 0u) << 1;
             osPlatform |= (OperatingSystem.IsMacOS()   ? 1u : 0u) << 2;
             osPlatform |= (OperatingSystem.IsWindows() ? 1u : 0u) << 3;
+            osPlatform |= (OperatingSystem.IsIOS()     ? 1u : 0u) << 4;
 #pragma warning restore IDE0055
 
             return osPlatform;

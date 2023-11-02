@@ -30,21 +30,26 @@ namespace ARMeilleure.Translation.Cache
             _blocks.Add(new MemoryBlock(0, capacity));
         }
 
-        public int Allocate(int size)
+        public int Allocate(ref int size, int alignment)
         {
+            int alignM1 = alignment - 1;
             for (int i = 0; i < _blocks.Count; i++)
             {
                 MemoryBlock block = _blocks[i];
+                int misAlignment = ((block.Offset + alignM1) & (~alignM1)) - block.Offset;
+                int alignedSize = size + misAlignment;
 
-                if (block.Size > size)
+                if (block.Size > alignedSize)
                 {
-                    _blocks[i] = new MemoryBlock(block.Offset + size, block.Size - size);
-                    return block.Offset;
+                    size = alignedSize;
+                    _blocks[i] = new MemoryBlock(block.Offset + alignedSize, block.Size - alignedSize);
+                    return block.Offset + misAlignment;
                 }
-                else if (block.Size == size)
+                else if (block.Size == alignedSize)
                 {
+                    size = alignedSize;
                     _blocks.RemoveAt(i);
-                    return block.Offset;
+                    return block.Offset + misAlignment;
                 }
             }
 

@@ -5,6 +5,7 @@ using System.Runtime.Versioning;
 namespace Ryujinx.Ui.Common.Helper
 {
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     public static partial class ObjectiveC
     {
         private const string ObjCRuntime = "/usr/lib/libobjc.A.dylib";

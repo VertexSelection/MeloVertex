@@ -112,6 +112,8 @@ namespace ARMeilleure.Translation
                     Debug.Assert(Functions.Count == 0);
                     _ptc.LoadTranslations(this);
                     _ptc.MakeAndSaveTranslations(this);
+
+                    JitCache.RunDeferredRxProtects();
                 }
 
                 _ptc.Profiler.Start();
@@ -250,7 +252,7 @@ namespace ARMeilleure.Translation
             }
         }
 
-        internal TranslatedFunction Translate(ulong address, ExecutionMode mode, bool highCq, bool singleStep = false)
+        internal TranslatedFunction Translate(ulong address, ExecutionMode mode, bool highCq, bool singleStep = false, bool deferProtect = false)
         {
             var context = new ArmEmitterContext(
                 Memory,
@@ -308,7 +310,7 @@ namespace ARMeilleure.Translation
                 _ptc.WriteCompiledFunction(address, funcSize, hash, highCq, compiledFunc);
             }
 
-            GuestFunction func = compiledFunc.MapWithPointer<GuestFunction>(out IntPtr funcPointer);
+            GuestFunction func = compiledFunc.MapWithPointer<GuestFunction>(out IntPtr funcPointer, deferProtect);
 
             Allocators.ResetAll();
 

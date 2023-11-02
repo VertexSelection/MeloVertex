@@ -4,6 +4,7 @@ using ARMeilleure.Memory;
 using ARMeilleure.Native;
 using Ryujinx.Memory;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -18,6 +19,7 @@ namespace ARMeilleure.Translation.Cache
 
         private const int CodeAlignment = 4; // Bytes.
         private const int CacheSize = 2047 * 1024 * 1024;
+        private const int CacheSizeIOS = 512 * 1024 * 1024;
 
         private static ReservedRegion _jitRegion;
         private static JitCacheInvalidation _jitCacheInvalidator;
@@ -47,9 +49,9 @@ namespace ARMeilleure.Translation.Cache
                     return;
                 }
 
-                _jitRegion = new ReservedRegion(allocator, CacheSize);
+                _jitRegion = new ReservedRegion(allocator, (ulong)(OperatingSystem.IsIOS() ? CacheSizeIOS : CacheSize));
 
-                if (!OperatingSystem.IsWindows() && !OperatingSystem.IsMacOS())
+                if (!OperatingSystem.IsWindows() && !OperatingSystem.IsMacOS() && !OperatingSystem.IsIOS())
                 {
                     _jitCacheInvalidator = new JitCacheInvalidation(allocator);
                 }
@@ -65,7 +67,17 @@ namespace ARMeilleure.Translation.Cache
             }
         }
 
-        public static IntPtr Map(CompiledFunction func)
+        static ConcurrentQueue<(int funcOffset, int length)> _deferredRxProtect = new();
+
+        public static void RunDeferredRxProtects()
+        {
+            while (_deferredRxProtect.TryDequeue(out var result))
+            {
+                ReprotectAsExecutable(result.funcOffset, result.length);
+            }
+        }  
+
+        public static IntPtr Map(CompiledFunction func, bool deferProtect)
         {
             byte[] code = func.Code;
 
@@ -73,11 +85,25 @@ namespace ARMeilleure.Translation.Cache
             {
                 Debug.Assert(_initialized);
 
-                int funcOffset = Allocate(code.Length);
+                int funcOffset = Allocate(code.Length, deferProtect);
 
                 IntPtr funcPtr = _jitRegion.Pointer + funcOffset;
 
-                if (OperatingSystem.IsMacOS() && RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                if (OperatingSystem.IsIOS())
+                {
+                    Marshal.Copy(code, 0, funcPtr, code.Length);
+                    if (deferProtect)
+                    {
+                        _deferredRxProtect.Enqueue((funcOffset, code.Length));
+                    }
+                    else
+                    {
+                        ReprotectAsExecutable(funcOffset, code.Length);
+
+                        JitSupportDarwinAot.Invalidate(funcPtr, (ulong)code.Length);
+                    }
+                }
+                else if (OperatingSystem.IsMacOS()&& RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                 {
                     unsafe
                     {
@@ -111,6 +137,11 @@ namespace ARMeilleure.Translation.Cache
 
         public static void Unmap(IntPtr pointer)
         {
+            if (OperatingSystem.IsIOS())
+            {
+                return;
+            }
+
             lock (_lock)
             {
                 Debug.Assert(_initialized);
@@ -145,11 +176,20 @@ namespace ARMeilleure.Translation.Cache
             _jitRegion.Block.MapAsRx((ulong)regionStart, (ulong)(regionEnd - regionStart));
         }
 
-        private static int Allocate(int codeSize)
+        private static int Allocate(int codeSize, bool deferProtect = false)
         {
-            codeSize = AlignCodeSize(codeSize);
+            codeSize = AlignCodeSize(codeSize, deferProtect);
 
-            int allocOffset = _cacheAllocator.Allocate(codeSize);
+            int alignment = CodeAlignment;
+
+            if (OperatingSystem.IsIOS() && !deferProtect)
+            {
+                alignment = 0x4000;
+            }
+
+            int allocOffset = _cacheAllocator.Allocate(ref codeSize, alignment);
+
+            Console.WriteLine($"{allocOffset:x8}: {codeSize:x8} {alignment:x8}");
 
             if (allocOffset < 0)
             {
@@ -161,9 +201,16 @@ namespace ARMeilleure.Translation.Cache
             return allocOffset;
         }
 
-        private static int AlignCodeSize(int codeSize)
+        private static int AlignCodeSize(int codeSize, bool deferProtect = false)
         {
-            return checked(codeSize + (CodeAlignment - 1)) & ~(CodeAlignment - 1);
+            int alignment = CodeAlignment;
+
+            if (OperatingSystem.IsIOS() && !deferProtect)
+            {
+                alignment = 0x4000;
+            }
+
+            return checked(codeSize + (alignment - 1)) & ~(alignment - 1);
         }
 
         private static void Add(int offset, int size, UnwindInfo unwindInfo)

@@ -40,7 +40,7 @@ namespace Ryujinx.Graphics.Gpu
         /// <summary>
         /// Enables or disables the Just-in-Time compiler for GPU Macro code.
         /// </summary>
-        public static bool EnableMacroJit = true;
+        public static bool EnableMacroJit = false;
 
         /// <summary>
         /// Enables or disables high-level emulation of common GPU Macro code.

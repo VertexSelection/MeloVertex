@@ -36,7 +36,7 @@ namespace Ryujinx.Headless.SDL2
 
         private static readonly ConcurrentQueue<Action> _mainThreadActions = new();
 
-        [LibraryImport("SDL2")]
+        [LibraryImport("SDL2.framework/SDL2")]
         // TODO: Remove this as soon as SDL2-CS was updated to expose this method publicly
         private static partial IntPtr SDL_LoadBMP_RW(IntPtr src, int freesrc);
 

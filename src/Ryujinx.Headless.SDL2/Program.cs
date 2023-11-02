@@ -33,6 +33,7 @@ using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
 using ConfigGamepadInputId = Ryujinx.Common.Configuration.Hid.Controller.GamepadInputId;
@@ -60,16 +61,46 @@ namespace Ryujinx.Headless.SDL2
 
         private static readonly InputConfigJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
 
+        [UnmanagedCallersOnly(EntryPoint = "main_ryujinx_sdl")]
+        public static unsafe int MainExternal(int argCount, IntPtr* pArgs)
+        {
+            string[] args = new string[argCount];
+
+            try
+            {
+                for (int i = 0; i < argCount; i++)
+                {
+                    args[i] = Marshal.PtrToStringAnsi(pArgs[i]);
+
+                    Console.WriteLine(args[i]);
+                }
+
+                Main(args);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return -1;
+            }
+
+            return 0;
+        }
+
         static void Main(string[] args)
         {
-            Version = ReleaseInformation.GetVersion();
-
             // Make process DPI aware for proper window sizing on high-res screens.
             ForceDpiAware.Windows();
 
-            Console.Title = $"Ryujinx Console {Version} (Headless SDL2)";
+            Silk.NET.Core.Loader.SearchPathContainer.Platform = Silk.NET.Core.Loader.UnderlyingPlatform.MacOS;
 
-            if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
+            Version = ReleaseInformation.GetVersion();
+
+            if (!OperatingSystem.IsIOS())
+            {
+                Console.Title = $"Ryujinx Console {Version} (Headless SDL2)";
+            }
+
+            if (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS() || OperatingSystem.IsLinux())
             {
                 AutoResetEvent invoked = new(false);
 
@@ -344,12 +375,12 @@ namespace Ryujinx.Headless.SDL2
 
             GraphicsConfig.EnableShaderCache = true;
 
-            if (OperatingSystem.IsMacOS())
+            if (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())
             {
                 if (option.GraphicsBackend == GraphicsBackend.OpenGl)
                 {
                     option.GraphicsBackend = GraphicsBackend.Vulkan;
-                    Logger.Warning?.Print(LogClass.Application, "OpenGL is not supported on macOS, switching to Vulkan!");
+                    Logger.Warning?.Print(LogClass.Application, "OpenGL is not supported on Apple platforms, switching to Vulkan!");
                 }
             }
 

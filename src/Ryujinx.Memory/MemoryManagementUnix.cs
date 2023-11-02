@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using static Ryujinx.Memory.MemoryManagerUnixHelper;
@@ -8,6 +9,7 @@ namespace Ryujinx.Memory
 {
     [SupportedOSPlatform("linux")]
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     static class MemoryManagementUnix
     {
         private static readonly ConcurrentDictionary<IntPtr, ulong> _allocations = new();
@@ -40,7 +42,7 @@ namespace Ryujinx.Memory
                 flags |= MmapFlags.MAP_NORESERVE;
             }
 
-            if (OperatingSystem.IsMacOSVersionAtLeast(10, 14) && forJit)
+            if (OperatingSystem.IsMacOS() && OperatingSystem.IsMacOSVersionAtLeast(10, 14) && forJit)
             {
                 flags |= MmapFlags.MAP_JIT_DARWIN;
 
@@ -57,6 +59,11 @@ namespace Ryujinx.Memory
                 throw new SystemException(Marshal.GetLastPInvokeErrorMessage());
             }
 
+            if (OperatingSystem.IsIOS() && forJit)
+            {
+                MachJitWorkaround.ReallocateAreaWithOwnership(ptr, (int)size);
+            }
+
             if (!_allocations.TryAdd(ptr, size))
             {
                 // This should be impossible, kernel shouldn't return an already mapped address.
@@ -70,7 +77,7 @@ namespace Ryujinx.Memory
         {
             MmapProts prot = MmapProts.PROT_READ | MmapProts.PROT_WRITE;
 
-            if (OperatingSystem.IsMacOSVersionAtLeast(10, 14) && forJit)
+            if ((OperatingSystem.IsIOS() || OperatingSystem.IsMacOSVersionAtLeast(10, 14)) && forJit)
             {
                 prot |= MmapProts.PROT_EXEC;
             }
@@ -134,11 +141,21 @@ namespace Ryujinx.Memory
             return munmap(address, size) == 0;
         }
 
+        private static Dictionary<IntPtr, ulong> _sharedMemorySizes = new Dictionary<nint, ulong>();
+
         public unsafe static IntPtr CreateSharedMemory(ulong size, bool reserve)
         {
             int fd;
 
-            if (OperatingSystem.IsMacOS())
+            if (OperatingSystem.IsIOS())
+            {
+                IntPtr baseAddress = MachJitWorkaround.AllocateSharedMemory(size, reserve);
+
+                _sharedMemorySizes.Add(baseAddress, size);
+
+                return baseAddress;
+            }
+            else if (OperatingSystem.IsMacOS())
             {
                 byte[] memName = "Ryujinx-XXXXXX"u8.ToArray();
 
@@ -185,27 +202,64 @@ namespace Ryujinx.Memory
 
         public static void DestroySharedMemory(IntPtr handle)
         {
-            close(handle.ToInt32());
+            if (OperatingSystem.IsIOS())
+            {
+                if (_sharedMemorySizes.TryGetValue(handle, out ulong size))
+                {
+                    MachJitWorkaround.DestroySharedMemory(handle, size);
+                }
+            }
+            else
+            {
+                close(handle.ToInt32());
+            }
         }
 
         public static IntPtr MapSharedMemory(IntPtr handle, ulong size)
         {
-            return Mmap(IntPtr.Zero, size, MmapProts.PROT_READ | MmapProts.PROT_WRITE, MmapFlags.MAP_SHARED, handle.ToInt32(), 0);
+            if (OperatingSystem.IsIOS())
+            {
+                // The base of the shared memory is already mapped - it's the handle.
+                // Views are remapped from it.
+
+                return handle;
+            }
+            else
+            {
+                return Mmap(IntPtr.Zero, size, MmapProts.PROT_READ | MmapProts.PROT_WRITE, MmapFlags.MAP_SHARED, handle.ToInt32(), 0);
+            }
         }
 
         public static void UnmapSharedMemory(IntPtr address, ulong size)
         {
-            munmap(address, size);
+            if (!OperatingSystem.IsIOS())
+            {
+                munmap(address, size);
+            }
         }
 
         public static void MapView(IntPtr sharedMemory, ulong srcOffset, IntPtr location, ulong size)
         {
-            Mmap(location, size, MmapProts.PROT_READ | MmapProts.PROT_WRITE, MmapFlags.MAP_FIXED | MmapFlags.MAP_SHARED, sharedMemory.ToInt32(), (long)srcOffset);
+            if (OperatingSystem.IsIOS())
+            {
+                MachJitWorkaround.MapView(sharedMemory, srcOffset, location, size);
+            }
+            else
+            {
+                Mmap(location, size, MmapProts.PROT_READ | MmapProts.PROT_WRITE, MmapFlags.MAP_FIXED | MmapFlags.MAP_SHARED, sharedMemory.ToInt32(), (long)srcOffset);
+            }
         }
 
         public static void UnmapView(IntPtr location, ulong size)
         {
-            Mmap(location, size, MmapProts.PROT_NONE, MmapFlags.MAP_FIXED | MmapFlags.MAP_PRIVATE | MmapFlags.MAP_ANONYMOUS | MmapFlags.MAP_NORESERVE, -1, 0);
+            if (OperatingSystem.IsIOS())
+            {
+                MachJitWorkaround.UnmapView(location, size);
+            }
+            else
+            {
+                Mmap(location, size, MmapProts.PROT_NONE, MmapFlags.MAP_FIXED | MmapFlags.MAP_PRIVATE | MmapFlags.MAP_ANONYMOUS | MmapFlags.MAP_NORESERVE, -1, 0);
+            }
         }
     }
 }

@@ -50,6 +50,10 @@ namespace Ryujinx.Common.Configuration
             {
                 appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support");
             }
+            else if (OperatingSystem.IsIOS())
+            {
+                appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            }
             else
             {
                 appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);

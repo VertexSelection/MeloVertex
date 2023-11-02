@@ -8,6 +8,7 @@ namespace Ryujinx.Ui.Helper
     public delegate void UpdateBoundsCallbackDelegate(Window window);
 
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     static partial class MetalHelper
     {
         private const string LibObjCImport = "/usr/lib/libobjc.A.dylib";

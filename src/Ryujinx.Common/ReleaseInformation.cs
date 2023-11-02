@@ -30,6 +30,11 @@ namespace Ryujinx.Common
 
         public static string GetVersion()
         {
+            if (OperatingSystem.IsIOS())
+            {
+                return "ios";
+            }
+
             if (IsValid())
             {
                 return BuildVersion;
@@ -46,7 +51,7 @@ namespace Ryujinx.Common
 #else
         public static string GetBaseApplicationDirectory()
         {
-            if (IsFlatHubBuild() || OperatingSystem.IsMacOS())
+            if (IsFlatHubBuild() || OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())
             {
                 return AppDataManager.BaseDirPath;
             }

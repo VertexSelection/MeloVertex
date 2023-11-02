@@ -112,7 +112,7 @@ namespace ARMeilleure.Signal
 
                 ref SignalHandlerConfig config = ref GetConfigRef();
 
-                if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+                if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())
                 {
                     _signalHandlerPtr = Marshal.GetFunctionPointerForDelegate(GenerateUnixSignalHandler(_handlerConfig));
 
@@ -252,13 +252,13 @@ namespace ARMeilleure.Signal
 
         private static Operand GenerateUnixFaultAddress(EmitterContext context, Operand sigInfoPtr)
         {
-            ulong structAddressOffset = OperatingSystem.IsMacOS() ? 24ul : 16ul; // si_addr
+            ulong structAddressOffset = (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS()) ? 24ul : 16ul; // si_addr
             return context.Load(OperandType.I64, context.Add(sigInfoPtr, Const(structAddressOffset)));
         }
 
         private static Operand GenerateUnixWriteFlag(EmitterContext context, Operand ucontextPtr)
         {
-            if (OperatingSystem.IsMacOS())
+            if (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())
             {
                 const ulong McontextOffset = 48; // uc_mcontext
                 Operand ctxPtr = context.Load(OperandType.I64, context.Add(ucontextPtr, Const(McontextOffset)));

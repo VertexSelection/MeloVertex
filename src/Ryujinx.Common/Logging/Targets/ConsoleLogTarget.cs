@@ -30,15 +30,26 @@ namespace Ryujinx.Common.Logging.Targets
 
         public void Log(object sender, LogEventArgs args)
         {
-            Console.ForegroundColor = GetLogColor(args.Level);
-            Console.WriteLine(_formatter.Format(args));
-            Console.ResetColor();
+            if (OperatingSystem.IsIOS())
+            {
+                Console.WriteLine(_formatter.Format(args));
+            }
+            else
+            {
+                Console.ForegroundColor = GetLogColor(args.Level);
+                Console.WriteLine(_formatter.Format(args));
+                Console.ResetColor();
+            }
         }
 
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            Console.ResetColor();
+
+            if (!OperatingSystem.IsIOS())
+            {
+                Console.ResetColor();
+            }
         }
     }
 }
