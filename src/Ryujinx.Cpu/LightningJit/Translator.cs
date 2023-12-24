@@ -63,10 +63,7 @@ namespace Ryujinx.Cpu.LightningJit
 
         public void Execute(State.ExecutionContext context, ulong address)
         {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException(nameof(Translator));
-            }
+            ObjectDisposedException.ThrowIf(_disposed, this);
 
             NativeInterface.RegisterThread(context, Memory, this);
 
