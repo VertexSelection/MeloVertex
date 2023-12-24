@@ -1,4 +1,4 @@
-using ARMeilleure.Memory;
+﻿using ARMeilleure.Memory;
 using Ryujinx.Cpu;
 using Ryujinx.Graphics.Gpu;
 using Ryujinx.HLE.HOS.Kernel.Process;
@@ -85,6 +85,8 @@ namespace Ryujinx.HLE.HOS
                 _memoryManager = null;
                 _gpuContext.UnregisterProcess(_pid);
             }
+
+            _cpuContext.Dispose();
         }
     }
 }
