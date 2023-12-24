@@ -116,7 +116,8 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static uint GetShiftRight(uint imm6, uint size)
         {
-            return (size == 3 ? 64u : (16u << (int)size)) - imm6;;
+            return (size == 3 ? 64u : (16u << (int)size)) - imm6;
+            ;
         }
     }
 }

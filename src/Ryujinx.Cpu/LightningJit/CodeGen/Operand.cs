@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Ryujinx.Cpu.LightningJit.CodeGen
 {
-    struct Operand
+    readonly struct Operand
     {
         public readonly OperandKind Kind { get; }
         public readonly OperandType Type { get; }

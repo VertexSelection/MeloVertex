@@ -1,5 +1,5 @@
-using Ryujinx.Cpu.LightningJit.Graph;
 using ARMeilleure.Memory;
+using Ryujinx.Cpu.LightningJit.Graph;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;

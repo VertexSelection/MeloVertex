@@ -21,7 +21,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             public bool HasTarget;
         }
 
-        private List<LabelState> _labels;
+        private readonly List<LabelState> _labels;
 
         public Assembler(CodeWriter writer)
         {
@@ -29,7 +29,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             _labels = new List<LabelState>();
         }
 
-        public Operand CreateLabel()
+        public readonly Operand CreateLabel()
         {
             int labelIndex = _labels.Count;
             _labels.Add(new LabelState());
@@ -37,7 +37,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             return new Operand(OperandKind.Label, OperandType.None, (ulong)labelIndex);
         }
 
-        public void MarkLabel(Operand label)
+        public readonly void MarkLabel(Operand label)
         {
             int targetIndex = _code.Count;
 
@@ -213,12 +213,12 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionBitwiseAuto(0x1ac02800u, rd, rn, rm);
         }
 
-        public void B(int imm)
+        public readonly void B(int imm)
         {
             WriteUInt32(0x14000000u | EncodeSImm26_2(imm));
         }
 
-        public void B(ArmCondition condition, int imm)
+        public readonly void B(ArmCondition condition, int imm)
         {
             WriteUInt32(0x54000000u | (uint)condition | (EncodeSImm19_2(imm) << 5));
         }
@@ -263,17 +263,17 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionAuto(0x6a200000u, rd, rn, rm, shiftType, shiftAmount);
         }
 
-        public void Blr(Operand rn)
+        public readonly void Blr(Operand rn)
         {
             WriteUInt32(0xd63f0000u | (EncodeReg(rn) << 5));
         }
 
-        public void Br(Operand rn)
+        public readonly void Br(Operand rn)
         {
             WriteUInt32(0xd61f0000u | (EncodeReg(rn) << 5));
         }
 
-        public void Brk()
+        public readonly void Brk()
         {
             WriteUInt32(0xd4200000u);
         }
@@ -300,7 +300,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionRm16(0x1ac05000u | (sz << 10), rd, rn, rm);
         }
 
-        public void Clrex(int crm = 15)
+        public readonly void Clrex(int crm = 15)
         {
             WriteUInt32(0xd503305fu | (EncodeUImm4(crm) << 8));
         }
@@ -330,7 +330,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             Subs(new Operand(ZrRegister, RegisterType.Integer, rn.Type), rn, rm, shiftType, shiftAmount);
         }
 
-        public void Csdb()
+        public readonly void Csdb()
         {
             WriteUInt32(0xd503229fu);
         }
@@ -351,12 +351,12 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionBitwiseAuto(0x1a800400u | ((uint)condition << 12), rd, rn, rm);
         }
 
-        public void Dmb(uint option)
+        public readonly void Dmb(uint option)
         {
             WriteUInt32(0xd50330bfu | (option << 8));
         }
 
-        public void Dsb(uint option)
+        public readonly void Dsb(uint option)
         {
             WriteUInt32(0xd503309fu | (option << 8));
         }
@@ -382,7 +382,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             Tst(rd, rd);
         }
 
-        public void Esb()
+        public readonly void Esb()
         {
             WriteUInt32(0xd503221fu);
         }
@@ -393,7 +393,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionBitwiseAuto(0x13800000u | n | (EncodeUImm6(imms) << 10), rd, rn, rm);
         }
 
-        public void Isb(uint option)
+        public readonly void Isb(uint option)
         {
             WriteUInt32(0xd50330dfu | (option << 8));
         }
@@ -882,7 +882,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             Ret(new Operand(30, RegisterType.Integer, OperandType.I64));
         }
 
-        public void Ret(Operand rn)
+        public readonly void Ret(Operand rn)
         {
             WriteUInt32(0xd65f0000u | (EncodeReg(rn) << 5));
         }
@@ -949,12 +949,12 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionRm16Auto(0x1ac00c00u, rd, rn, rm);
         }
 
-        public void Sev()
+        public readonly void Sev()
         {
             WriteUInt32(0xd503209fu);
         }
 
-        public void Sevl()
+        public readonly void Sevl()
         {
             WriteUInt32(0xd50320bfu);
         }
@@ -1162,7 +1162,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             Sbfm(rd, rn, 0, 31);
         }
 
-        public void Tsb()
+        public readonly void Tsb()
         {
             WriteUInt32(0xd503225fu);
         }
@@ -4292,12 +4292,12 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionRm16(0x0e005800u | (size << 22) | (q << 30), rd, rn, rm);
         }
 
-        public void Wfe()
+        public readonly void Wfe()
         {
             WriteUInt32(0xd503205fu);
         }
 
-        public void Wfi()
+        public readonly void Wfi()
         {
             WriteUInt32(0xd503207fu);
         }
@@ -4312,7 +4312,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstruction(0x0e212800u | (size << 22) | (q << 30), rd, rn);
         }
 
-        public void Yield()
+        public readonly void Yield()
         {
             WriteUInt32(0xd503203fu);
         }
@@ -4498,22 +4498,22 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstruction(instruction, rd, rn, rm, ra);
         }
 
-        public void WriteInstruction(uint instruction, Operand rd)
+        public readonly void WriteInstruction(uint instruction, Operand rd)
         {
             WriteUInt32(instruction | EncodeReg(rd));
         }
 
-        public void WriteInstruction(uint instruction, Operand rd, Operand rn)
+        public readonly void WriteInstruction(uint instruction, Operand rd, Operand rn)
         {
             WriteUInt32(instruction | EncodeReg(rd) | (EncodeReg(rn) << 5));
         }
 
-        public void WriteInstruction(uint instruction, Operand rd, Operand rn, Operand rm)
+        public readonly void WriteInstruction(uint instruction, Operand rd, Operand rn, Operand rm)
         {
             WriteUInt32(instruction | EncodeReg(rd) | (EncodeReg(rn) << 5) | (EncodeReg(rm) << 10));
         }
 
-        public void WriteInstruction(uint instruction, Operand rd, Operand rn, Operand rm, Operand ra)
+        public readonly void WriteInstruction(uint instruction, Operand rd, Operand rn, Operand rm, Operand ra)
         {
             WriteUInt32(instruction | EncodeReg(rd) | (EncodeReg(rn) << 5) | (EncodeReg(ra) << 10) | (EncodeReg(rm) << 16));
         }
@@ -4528,12 +4528,12 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionRm16(instruction, rd, rn, rm);
         }
 
-        public void WriteInstructionRm16(uint instruction, Operand rn, Operand rm)
+        public readonly void WriteInstructionRm16(uint instruction, Operand rn, Operand rm)
         {
             WriteUInt32(instruction | (EncodeReg(rn) << 5) | (EncodeReg(rm) << 16));
         }
 
-        public void WriteInstructionRm16(uint instruction, Operand rd, Operand rn, Operand rm)
+        public readonly void WriteInstructionRm16(uint instruction, Operand rd, Operand rn, Operand rm)
         {
             WriteUInt32(instruction | EncodeReg(rd) | (EncodeReg(rn) << 5) | (EncodeReg(rm) << 16));
         }

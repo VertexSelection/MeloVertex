@@ -1,6 +1,6 @@
 using ARMeilleure.Common;
-using Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64;
 using ARMeilleure.Memory;
+using Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64;
 using System;
 using System.Runtime.InteropServices;
 

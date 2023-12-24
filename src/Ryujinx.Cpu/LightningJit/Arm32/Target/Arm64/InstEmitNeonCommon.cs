@@ -363,7 +363,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             }
         }
 
-        public static void EmitVectorUnary(CodeGenContext context, uint rd, uint rm, uint size, uint q, Action<Operand,  Operand, uint, uint> action)
+        public static void EmitVectorUnary(CodeGenContext context, uint rd, uint rm, uint size, uint q, Action<Operand, Operand, uint, uint> action)
         {
             Debug.Assert(size < 3);
 

@@ -19,7 +19,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
         private InstInfo _nextInstruction;
         private bool _skipNextInstruction;
 
-        private ArmCondition[] _itConditions;
+        private readonly ArmCondition[] _itConditions;
         private int _itCount;
 
         private readonly List<PendingBranch> _pendingBranches;

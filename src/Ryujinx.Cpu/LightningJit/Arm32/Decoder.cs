@@ -1,6 +1,6 @@
+using ARMeilleure.Memory;
 using Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64;
 using Ryujinx.Cpu.LightningJit.CodeGen.Arm64;
-using ARMeilleure.Memory;
 using System.Collections.Generic;
 using System.Diagnostics;
 

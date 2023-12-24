@@ -3,7 +3,7 @@ using System;
 
 namespace Ryujinx.Cpu.LightningJit.Arm32
 {
-    struct ScopedRegister : IDisposable
+    readonly struct ScopedRegister : IDisposable
     {
         private readonly RegisterAllocator _registerAllocator;
         private readonly Operand _operand;

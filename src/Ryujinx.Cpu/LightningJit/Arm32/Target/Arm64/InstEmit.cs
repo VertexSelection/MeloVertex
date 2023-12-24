@@ -515,7 +515,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void ClrbhbA1(CodeGenContext context, uint encoding)
         {
-            InstCondb28w4 inst = new(encoding);
+            _ = new InstCondb28w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -2546,14 +2546,14 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void SetpanA1(CodeGenContext context, uint encoding)
         {
-            InstImm1b9w1 inst = new(encoding);
+            _ = new InstImm1b9w1(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void SetpanT1(CodeGenContext context, uint encoding)
         {
-            InstImm1b19w1 inst = new(encoding);
+            _ = new InstImm1b19w1(encoding);
 
             throw new NotImplementedException();
         }
@@ -4726,14 +4726,14 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VcaddA1(CodeGenContext context, uint encoding)
         {
-            InstRotb24w1Db22w1Sb20w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstRotb24w1Db22w1Sb20w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VcaddT1(CodeGenContext context, uint encoding)
         {
-            InstRotb24w1Db22w1Sb20w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstRotb24w1Db22w1Sb20w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -4922,28 +4922,28 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VcmlaA1(CodeGenContext context, uint encoding)
         {
-            InstRotb23w2Db22w1Sb20w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstRotb23w2Db22w1Sb20w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VcmlaT1(CodeGenContext context, uint encoding)
         {
-            InstRotb23w2Db22w1Sb20w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstRotb23w2Db22w1Sb20w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VcmlaSA1(CodeGenContext context, uint encoding)
         {
-            InstSb23w1Db22w1Rotb20w2Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstSb23w1Db22w1Rotb20w2Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VcmlaST1(CodeGenContext context, uint encoding)
         {
-            InstSb23w1Db22w1Rotb20w2Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstSb23w1Db22w1Rotb20w2Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -5068,14 +5068,14 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VcvtbBfsA1(CodeGenContext context, uint encoding)
         {
-            InstCondb28w4Db22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstCondb28w4Db22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VcvtbBfsT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -5200,28 +5200,28 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VcvttBfsA1(CodeGenContext context, uint encoding)
         {
-            InstCondb28w4Db22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstCondb28w4Db22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VcvttBfsT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VcvtBfsA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VcvtBfsT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -5344,28 +5344,28 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VdotA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VdotT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VdotSA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VdotST1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -5456,56 +5456,56 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VfmalA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmalT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmalSA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmalST1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmaBfA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmaBfT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmaBfsA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmaBfsT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -5540,28 +5540,28 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VfmslA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmslT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmslSA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VfmslST1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -5624,28 +5624,28 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VinsA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VinsT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VjcvtA1(CodeGenContext context, uint encoding)
         {
-            InstCondb28w4Db22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstCondb28w4Db22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VjcvtT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vdb12w4Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vdb12w4Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -6324,14 +6324,14 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VmmlaA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VmmlaT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -7672,28 +7672,28 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VsdotA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VsdotT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VsdotSA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VsdotST1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -7812,14 +7812,14 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VsmmlaA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VsmmlaT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -8274,14 +8274,14 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VsudotSA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VsudotST1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
@@ -8344,84 +8344,84 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void VudotA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VudotT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VudotSA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VudotST1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VummlaA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VummlaT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VusdotA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VusdotT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VusdotSA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VusdotST1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Qb6w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VusmmlaA1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }
 
         public static void VusmmlaT1(CodeGenContext context, uint encoding)
         {
-            InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4 inst = new(encoding);
+            _ = new InstDb22w1Vnb16w4Vdb12w4Nb7w1Mb5w1Vmb0w4(encoding);
 
             throw new NotImplementedException();
         }

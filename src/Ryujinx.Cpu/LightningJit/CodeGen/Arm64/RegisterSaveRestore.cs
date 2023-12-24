@@ -221,7 +221,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
                     {
                         asm.LdrRiUn(Register(reg, type), Register(Assembler.SpRegister), offset);
                     }
-                    else  if (calleeSaveRegionSize < Encodable9BitsOffsetLimit)
+                    else if (calleeSaveRegionSize < Encodable9BitsOffsetLimit)
                     {
                         asm.LdrRiPost(Register(reg, type), Register(Assembler.SpRegister), calleeSaveRegionSize);
                     }

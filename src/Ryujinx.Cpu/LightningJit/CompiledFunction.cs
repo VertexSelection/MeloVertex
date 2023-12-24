@@ -2,7 +2,7 @@ using System;
 
 namespace Ryujinx.Cpu.LightningJit
 {
-    ref struct CompiledFunction
+    readonly ref struct CompiledFunction
     {
         public readonly ReadOnlySpan<byte> Code;
         public readonly int GuestCodeLength;
