@@ -4340,7 +4340,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstruction(inst, rt);
         }
 
-        private void WriteInstructionAuto(
+        private readonly void WriteInstructionAuto(
             uint instI,
             uint instR,
             Operand rd,
@@ -4372,7 +4372,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             }
         }
 
-        private void WriteInstructionAuto(
+        private readonly void WriteInstructionAuto(
             uint instR,
             Operand rd,
             Operand rn,
@@ -4386,7 +4386,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionRm16Auto(instR, rd, rn, rm);
         }
 
-        private void WriteInstructionAuto(
+        private readonly void WriteInstructionAuto(
             uint instruction,
             Operand rd,
             Operand rn,
@@ -4402,7 +4402,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionRm16Auto(instruction, rd, rn, rm);
         }
 
-        private void WriteInstructionBitwiseAuto(
+        private readonly void WriteInstructionBitwiseAuto(
             uint instI,
             uint instR,
             Operand rd,
@@ -4426,7 +4426,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             }
         }
 
-        private void WriteInstructionBitwiseAuto(
+        private readonly void WriteInstructionBitwiseAuto(
             uint instruction,
             Operand rd,
             Operand rn,
@@ -4445,7 +4445,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionRm16(instruction, rd, rn, rm);
         }
 
-        private void WriteInstructionLdrStrAuto(
+        private readonly void WriteInstructionLdrStrAuto(
             uint instruction,
             Operand rd,
             Operand rn,
@@ -4468,7 +4468,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstructionRm16(instruction, rd, rn, rm);
         }
 
-        private void WriteInstructionAuto(uint instruction, Operand rd)
+        private readonly void WriteInstructionAuto(uint instruction, Operand rd)
         {
             if (rd.Type == OperandType.I64)
             {
@@ -4488,7 +4488,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteInstruction(instruction, rd, rn);
         }
 
-        private void WriteInstructionAuto(uint instruction, Operand rd, Operand rn, Operand rm, Operand ra)
+        private readonly void WriteInstructionAuto(uint instruction, Operand rd, Operand rn, Operand rm, Operand ra)
         {
             if (rd.Type == OperandType.I64)
             {
@@ -4518,7 +4518,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             WriteUInt32(instruction | EncodeReg(rd) | (EncodeReg(rn) << 5) | (EncodeReg(ra) << 10) | (EncodeReg(rm) << 16));
         }
 
-        private void WriteInstructionRm16Auto(uint instruction, Operand rd, Operand rn, Operand rm)
+        private readonly void WriteInstructionRm16Auto(uint instruction, Operand rd, Operand rn, Operand rm)
         {
             if (rd.Type == OperandType.I64)
             {

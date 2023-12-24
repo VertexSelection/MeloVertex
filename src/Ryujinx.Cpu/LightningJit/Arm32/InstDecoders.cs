@@ -377,12 +377,6 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
         public readonly uint Cond => (_value >> 28) & 0xF;
     }
 
-    readonly struct Inst
-    {
-        private readonly uint _value;
-        public Inst(uint value) => _value = value;
-    }
-
     readonly struct InstCondb28w4Rdb12w4Rmb0w4
     {
         private readonly uint _value;
