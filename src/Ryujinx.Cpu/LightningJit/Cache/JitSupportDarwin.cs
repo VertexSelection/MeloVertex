@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace ARMeilleure.Native
+namespace Ryujinx.Cpu.LightningJit.Cache
 {
     [SupportedOSPlatform("macos")]
     static partial class JitSupportDarwin

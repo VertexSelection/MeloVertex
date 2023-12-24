@@ -13,7 +13,6 @@ namespace Ryujinx.Cpu.LightningJit.State
         internal IntPtr NativeContextPtr => _nativeContext.BasePtr;
 
         private bool _interrupted;
-
         private readonly ICounter _counter;
 
         public ulong Pc => _nativeContext.GetPc();
@@ -140,9 +139,15 @@ namespace Ryujinx.Cpu.LightningJit.State
             _nativeContext.SetCounter(0);
         }
 
-        public void Dispose()
+        protected virtual void Dispose(bool disposing)
         {
             _nativeContext.Dispose();
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

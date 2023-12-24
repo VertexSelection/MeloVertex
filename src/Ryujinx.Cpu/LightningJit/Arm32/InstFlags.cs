@@ -22,7 +22,6 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
 
         RdnDn = Rdn | Dn,
         RdRd16 = Rd | Rd16,
-        RtRt16 = Rt | Rd16,
         RtRt2 = Rt | Rt2,
         RdLoRdHi = RdLo | RdHi,
         RdLoHi = Rd | RdHi,
