@@ -1,7 +1,9 @@
 using ARMeilleure.Common;
 using ARMeilleure.Memory;
 using ARMeilleure.Signal;
+using Ryujinx.Cpu.Jit;
 using Ryujinx.Cpu.LightningJit.Cache;
+using Ryujinx.Cpu.LightningJit.CodeGen.Arm64;
 using Ryujinx.Cpu.LightningJit.State;
 using System;
 using System.Collections.Concurrent;
@@ -13,6 +15,9 @@ namespace Ryujinx.Cpu.LightningJit
 {
     class Translator : IDisposable
     {
+        // Should be enabled on platforms that enforce W^X.
+        private static bool IsNoWxPlatform => false;
+
         private static readonly AddressTable<ulong>.Level[] _levels64Bit =
             new AddressTable<ulong>.Level[]
             {
@@ -33,6 +38,7 @@ namespace Ryujinx.Cpu.LightningJit
             };
 
         private readonly ConcurrentQueue<KeyValuePair<ulong, TranslatedFunction>> _oldFuncs;
+        private readonly NoWxCache _noWxCache;
         private bool _disposed;
 
         internal TranslatorCache<TranslatedFunction> Functions { get; }
@@ -46,18 +52,38 @@ namespace Ryujinx.Cpu.LightningJit
 
             _oldFuncs = new ConcurrentQueue<KeyValuePair<ulong, TranslatedFunction>>();
 
-            JitCache.Initialize(allocator);
+            if (IsNoWxPlatform)
+            {
+                _noWxCache = new(new JitMemoryAllocator(), CreateStackWalker(), this);
+            }
+            else
+            {
+                JitCache.Initialize(allocator);
+            }
+
             NativeSignalHandler.Initialize(allocator);
 
             Functions = new TranslatorCache<TranslatedFunction>();
             FunctionTable = new AddressTable<ulong>(for64Bits ? _levels64Bit : _levels32Bit);
-            Stubs = new TranslatorStubs(FunctionTable);
+            Stubs = new TranslatorStubs(FunctionTable, _noWxCache);
 
             FunctionTable.Fill = (ulong)Stubs.SlowDispatchStub;
 
             if (memory.Type == MemoryManagerType.HostMapped || memory.Type == MemoryManagerType.HostMappedUnsafe)
             {
                 NativeSignalHandler.InitializeSignalHandler(allocator.GetPageSize());
+            }
+        }
+
+        private static IStackWalker CreateStackWalker()
+        {
+            if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            {
+                return new StackWalker();
+            }
+            else
+            {
+                throw new PlatformNotSupportedException();
             }
         }
 
@@ -70,9 +96,22 @@ namespace Ryujinx.Cpu.LightningJit
             Stubs.DispatchLoop(context.NativeContextPtr, address);
 
             NativeInterface.UnregisterThread();
+            _noWxCache?.ClearEntireThreadLocalCache();
         }
 
-        internal TranslatedFunction GetOrTranslate(ulong address, ExecutionMode mode)
+        internal IntPtr GetOrTranslatePointer(IntPtr framePointer, ulong address, ExecutionMode mode)
+        {
+            if (_noWxCache != null)
+            {
+                CompiledFunction func = Compile(address, mode);
+
+                return _noWxCache.Map(framePointer, func.Code, address, (ulong)func.GuestCodeLength);
+            }
+
+            return GetOrTranslate(address, mode).FuncPointer;
+        }
+
+        private TranslatedFunction GetOrTranslate(ulong address, ExecutionMode mode)
         {
             if (!Functions.TryGetValue(address, out TranslatedFunction func))
             {
@@ -85,7 +124,6 @@ namespace Ryujinx.Cpu.LightningJit
                     JitCache.Unmap(func.FuncPointer);
                     func = oldFunc;
                 }
-
 
                 RegisterFunction(address, func);
             }
@@ -103,11 +141,15 @@ namespace Ryujinx.Cpu.LightningJit
 
         internal TranslatedFunction Translate(ulong address, ExecutionMode mode)
         {
-            CompiledFunction func = AarchCompiler.Compile(CpuPresets.CortexA57, Memory, address, FunctionTable, Stubs.DispatchStub, mode, RuntimeInformation.ProcessArchitecture);
-
+            CompiledFunction func = Compile(address, mode);
             IntPtr funcPointer = JitCache.Map(func.Code);
 
             return new TranslatedFunction(funcPointer, (ulong)func.GuestCodeLength);
+        }
+
+        internal CompiledFunction Compile(ulong address, ExecutionMode mode)
+        {
+            return AarchCompiler.Compile(CpuPresets.CortexA57, Memory, address, FunctionTable, Stubs.DispatchStub, mode, RuntimeInformation.ProcessArchitecture);
         }
 
         public void InvalidateJitCacheRegion(ulong address, ulong size)
@@ -160,7 +202,14 @@ namespace Ryujinx.Cpu.LightningJit
             {
                 if (disposing)
                 {
-                    ClearJitCache();
+                    if (_noWxCache != null)
+                    {
+                        _noWxCache.Dispose();
+                    }
+                    else
+                    {
+                        ClearJitCache();
+                    }
 
                     Stubs.Dispose();
                     FunctionTable.Dispose();

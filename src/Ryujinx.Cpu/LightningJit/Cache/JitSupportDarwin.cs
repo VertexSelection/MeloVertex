@@ -9,5 +9,8 @@ namespace Ryujinx.Cpu.LightningJit.Cache
     {
         [LibraryImport("libarmeilleure-jitsupport", EntryPoint = "armeilleure_jit_memcpy")]
         public static partial void Copy(IntPtr dst, IntPtr src, ulong n);
+
+        [LibraryImport("libc", EntryPoint = "sys_icache_invalidate", SetLastError = true)]
+        public static partial void SysIcacheInvalidate(IntPtr start, IntPtr len);
     }
 }

@@ -61,11 +61,9 @@ namespace Ryujinx.Cpu.LightningJit
             return GetContext().CntpctEl0;
         }
 
-        public static ulong GetFunctionAddress(ulong address)
+        public static ulong GetFunctionAddress(IntPtr framePointer, ulong address)
         {
-            TranslatedFunction function = Context.Translator.GetOrTranslate(address, GetContext().ExecutionMode);
-
-            return (ulong)function.FuncPointer.ToInt64();
+            return (ulong)Context.Translator.GetOrTranslatePointer(framePointer, address, GetContext().ExecutionMode);
         }
 
         public static void InvalidateCacheLine(ulong address)

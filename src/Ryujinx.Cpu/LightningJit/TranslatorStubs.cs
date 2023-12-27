@@ -17,13 +17,14 @@ namespace Ryujinx.Cpu.LightningJit
     /// </summary>
     class TranslatorStubs : IDisposable
     {
-        private delegate ulong GetFunctionAddressDelegate(ulong address);
+        private delegate ulong GetFunctionAddressDelegate(IntPtr framePointer, ulong address);
 
         private readonly Lazy<IntPtr> _slowDispatchStub;
 
         private bool _disposed;
 
         private readonly AddressTable<ulong> _functionTable;
+        private readonly NoWxCache _noWxCache;
         private readonly GetFunctionAddressDelegate _getFunctionAddressRef;
         private readonly IntPtr _getFunctionAddress;
         private readonly Lazy<IntPtr> _dispatchStub;
@@ -76,12 +77,14 @@ namespace Ryujinx.Cpu.LightningJit
         /// <see cref="Translator"/> instance.
         /// </summary>
         /// <param name="functionTable">Function table used to store pointers to the functions that the guest code will call</param>
+        /// <param name="noWxCache">Cache used on platforms that enforce W^X, otherwise should be null</param>
         /// <exception cref="ArgumentNullException"><paramref name="translator"/> is null</exception>
-        public TranslatorStubs(AddressTable<ulong> functionTable)
+        public TranslatorStubs(AddressTable<ulong> functionTable, NoWxCache noWxCache)
         {
             ArgumentNullException.ThrowIfNull(functionTable);
 
             _functionTable = functionTable;
+            _noWxCache = noWxCache;
             _getFunctionAddressRef = NativeInterface.GetFunctionAddress;
             _getFunctionAddress = Marshal.GetFunctionPointerForDelegate(_getFunctionAddressRef);
             _slowDispatchStub = new(GenerateSlowDispatchStub, isThreadSafe: true);
@@ -106,14 +109,17 @@ namespace Ryujinx.Cpu.LightningJit
         {
             if (!_disposed)
             {
-                if (_dispatchStub.IsValueCreated)
+                if (_noWxCache == null)
                 {
-                    JitCache.Unmap(_dispatchStub.Value);
-                }
+                    if (_dispatchStub.IsValueCreated)
+                    {
+                        JitCache.Unmap(_dispatchStub.Value);
+                    }
 
-                if (_dispatchLoop.IsValueCreated)
-                {
-                    JitCache.Unmap(Marshal.GetFunctionPointerForDelegate(_dispatchLoop.Value));
+                    if (_dispatchLoop.IsValueCreated)
+                    {
+                        JitCache.Unmap(Marshal.GetFunctionPointerForDelegate(_dispatchLoop.Value));
+                    }
                 }
 
                 _disposed = true;
@@ -197,7 +203,8 @@ namespace Ryujinx.Cpu.LightningJit
                 }
 
                 // Fallback.
-                asm.Mov(Register(0), guestAddress);
+                asm.Mov(Register(0), Register(29));
+                asm.Mov(Register(1), guestAddress);
                 asm.Mov(Register(16), (ulong)_getFunctionAddress);
                 asm.Blr(Register(16));
                 asm.Mov(Register(16), Register(0));
@@ -212,7 +219,7 @@ namespace Ryujinx.Cpu.LightningJit
                 throw new PlatformNotSupportedException();
             }
 
-            return JitCache.Map(writer.AsByteSpan());
+            return Map(writer.AsByteSpan());
         }
 
         /// <summary>
@@ -234,7 +241,8 @@ namespace Ryujinx.Cpu.LightningJit
                 asm.Mov(context, Register(0));
 
                 // Load the target guest address from the native context.
-                asm.LdrRiUn(Register(0), context, NativeContext.GetDispatchAddressOffset());
+                asm.Mov(Register(0), Register(29));
+                asm.LdrRiUn(Register(1), context, NativeContext.GetDispatchAddressOffset());
                 asm.Mov(Register(16), (ulong)_getFunctionAddress);
                 asm.Blr(Register(16));
                 asm.Mov(Register(16), Register(0));
@@ -249,7 +257,7 @@ namespace Ryujinx.Cpu.LightningJit
                 throw new PlatformNotSupportedException();
             }
 
-            return JitCache.Map(writer.AsByteSpan());
+            return Map(writer.AsByteSpan());
         }
 
         /// <summary>
@@ -312,7 +320,7 @@ namespace Ryujinx.Cpu.LightningJit
                 Operand context = Register(19);
                 asm.Mov(context, Register(0));
 
-                EmitSyncFpContext(ref asm, context, Register(16), Register(17), true);
+                EmitSyncFpContext(ref asm, context, Register(16, OperandType.I32), Register(17, OperandType.I32), true);
 
                 // Load the target guest address from the native context.
                 Operand guestAddress = Register(16);
@@ -331,7 +339,7 @@ namespace Ryujinx.Cpu.LightningJit
                 asm.Cbz(Register(17), 8);
                 asm.B((loopStartIndex - writer.InstructionPointer) * 4);
 
-                EmitSyncFpContext(ref asm, context, Register(16), Register(17), false);
+                EmitSyncFpContext(ref asm, context, Register(16, OperandType.I32), Register(17, OperandType.I32), false);
 
                 rsr.WriteEpilogue(ref asm);
 
@@ -342,9 +350,21 @@ namespace Ryujinx.Cpu.LightningJit
                 throw new PlatformNotSupportedException();
             }
 
-            IntPtr pointer = JitCache.Map(writer.AsByteSpan());
+            IntPtr pointer = Map(writer.AsByteSpan());
 
             return Marshal.GetDelegateForFunctionPointer<DispatcherFunction>(pointer);
+        }
+
+        private IntPtr Map(ReadOnlySpan<byte> code)
+        {
+            if (_noWxCache != null)
+            {
+                return _noWxCache.MapPageAligned(code);
+            }
+            else
+            {
+                return JitCache.Map(code);
+            }
         }
 
         private static Operand Register(int register, OperandType type = OperandType.I64)
