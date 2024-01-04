@@ -157,7 +157,7 @@ namespace ARMeilleure.Instructions
 
             context.Copy(temp, value);
 
-            if (!context.Memory.Type.IsHostMapped())
+            if (!context.Memory.Type.IsHostMappedOrTracked())
             {
                 context.Branch(lblEnd);
 
@@ -198,7 +198,7 @@ namespace ARMeilleure.Instructions
 
             SetInt(context, rt, value);
 
-            if (!context.Memory.Type.IsHostMapped())
+            if (!context.Memory.Type.IsHostMappedOrTracked())
             {
                 context.Branch(lblEnd);
 
@@ -265,7 +265,7 @@ namespace ARMeilleure.Instructions
 
             context.Copy(GetVec(rt), value);
 
-            if (!context.Memory.Type.IsHostMapped())
+            if (!context.Memory.Type.IsHostMappedOrTracked())
             {
                 context.Branch(lblEnd);
 
@@ -312,7 +312,7 @@ namespace ARMeilleure.Instructions
                     break;
             }
 
-            if (!context.Memory.Type.IsHostMapped())
+            if (!context.Memory.Type.IsHostMappedOrTracked())
             {
                 context.Branch(lblEnd);
 
@@ -385,7 +385,7 @@ namespace ARMeilleure.Instructions
                     break;
             }
 
-            if (!context.Memory.Type.IsHostMapped())
+            if (!context.Memory.Type.IsHostMappedOrTracked())
             {
                 context.Branch(lblEnd);
 
@@ -402,6 +402,21 @@ namespace ARMeilleure.Instructions
             if (context.Memory.Type.IsHostMapped())
             {
                 return EmitHostMappedPointer(context, address);
+            }
+            else if (context.Memory.Type == MemoryManagerType.HostTracked)
+            {
+                Operand ptBase = !context.HasPtc
+                    ? Const(context.Memory.PageTablePointer.ToInt64())
+                    : Const(context.Memory.PageTablePointer.ToInt64(), Ptc.PageTableSymbol);
+
+                Operand ptOffset = context.ShiftRightUI(address, Const(PageBits));
+
+                if (ptOffset.Type == OperandType.I32)
+                {
+                    ptOffset = context.ZeroExtend32(OperandType.I64, ptOffset);
+                }
+
+                return context.Add(address, context.Load(OperandType.I64, context.Add(ptBase, context.ShiftLeft(ptOffset, Const(3)))));
             }
 
             int ptLevelBits = context.Memory.AddressSpaceBits - PageBits;

@@ -1,8 +1,9 @@
-using Ryujinx.Common.Configuration;
+﻿using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Logging;
 using Ryujinx.Cpu;
 using Ryujinx.Cpu.AppleHv;
 using Ryujinx.Cpu.Jit;
+using Ryujinx.Cpu.LightningJit;
 using Ryujinx.Graphics.Gpu;
 using Ryujinx.HLE.HOS.Kernel;
 using Ryujinx.HLE.HOS.Kernel.Process;
@@ -46,7 +47,9 @@ namespace Ryujinx.HLE.HOS
         {
             IArmProcessContext processContext;
 
-            if (OperatingSystem.IsMacOS() && RuntimeInformation.ProcessArchitecture == Architecture.Arm64 && for64Bit && context.Device.Configuration.UseHypervisor)
+            bool isArm64Host = RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
+
+            if (OperatingSystem.IsMacOS() && isArm64Host && for64Bit && context.Device.Configuration.UseHypervisor)
             {
                 var cpuEngine = new HvEngine(_tickSource);
                 var memoryManager = new HvMemoryManager(context.Memory, addressSpaceSize, invalidAccessHandler);
@@ -63,11 +66,13 @@ namespace Ryujinx.HLE.HOS
                     mode = MemoryManagerMode.SoftwarePageTable;
                 }
 
-                var cpuEngine = new JitEngine(_tickSource);
+                ICpuEngine cpuEngine = isArm64Host && (mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe)
+                    ? new LightningJitEngine(_tickSource)
+                    : new JitEngine(_tickSource);
 
                 AddressSpace addressSpace = null;
 
-                if (mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe)
+                if ((mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe) && (!for64Bit || MemoryBlock.GetPageSize() <= 0x1000))
                 {
                     if (!AddressSpace.TryCreate(context.Memory, addressSpaceSize, MemoryBlock.GetPageSize() == MemoryManagerHostMapped.PageSize, out addressSpace))
                     {
@@ -86,13 +91,21 @@ namespace Ryujinx.HLE.HOS
 
                     case MemoryManagerMode.HostMapped:
                     case MemoryManagerMode.HostMappedUnsafe:
-                        if (addressSpaceSize != addressSpace.AddressSpaceSize)
+                        if (addressSpace == null)
                         {
-                            Logger.Warning?.Print(LogClass.Emulation, $"Allocated address space (0x{addressSpace.AddressSpaceSize:X}) is smaller than guest application requirements (0x{addressSpaceSize:X})");
+                            var memoryManagerHostTracked = new MemoryManagerHostTracked(context.Memory, addressSpaceSize, invalidAccessHandler);
+                            processContext = new ArmProcessContext<MemoryManagerHostTracked>(pid, cpuEngine, _gpu, memoryManagerHostTracked, addressSpaceSize, for64Bit);
                         }
+                        else
+                        {
+                            if (addressSpaceSize != addressSpace.AddressSpaceSize)
+                            {
+                                Logger.Warning?.Print(LogClass.Emulation, $"Allocated address space (0x{addressSpace.AddressSpaceSize:X}) is smaller than guest application requirements (0x{addressSpaceSize:X})");
+                            }
 
-                        var memoryManagerHostMapped = new MemoryManagerHostMapped(addressSpace, mode == MemoryManagerMode.HostMappedUnsafe, invalidAccessHandler);
-                        processContext = new ArmProcessContext<MemoryManagerHostMapped>(pid, cpuEngine, _gpu, memoryManagerHostMapped, addressSpace.AddressSpaceSize, for64Bit);
+                            var memoryManagerHostMapped = new MemoryManagerHostMapped(addressSpace, mode == MemoryManagerMode.HostMappedUnsafe, invalidAccessHandler);
+                            processContext = new ArmProcessContext<MemoryManagerHostMapped>(pid, cpuEngine, _gpu, memoryManagerHostMapped, addressSpace.AddressSpaceSize, for64Bit);
+                        }
                         break;
 
                     default:
