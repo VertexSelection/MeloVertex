@@ -258,17 +258,17 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 if (wBack)
                 {
                     InstEmitMemory.WriteAddShiftOffset(context.Arm64Assembler, baseAddress, baseAddress, offset, false, ArmShiftType.Lsl, 0);
-                    InstEmitMemory.WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
+                    InstEmitMemory.WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
                 }
                 else
                 {
                     InstEmitMemory.WriteAddShiftOffset(context.Arm64Assembler, tempRegister.Operand, baseAddress, offset, false, ArmShiftType.Lsl, 0);
-                    InstEmitMemory.WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
+                    InstEmitMemory.WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
                 }
             }
             else
             {
-                InstEmitMemory.WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
+                InstEmitMemory.WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
             }
 
             EmitMemoryMultipleInstructionCore(context, tempRegister.Operand, rd, registerCount, singleRegs, isStore);
@@ -402,7 +402,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
                 context.Arm64Assembler.Mov(address.Operand, (context.Pc & ~3u) + (uint)offs);
 
-                InstEmitMemory.WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, address.Operand, address.Operand);
+                InstEmitMemory.WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, address.Operand, address.Operand);
 
                 offs = 0;
             }
@@ -410,9 +410,9 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             {
                 Operand rnOperand = context.RegisterAllocator.RemapGprRegister((int)rn);
 
-                if (InstEmitMemory.CanFoldOffset(add ? offs : -offs, (int)size, true, out _))
+                if (InstEmitMemory.CanFoldOffset(context.MemoryManagerType, add ? offs : -offs, (int)size, true, out _))
                 {
-                    InstEmitMemory.WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, address.Operand, rnOperand);
+                    InstEmitMemory.WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, address.Operand, rnOperand);
 
                     if (!add)
                     {
@@ -422,7 +422,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 else
                 {
                     InstEmitMemory.WriteAddShiftOffset(context.Arm64Assembler, address.Operand, rnOperand, InstEmitCommon.Const(offs), add, ArmShiftType.Lsl, 0);
-                    InstEmitMemory.WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, address.Operand, address.Operand);
+                    InstEmitMemory.WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, address.Operand, address.Operand);
 
                     offs = 0;
                 }
@@ -473,7 +473,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister address = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            InstEmitMemory.WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, address.Operand, rnOperand);
+            InstEmitMemory.WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, address.Operand, rnOperand);
 
             callback(address.Operand);
 

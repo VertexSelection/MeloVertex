@@ -1,3 +1,4 @@
+using ARMeilleure.Memory;
 using Ryujinx.Cpu.LightningJit.CodeGen;
 using Ryujinx.Cpu.LightningJit.CodeGen.Arm64;
 using System;
@@ -66,7 +67,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
 
             EmitMemoryMultipleInstructionCore(
                 context,
@@ -335,7 +336,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
 
             EmitMemoryMultipleInstructionCore(
                 context,
@@ -477,7 +478,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 offset = InstEmitCommon.Const(BitOperations.PopCount(registerList) * 4 - 4);
 
                 WriteAddShiftOffset(context.Arm64Assembler, tempRegister.Operand, baseAddress, offset, false, ArmShiftType.Lsl, 0);
-                WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
+                WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
 
                 EmitMemoryMultipleInstructionCore(
                     context,
@@ -516,12 +517,12 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             if (w && !writesToRn)
             {
                 WriteAddShiftOffset(context.Arm64Assembler, baseAddress, baseAddress, offset, false, ArmShiftType.Lsl, 0);
-                WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
+                WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, baseAddress);
             }
             else
             {
                 WriteAddShiftOffset(context.Arm64Assembler, tempRegister.Operand, baseAddress, offset, false, ArmShiftType.Lsl, 0);
-                WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
+                WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
             }
 
             EmitMemoryMultipleInstructionCore(
@@ -554,7 +555,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             Operand offset = InstEmitCommon.Const(4);
 
             WriteAddShiftOffset(context.Arm64Assembler, tempRegister.Operand, baseAddress, offset, true, ArmShiftType.Lsl, 0);
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
 
             EmitMemoryMultipleInstructionCore(
                 context,
@@ -663,7 +664,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
 
             action(rtOperand, tempRegister.Operand);
         }
@@ -676,7 +677,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
 
             action(rtOperand, rt2Operand, tempRegister.Operand);
         }
@@ -746,17 +747,17 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
                 if (offset.Kind == OperandKind.Constant && offset.Value == 0)
                 {
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
                 }
-                else if (offset.Kind == OperandKind.Constant && CanFoldDWordOffset(signedOffs))
+                else if (offset.Kind == OperandKind.Constant && CanFoldDWordOffset(context.MemoryManagerType, signedOffs))
                 {
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
                     offs = signedOffs;
                 }
                 else
                 {
                     WriteAddShiftOffset(asm, tempRegister.Operand, baseAddress, offset, add, ArmShiftType.Lsl, 0);
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, tempRegister.Operand);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, tempRegister.Operand);
                 }
 
                 action(rt, rt2, tempRegister.Operand, offs);
@@ -767,7 +768,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
                 using ScopedRegister tempRegister = regAlloc.AllocateTempGprRegisterScoped();
 
-                WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
 
                 action(rt, rt2, tempRegister.Operand, 0);
 
@@ -784,7 +785,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                     // If Rt and Rn are the same register, ensure we perform the write back after the read/write.
 
                     WriteAddShiftOffset(asm, tempRegister.Operand, baseAddress, offset, add, ArmShiftType.Lsl, 0);
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, tempRegister.Operand);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, tempRegister.Operand);
 
                     action(rt, rt2, tempRegister.Operand, 0);
 
@@ -793,7 +794,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 else
                 {
                     WriteAddShiftOffset(asm, baseAddress, baseAddress, offset, add, ArmShiftType.Lsl, 0);
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
 
                     action(rt, rt2, tempRegister.Operand, 0);
                 }
@@ -808,7 +809,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
 
             action(rdOperand, rtOperand, tempRegister.Operand);
         }
@@ -822,7 +823,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
 
             action(rdOperand, rtOperand, rt2Operand, tempRegister.Operand);
         }
@@ -856,17 +857,17 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
                 if (offset.Kind == OperandKind.Constant && offset.Value == 0)
                 {
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
                 }
-                else if (offset.Kind == OperandKind.Constant && shift == 0 && CanFoldOffset(signedOffs, scale, writeInstUnscaled != null, out unscaled))
+                else if (offset.Kind == OperandKind.Constant && shift == 0 && CanFoldOffset(context.MemoryManagerType, signedOffs, scale, writeInstUnscaled != null, out unscaled))
                 {
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
                     offs = signedOffs;
                 }
                 else
                 {
                     WriteAddShiftOffset(asm, tempRegister.Operand, baseAddress, offset, add, shiftType, shift);
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, tempRegister.Operand);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, tempRegister.Operand);
                 }
 
                 if (unscaled)
@@ -891,7 +892,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                     {
                         using ScopedRegister tempRegister = regAlloc.AllocateTempGprRegisterScoped();
 
-                        WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                        WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
                         WriteAddShiftOffset(asm, baseAddress, baseAddress, offset, add, shiftType, shift);
 
                         writeInst(rt, tempRegister.Operand, 0);
@@ -901,7 +902,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                         using ScopedRegister tempRegister = regAlloc.AllocateTempGprRegisterScoped();
                         using ScopedRegister tempRegister2 = regAlloc.AllocateTempGprRegisterScoped();
 
-                        WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                        WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
                         WriteAddShiftOffset(asm, tempRegister2.Operand, baseAddress, offset, add, shiftType, shift);
 
                         writeInst(rt, tempRegister.Operand, 0);
@@ -913,7 +914,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 {
                     using ScopedRegister tempRegister = regAlloc.AllocateTempGprRegisterScoped();
 
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
 
                     writeInst(rt, tempRegister.Operand, 0);
 
@@ -931,7 +932,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                     // If Rt and Rn are the same register, ensure we perform the write back after the read/write.
 
                     WriteAddShiftOffset(asm, tempRegister.Operand, baseAddress, offset, add, shiftType, shift);
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, tempRegister.Operand);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, tempRegister.Operand);
 
                     writeInst(rt, tempRegister.Operand, 0);
 
@@ -940,7 +941,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 else
                 {
                     WriteAddShiftOffset(asm, baseAddress, baseAddress, offset, add, shiftType, shift);
-                    WriteAddressTranslation(regAlloc, asm, tempRegister.Operand, baseAddress);
+                    WriteAddressTranslation(context.MemoryManagerType, regAlloc, asm, tempRegister.Operand, baseAddress);
 
                     writeInst(rt, tempRegister.Operand, 0);
                 }
@@ -974,7 +975,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, targetAddress);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, targetAddress);
 
             action(rtOperand, tempRegister.Operand, 0);
         }
@@ -1003,7 +1004,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, targetAddress);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, targetAddress);
 
             action(rtOperand, rt2Operand, tempRegister.Operand, 0);
         }
@@ -1020,17 +1021,17 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             if (imm == 0)
             {
-                WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
+                WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
             }
-            else if (CanFoldOffset(signedOffs, 3, true, out unscaled))
+            else if (CanFoldOffset(context.MemoryManagerType, signedOffs, 3, true, out unscaled))
             {
-                WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
+                WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, rnOperand);
                 offs = signedOffs;
             }
             else
             {
                 WriteAddShiftOffset(context.Arm64Assembler, tempRegister.Operand, rnOperand, InstEmitCommon.Const((int)imm), u, ArmShiftType.Lsl, 0);
-                WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
+                WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
             }
 
             if (unscaled)
@@ -1051,7 +1052,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
             WriteAddShiftOffset(context.Arm64Assembler, tempRegister.Operand, rnOperand, rmOperand, u, (ArmShiftType)sType, (int)shift);
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, tempRegister.Operand);
 
             context.Arm64Assembler.PrfmI(tempRegister.Operand, 0, (uint)type, 0, 0);
         }
@@ -1071,14 +1072,19 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             using ScopedRegister tempRegister = context.RegisterAllocator.AllocateTempGprRegisterScoped();
 
-            WriteAddressTranslation(context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, targetAddress);
+            WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, context.Arm64Assembler, tempRegister.Operand, targetAddress);
 
             context.Arm64Assembler.PrfmI(tempRegister.Operand, 0, (uint)type, 0, 0);
         }
 
-        public static bool CanFoldOffset(int offset, int scale, bool hasUnscaled, out bool unscaled)
+        public static bool CanFoldOffset(MemoryManagerType mmType, int offset, int scale, bool hasUnscaled, out bool unscaled)
         {
-            // TODO: Check if the memory manager mode also works with folded offsets.
+            if (mmType != MemoryManagerType.HostMappedUnsafe)
+            {
+                unscaled = false;
+
+                return false;
+            }
 
             int mask = (1 << scale) - 1;
 
@@ -1098,21 +1104,24 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             return unscaled;
         }
 
-        private static bool CanFoldDWordOffset(int offset)
+        private static bool CanFoldDWordOffset(MemoryManagerType mmType, int offset)
         {
-            // TODO: Check if the memory manager mode also works with folded offsets.
+            if (mmType != MemoryManagerType.HostMappedUnsafe)
+            {
+                return false;
+            }
 
             return offset >= 0 && offset < 0x40 && (offset & 3) == 0;
         }
 
-        private static void WriteAddressTranslation(RegisterAllocator regAlloc, in Assembler asm, Operand destination, uint guestAddress)
+        private static void WriteAddressTranslation(MemoryManagerType mmType, RegisterAllocator regAlloc, in Assembler asm, Operand destination, uint guestAddress)
         {
             asm.Mov(destination, guestAddress);
 
-            WriteAddressTranslation(regAlloc, asm, destination, destination);
+            WriteAddressTranslation(mmType, regAlloc, asm, destination, destination);
         }
 
-        public static void WriteAddressTranslation(RegisterAllocator regAlloc, in Assembler asm, Operand destination, Operand guestAddress)
+        public static void WriteAddressTranslation(MemoryManagerType mmType, RegisterAllocator regAlloc, in Assembler asm, Operand destination, Operand guestAddress)
         {
             Operand destination64 = new(destination.Kind, OperandType.I64, destination.Value);
             Operand basePointer = new(regAlloc.FixedPageTableRegister, RegisterType.Integer, OperandType.I64);

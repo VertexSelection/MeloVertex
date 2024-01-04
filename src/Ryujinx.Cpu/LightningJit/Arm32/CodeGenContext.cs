@@ -1,3 +1,4 @@
+using ARMeilleure.Memory;
 using Ryujinx.Cpu.LightningJit.CodeGen.Arm64;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,8 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
         public CodeWriter CodeWriter { get; }
         public Assembler Arm64Assembler { get; }
         public RegisterAllocator RegisterAllocator { get; }
+
+        public MemoryManagerType MemoryManagerType { get; }
 
         private uint _instructionAddress;
 
@@ -26,11 +29,12 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
 
         private bool _nzcvModified;
 
-        public CodeGenContext(CodeWriter codeWriter, Assembler arm64Assembler, RegisterAllocator registerAllocator, bool isThumb)
+        public CodeGenContext(CodeWriter codeWriter, Assembler arm64Assembler, RegisterAllocator registerAllocator, MemoryManagerType mmType, bool isThumb)
         {
             CodeWriter = codeWriter;
             Arm64Assembler = arm64Assembler;
             RegisterAllocator = registerAllocator;
+            MemoryManagerType = mmType;
             _itConditions = new ArmCondition[4];
             _pendingBranches = new();
             IsThumb = isThumb;

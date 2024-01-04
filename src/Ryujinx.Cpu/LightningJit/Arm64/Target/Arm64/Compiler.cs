@@ -350,11 +350,11 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
 
                     if (instInfo.AddressForm != AddressForm.None)
                     {
-                        InstEmitMemory.RewriteInstruction(writer, regAlloc, instInfo.Name, instInfo.Flags, instInfo.AddressForm, pc, encoding);
+                        InstEmitMemory.RewriteInstruction(memoryManager.Type, writer, regAlloc, instInfo.Name, instInfo.Flags, instInfo.AddressForm, pc, encoding);
                     }
                     else if (instInfo.Name == InstName.Sys)
                     {
-                        InstEmitMemory.RewriteSysInstruction(writer, regAlloc, encoding);
+                        InstEmitMemory.RewriteSysInstruction(memoryManager.Type, writer, regAlloc, encoding);
                     }
                     else if (instInfo.Name.IsSystem())
                     {

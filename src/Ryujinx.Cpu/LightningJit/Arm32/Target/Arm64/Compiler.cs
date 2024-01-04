@@ -21,6 +21,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
         {
             public readonly CodeWriter Writer;
             public readonly RegisterAllocator RegisterAllocator;
+            public readonly MemoryManagerType MemoryManagerType;
             public readonly TailMerger TailMerger;
             public readonly AddressTable<ulong> FuncTable;
             public readonly IntPtr DispatchStubPointer;
@@ -31,6 +32,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             public Context(
                 CodeWriter writer,
                 RegisterAllocator registerAllocator,
+                MemoryManagerType mmType,
                 TailMerger tailMerger,
                 AddressTable<ulong> funcTable,
                 RegisterSaveRestore registerSaveRestore,
@@ -39,6 +41,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             {
                 Writer = writer;
                 RegisterAllocator = registerAllocator;
+                MemoryManagerType = mmType;
                 TailMerger = tailMerger;
                 FuncTable = funcTable;
                 _registerSaveRestore = registerSaveRestore;
@@ -232,7 +235,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             CodeWriter writer = new();
             RegisterAllocator regAlloc = new();
             Assembler asm = new(writer);
-            CodeGenContext cgContext = new(writer, asm, regAlloc, isThumb);
+            CodeGenContext cgContext = new(writer, asm, regAlloc, memoryManager.Type, isThumb);
             ArmCondition lastCondition = ArmCondition.Al;
             int lastConditionIp = 0;
 
@@ -311,7 +314,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
             TailMerger tailMerger = new();
 
-            Context context = new(writer, regAlloc, tailMerger, funcTable, rsr, dispatchStubPtr, memoryManager.PageTablePointer);
+            Context context = new(writer, regAlloc, memoryManager.Type, tailMerger, funcTable, rsr, dispatchStubPtr, memoryManager.PageTablePointer);
 
             InstInfo lastInstruction = multiBlock.Blocks[^1].Instructions[^1];
             bool lastInstIsConditional = GetCondition(lastInstruction, isThumb) != ArmCondition.Al;
@@ -635,7 +638,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 ArmShiftType.Lsl,
                 halfword ? 1 : 0);
 
-            InstEmitMemory.WriteAddressTranslation(context.RegisterAllocator, asm, target.Operand, target.Operand);
+            InstEmitMemory.WriteAddressTranslation(context.MemoryManagerType, context.RegisterAllocator, asm, target.Operand, target.Operand);
 
             if (halfword)
             {
