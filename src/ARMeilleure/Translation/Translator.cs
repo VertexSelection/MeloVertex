@@ -80,7 +80,7 @@ namespace ARMeilleure.Translation
 
             FunctionTable.Fill = (ulong)Stubs.SlowDispatchStub;
 
-            if (memory.Type.IsHostMapped())
+            if (memory.Type.IsHostMappedOrTracked())
             {
                 NativeSignalHandler.InitializeSignalHandler(allocator.GetPageSize());
             }

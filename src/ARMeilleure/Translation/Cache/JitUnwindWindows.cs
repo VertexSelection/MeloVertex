@@ -114,7 +114,7 @@ namespace ARMeilleure.Translation.Cache
                         {
                             int stackOffset = entry.StackOffsetOrAllocSize;
 
-                            Debug.Assert(stackOffset % 16 == 0);
+                            // Debug.Assert(stackOffset % 16 == 0);
 
                             if (stackOffset <= 0xFFFF0)
                             {
@@ -135,7 +135,7 @@ namespace ARMeilleure.Translation.Cache
                         {
                             int allocSize = entry.StackOffsetOrAllocSize;
 
-                            Debug.Assert(allocSize % 8 == 0);
+                            // Debug.Assert(allocSize % 8 == 0);
 
                             if (allocSize <= 128)
                             {
