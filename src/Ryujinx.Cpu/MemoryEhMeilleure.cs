@@ -1,4 +1,4 @@
-using ARMeilleure.Signal;
+﻿using ARMeilleure.Signal;
 using Ryujinx.Memory;
 using Ryujinx.Memory.Tracking;
 using System;
@@ -8,19 +8,21 @@ namespace Ryujinx.Cpu
 {
     public class MemoryEhMeilleure : IDisposable
     {
-        private delegate bool TrackingEventDelegate(ulong address, ulong size, bool write);
+        public delegate bool TrackingEventDelegate(ulong address, ulong size, bool write);
 
         private readonly TrackingEventDelegate _trackingEvent;
 
         private readonly ulong _baseAddress;
         private readonly ulong _mirrorAddress;
 
-        public MemoryEhMeilleure(MemoryBlock addressSpace, MemoryBlock addressSpaceMirror, MemoryTracking tracking)
+        public MemoryEhMeilleure(MemoryBlock addressSpace, MemoryBlock addressSpaceMirror, MemoryTracking tracking, TrackingEventDelegate trackingEvent = null)
         {
             _baseAddress = (ulong)addressSpace.Pointer;
+
             ulong endAddress = _baseAddress + addressSpace.Size;
 
-            _trackingEvent = tracking.VirtualMemoryEvent;
+            _trackingEvent = trackingEvent ?? tracking.VirtualMemoryEvent;
+
             bool added = NativeSignalHandler.AddTrackedRegion((nuint)_baseAddress, (nuint)endAddress, Marshal.GetFunctionPointerForDelegate(_trackingEvent));
 
             if (!added)
@@ -28,7 +30,7 @@ namespace Ryujinx.Cpu
                 throw new InvalidOperationException("Number of allowed tracked regions exceeded.");
             }
 
-            if (OperatingSystem.IsWindows())
+            if (OperatingSystem.IsWindows() && addressSpaceMirror != null)
             {
                 // Add a tracking event with no signal handler for the mirror on Windows.
                 // The native handler has its own code to check for the partial overlap race when regions are protected by accident,
