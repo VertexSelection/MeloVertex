@@ -33,19 +33,22 @@ namespace Ryujinx.Cpu.Jit
 
             while (va < endVa)
             {
-                int partitionIndex = FindPartitionIndex(va);
-                AddressSpacePartition partition = _partitions[partitionIndex];
+                lock (_partitions)
+                {
+                    int partitionIndex = FindPartitionIndex(va);
+                    AddressSpacePartition partition = _partitions[partitionIndex];
 
-                (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
+                    (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
 
-                partition.Map(clampedVa, pa, clampedEndVa - clampedVa);
+                    partition.Map(clampedVa, pa, clampedEndVa - clampedVa);
 
-                ulong currentSize = clampedEndVa - clampedVa;
+                    ulong currentSize = clampedEndVa - clampedVa;
 
-                va += currentSize;
-                pa += currentSize;
+                    va += currentSize;
+                    pa += currentSize;
 
-                InsertBridgeIfNeeded(partitionIndex);
+                    InsertBridgeIfNeeded(partitionIndex);
+                }
             }
         }
 
@@ -55,27 +58,29 @@ namespace Ryujinx.Cpu.Jit
 
             while (va < endVa)
             {
-                int partitionIndex = FindPartitionIndex(va);
-                AddressSpacePartition partition = _partitions[partitionIndex];
+                AddressSpacePartition partition;
 
-                if (partition == null)
+                lock (_partitions)
                 {
-                    va += PartitionSize - (va & (PartitionSize - 1));
+                    int partitionIndex = FindPartitionIndex(va);
+                    if (partitionIndex < 0)
+                    {
+                        va += PartitionSize - (va & (PartitionSize - 1));
 
-                    continue;
-                }
+                        continue;
+                    }
 
-                (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
+                    partition = _partitions[partitionIndex];
 
-                partition.Unmap(clampedVa, clampedEndVa - clampedVa);
+                    (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
 
-                va += clampedEndVa - clampedVa;
+                    partition.Unmap(clampedVa, clampedEndVa - clampedVa);
 
-                RemoveBridgeIfNeeded(partitionIndex);
+                    va += clampedEndVa - clampedVa;
 
-                if (partition.IsEmpty())
-                {
-                    lock (_partitions)
+                    RemoveBridgeIfNeeded(partitionIndex);
+
+                    if (partition.IsEmpty())
                     {
                         _partitions.Remove(partition);
                         partition.Dispose();
