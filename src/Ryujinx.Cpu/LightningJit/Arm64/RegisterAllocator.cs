@@ -7,7 +7,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64
 {
     class RegisterAllocator
     {
-        public const int MaxTemps = 1;
+        public const int MaxTemps = 2;
         public const int MaxTempsInclFixed = MaxTemps + 2;
 
         private uint _gprMask;
