@@ -69,7 +69,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
                     asm.LdrRiUn(Register((int)rd), Register(regAlloc.FixedContextRegister), NativeContextOffsets.TpidrEl0Offset);
                 }
             }
-            else if ((encoding & ~0x1f) == 0xd53b0020 && OperatingSystem.IsMacOS()) // mrs x0, ctr_el0
+            else if ((encoding & ~0x1f) == 0xd53b0020 && (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())) // mrs x0, ctr_el0
             {
                 uint rd = encoding & 0x1f;
 
@@ -115,7 +115,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
             {
                 return true;
             }
-            else if ((encoding & ~0x1f) == 0xd53b0020 && OperatingSystem.IsMacOS()) // mrs x0, ctr_el0
+            else if ((encoding & ~0x1f) == 0xd53b0020 && (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())) // mrs x0, ctr_el0
             {
                 return true;
             }
