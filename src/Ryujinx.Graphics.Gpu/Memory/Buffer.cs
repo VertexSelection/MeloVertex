@@ -561,6 +561,18 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// <param name="size">Size in bytes</param>
         public void ExternalFlush(ulong address, ulong size)
         {
+            ulong maxAddress = Math.Max(address, Address);
+            ulong minEndAddress = Math.Min(address + size, Address + Size);
+
+            if (maxAddress >= minEndAddress)
+            {
+                // Access doesn't overlap.
+                return;
+            }
+
+            address = maxAddress;
+            size = minEndAddress - address;
+
             _context.Renderer.BackgroundContextAction(() =>
             {
                 var ranges = _modifiedRanges;
