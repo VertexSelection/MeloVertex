@@ -119,7 +119,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                 Context.MemoryManager.IncrementPagesReferenceCount(srcPa, pagesCount);
             }
 
-            if (shouldFillPages)
+            if (shouldFillPages && (Supports4KBPages || !flags.HasFlag(MemoryMapFlags.Private) || fillValue != 0))
             {
                 _cpuMemory.Fill(dstVa, size, fillValue);
             }
@@ -149,7 +149,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
 
                 _cpuMemory.Map(currentVa, addr, size, flags);
 
-                if (shouldFillPages)
+                if (shouldFillPages && (Supports4KBPages || !flags.HasFlag(MemoryMapFlags.Private) || fillValue != 0))
                 {
                     _cpuMemory.Fill(currentVa, size, fillValue);
                 }
