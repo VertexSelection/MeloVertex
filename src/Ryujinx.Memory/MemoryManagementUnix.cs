@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -141,7 +141,7 @@ namespace Ryujinx.Memory
             return munmap(address, size) == 0;
         }
 
-        private static Dictionary<IntPtr, ulong> _sharedMemorySizes = new Dictionary<nint, ulong>();
+        private static ConcurrentDictionary<IntPtr, ulong> _sharedMemorySizes = new ConcurrentDictionary<nint, ulong>();
 
         public unsafe static IntPtr CreateSharedMemory(ulong size, bool reserve)
         {
@@ -151,7 +151,7 @@ namespace Ryujinx.Memory
             {
                 IntPtr baseAddress = MachJitWorkaround.AllocateSharedMemory(size, reserve);
 
-                _sharedMemorySizes.Add(baseAddress, size);
+                _sharedMemorySizes.TryAdd(baseAddress, size);
 
                 return baseAddress;
             }
@@ -206,6 +206,7 @@ namespace Ryujinx.Memory
             {
                 if (_sharedMemorySizes.TryGetValue(handle, out ulong size))
                 {
+                    _sharedMemorySizes.Remove(handle, out _);
                     MachJitWorkaround.DestroySharedMemory(handle, size);
                 }
             }
