@@ -54,7 +54,7 @@ namespace Ryujinx.Audio.Backends.SoundIo
 
         public override void QueueBuffer(AudioBuffer buffer)
         {
-            SoundIoAudioBuffer driverBuffer = new(buffer.DataPointer, GetSampleCount(buffer));
+            SoundIoAudioBuffer driverBuffer = new(buffer.HostTag, GetSampleCount(buffer));
 
             _ringBuffer.Write(buffer.Data, 0, buffer.Data.Length);
 
@@ -90,7 +90,7 @@ namespace Ryujinx.Audio.Backends.SoundIo
                 return true;
             }
 
-            return driverBuffer.DriverIdentifier != buffer.DataPointer;
+            return driverBuffer.DriverIdentifier != buffer.HostTag;
         }
 
         private unsafe void Update(int minFrameCount, int maxFrameCount)

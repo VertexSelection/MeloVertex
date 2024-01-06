@@ -1,4 +1,5 @@
 using Ryujinx.Audio.Backends.CompatLayer;
+using Ryujinx.Audio.Backends.DelayLayer;
 using Ryujinx.Audio.Integration;
 using Ryujinx.Common.Configuration;
 using Ryujinx.Graphics.Gpu;
@@ -46,7 +47,7 @@ namespace Ryujinx.HLE
                 : MemoryAllocationFlags.Reserve | MemoryAllocationFlags.Mirrorable;
 
 #pragma warning disable IDE0055 // Disable formatting
-            AudioDeviceDriver = new CompatLayerHardwareDeviceDriver(Configuration.AudioDeviceDriver);
+            AudioDeviceDriver = AddAudioCompatLayers(Configuration.AudioDeviceDriver);
             Memory            = new MemoryBlock(Configuration.MemoryConfiguration.ToDramSize(), memoryAllocationFlags);
             Gpu               = new GpuContext(Configuration.GpuRenderer);
             System            = new HOS.Horizon(this);
@@ -65,6 +66,19 @@ namespace Ryujinx.HLE
             System.FsIntegrityCheckLevel            = Configuration.FsIntegrityCheckLevel;
             System.GlobalAccessLogMode              = Configuration.FsGlobalAccessLogMode;
 #pragma warning restore IDE0055
+        }
+
+        private IHardwareDeviceDriver AddAudioCompatLayers(IHardwareDeviceDriver driver)
+        {
+            ulong sampleDelay = 0;
+            driver = new CompatLayerHardwareDeviceDriver(driver);
+
+            if (sampleDelay > 0)
+            {
+                driver = new DelayLayerHardwareDeviceDriver(driver, sampleDelay);
+            }
+
+            return driver;
         }
 
         public bool LoadCart(string exeFsDir, string romFsFile = null)

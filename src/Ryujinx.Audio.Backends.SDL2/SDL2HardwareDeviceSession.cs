@@ -151,7 +151,7 @@ namespace Ryujinx.Audio.Backends.SDL2
 
             if (_outputStream != 0)
             {
-                SDL2AudioBuffer driverBuffer = new(buffer.DataPointer, GetSampleCount(buffer));
+                SDL2AudioBuffer driverBuffer = new(buffer.HostTag, GetSampleCount(buffer));
 
                 _ringBuffer.Write(buffer.Data, 0, buffer.Data.Length);
 
@@ -205,7 +205,7 @@ namespace Ryujinx.Audio.Backends.SDL2
                 return true;
             }
 
-            return driverBuffer.DriverIdentifier != buffer.DataPointer;
+            return driverBuffer.DriverIdentifier != buffer.HostTag;
         }
 
         protected virtual void Dispose(bool disposing)
