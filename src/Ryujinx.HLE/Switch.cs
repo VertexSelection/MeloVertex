@@ -70,7 +70,7 @@ namespace Ryujinx.HLE
 
         private IHardwareDeviceDriver AddAudioCompatLayers(IHardwareDeviceDriver driver)
         {
-            ulong sampleDelay = 0;
+            ulong sampleDelay = OperatingSystem.IsIOS() ? 1024ul : 0;
             driver = new CompatLayerHardwareDeviceDriver(driver);
 
             if (sampleDelay > 0)
