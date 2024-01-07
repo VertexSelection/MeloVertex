@@ -92,7 +92,7 @@ namespace Ryujinx.HLE.Loaders.Processes.Extensions
                     string titleUpdateMetadataPath = System.IO.Path.Combine(AppDataManager.GamesDirPath, titleIdBase.ToString("x16"), "updates.json");
                     if (File.Exists(titleUpdateMetadataPath))
                     {
-                        string updatePath = JsonHelper.DeserializeFromFile(titleUpdateMetadataPath, _titleSerializerContext.TitleUpdateMetadata).Selected;
+                        string updatePath = PlatformRelative(JsonHelper.DeserializeFromFile(titleUpdateMetadataPath, _titleSerializerContext.TitleUpdateMetadata).Selected);
                         if (File.Exists(updatePath))
                         {
                             PartitionFileSystem updatePartitionFileSystem = new();
@@ -153,13 +153,15 @@ namespace Ryujinx.HLE.Loaders.Processes.Extensions
                     {
                         foreach (DownloadableContentNca downloadableContentNca in downloadableContentContainer.DownloadableContentNcaList)
                         {
-                            if (File.Exists(downloadableContentContainer.ContainerPath) && downloadableContentNca.Enabled)
+                            string dlcPath = PlatformRelative(downloadableContentContainer.ContainerPath);
+
+                            if (File.Exists(dlcPath) && downloadableContentNca.Enabled)
                             {
-                                device.Configuration.ContentManager.AddAocItem(downloadableContentNca.TitleId, downloadableContentContainer.ContainerPath, downloadableContentNca.FullPath);
+                                device.Configuration.ContentManager.AddAocItem(downloadableContentNca.TitleId, dlcPath, downloadableContentNca.FullPath);
                             }
                             else
                             {
-                                Logger.Warning?.Print(LogClass.Application, $"Cannot find AddOnContent file {downloadableContentContainer.ContainerPath}. It may have been moved or renamed.");
+                                Logger.Warning?.Print(LogClass.Application, $"Cannot find AddOnContent file {dlcPath}. It may have been moved or renamed.");
                             }
                         }
                     }
@@ -171,6 +173,16 @@ namespace Ryujinx.HLE.Loaders.Processes.Extensions
             errorMessage = "Unable to load: Could not find Main NCA";
 
             return (false, ProcessResult.Failed);
+        }
+
+        private static string PlatformRelative(string path)
+        {
+            if (OperatingSystem.IsIOS() && !File.Exists(path))
+            {
+                path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), path);
+            }
+
+            return path;
         }
 
         public static Nca GetNca(this IFileSystem fileSystem, Switch device, string path)
