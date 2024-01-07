@@ -27,15 +27,15 @@ namespace Ryujinx.Cpu.Jit
 
         public void Map(ulong va, ulong pa, ulong size)
         {
-            EnsurePartitions(va, size);
-
             ulong endVa = va + size;
 
-            while (va < endVa)
+            lock (_partitions)
             {
-                lock (_partitions)
+                EnsurePartitionsLocked(va, size);
+
+                while (va < endVa)
                 {
-                    int partitionIndex = FindPartitionIndex(va);
+                    int partitionIndex = FindPartitionIndexLocked(va);
                     AddressSpacePartition partition = _partitions[partitionIndex];
 
                     (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
@@ -62,7 +62,7 @@ namespace Ryujinx.Cpu.Jit
 
                 lock (_partitions)
                 {
-                    int partitionIndex = FindPartitionIndex(va);
+                    int partitionIndex = FindPartitionIndexLocked(va);
                     if (partitionIndex < 0)
                     {
                         va += PartitionSize - (va & (PartitionSize - 1));
@@ -126,8 +126,11 @@ namespace Ryujinx.Cpu.Jit
             return partition.GetFirstPrivateAllocation(va, size, out nextVa);
         }
 
-        public bool HasAnyPrivateAllocation(ulong va, ulong size)
+        public bool HasAnyPrivateAllocation(ulong va, ulong size, out PrivateRange range)
         {
+            range = PrivateRange.Empty;
+
+            ulong startVa = va;
             ulong endVa = va + size;
 
             while (va < endVa)
@@ -143,7 +146,7 @@ namespace Ryujinx.Cpu.Jit
 
                 (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
 
-                if (partition.HasPrivateAllocation(clampedVa, clampedEndVa - clampedVa))
+                if (partition.HasPrivateAllocation(clampedVa, clampedEndVa - clampedVa, startVa, size, ref range))
                 {
                     return true;
                 }
@@ -206,19 +209,11 @@ namespace Ryujinx.Cpu.Jit
             return (va, endVa);
         }
 
-        private void EnsurePartitions(ulong va, ulong size)
-        {
-            lock (_partitions)
-            {
-                EnsurePartitionsForRange(va, size);
-            }
-        }
-
         private AddressSpacePartition FindPartition(ulong va)
         {
             lock (_partitions)
             {
-                int index = FindPartitionIndex(va);
+                int index = FindPartitionIndexLocked(va);
                 if (index >= 0)
                 {
                     return _partitions[index];
@@ -228,40 +223,37 @@ namespace Ryujinx.Cpu.Jit
             return null;
         }
 
-        private int FindPartitionIndex(ulong va)
+        private int FindPartitionIndexLocked(ulong va)
         {
-            lock (_partitions)
+            int left = 0;
+            int middle = 0;
+            int right = _partitions.Count - 1;
+
+            while (left <= right)
             {
-                int left = 0;
-                int middle = 0;
-                int right = _partitions.Count - 1;
+                middle = left + ((right - left) >> 1);
 
-                while (left <= right)
+                AddressSpacePartition partition = _partitions[middle];
+
+                if (partition.Address <= va && partition.EndAddress > va)
                 {
-                    middle = left + ((right - left) >> 1);
+                    return middle;
+                }
 
-                    AddressSpacePartition partition = _partitions[middle];
-
-                    if (partition.Address <= va && partition.EndAddress > va)
-                    {
-                        return middle;
-                    }
-
-                    if (partition.Address >= va)
-                    {
-                        right = middle - 1;
-                    }
-                    else
-                    {
-                        left = middle + 1;
-                    }
+                if (partition.Address >= va)
+                {
+                    right = middle - 1;
+                }
+                else
+                {
+                    left = middle + 1;
                 }
             }
 
             return -1;
         }
 
-        private void EnsurePartitionsForRange(ulong va, ulong size)
+        private void EnsurePartitionsLocked(ulong va, ulong size)
         {
             ulong endVa = BitUtils.AlignUp(va + size, PartitionSize);
             va = BitUtils.AlignDown(va, PartitionSize);

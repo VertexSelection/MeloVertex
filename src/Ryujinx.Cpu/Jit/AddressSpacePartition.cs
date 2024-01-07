@@ -3,6 +3,7 @@ using Ryujinx.Common.Collections;
 using Ryujinx.Memory;
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Ryujinx.Cpu.Jit
 {
@@ -169,7 +170,7 @@ namespace Ryujinx.Cpu.Jit
         private readonly IntrusiveRedBlackTree<Mapping> _mappingTree;
         private readonly IntrusiveRedBlackTree<PrivateMapping> _privateTree;
 
-        private readonly object _treeLock;
+        private readonly ReaderWriterLockSlim _treeLock;
 
         private readonly ulong _hostPageSize;
 
@@ -189,7 +190,7 @@ namespace Ryujinx.Cpu.Jit
             _privateMemoryAllocator = new PrivateMemoryAllocator(DefaultBlockAlignment, MemoryAllocationFlags.Mirrorable);
             _mappingTree = new IntrusiveRedBlackTree<Mapping>();
             _privateTree = new IntrusiveRedBlackTree<PrivateMapping>();
-            _treeLock = new object();
+            _treeLock = new ReaderWriterLockSlim();
 
             _mappingTree.Add(new Mapping(address, size, MappingType.None));
             _privateTree.Add(new PrivateMapping(address, size, default));
@@ -209,11 +210,17 @@ namespace Ryujinx.Cpu.Jit
 
         public bool IsEmpty()
         {
-            lock (_treeLock)
+            _treeLock.EnterReadLock();
+
+            try
             {
                 Mapping map = _mappingTree.GetNode(new Mapping(Address, Size, MappingType.None));
 
                 return map != null && map.Address == Address && map.Size == Size && map.Type == MappingType.None;
+            }
+            finally
+            {
+                _treeLock.ExitReadLock();
             }
         }
 
@@ -232,10 +239,7 @@ namespace Ryujinx.Cpu.Jit
                 _lastPagePa = pa + ((EndAddress - GuestPageSize) - va);
             }
 
-            lock (_treeLock)
-            {
-                Update(va, pa, size, MappingType.Private);
-            }
+            Update(va, pa, size, MappingType.Private);
         }
 
         public void Unmap(ulong va, ulong size)
@@ -253,10 +257,7 @@ namespace Ryujinx.Cpu.Jit
                 _lastPagePa = null;
             }
 
-            lock (_treeLock)
-            {
-                Update(va, 0UL, size, MappingType.None);
-            }
+            Update(va, 0UL, size, MappingType.None);
         }
 
         public void Reprotect(ulong va, ulong size, MemoryPermission protection)
@@ -349,7 +350,9 @@ namespace Ryujinx.Cpu.Jit
 
         private (MemoryBlock, ulong) GetFirstPageMemoryAndOffset()
         {
-            lock (_treeLock)
+            _treeLock.EnterReadLock();
+
+            try
             {
                 PrivateMapping map = _privateTree.GetNode(new PrivateMapping(Address, 1UL, default));
 
@@ -358,13 +361,19 @@ namespace Ryujinx.Cpu.Jit
                     return (map.PrivateAllocation.Memory, map.PrivateAllocation.Offset + (Address - map.Address));
                 }
             }
+            finally
+            {
+                _treeLock.ExitReadLock();
+            }
 
             return (_backingMemory, _firstPagePa.Value);
         }
 
         private (MemoryBlock, ulong) GetLastPageMemoryAndOffset()
         {
-            lock (_treeLock)
+            _treeLock.EnterReadLock();
+
+            try
             {
                 ulong pageAddress = EndAddress - _hostPageSize;
 
@@ -375,15 +384,28 @@ namespace Ryujinx.Cpu.Jit
                     return (map.PrivateAllocation.Memory, map.PrivateAllocation.Offset + (pageAddress - map.Address));
                 }
             }
+            finally
+            {
+                _treeLock.ExitReadLock();
+            }
 
             return (_backingMemory, _lastPagePa.Value & ~(_hostPageSize - 1));
         }
 
         private void Update(ulong va, ulong pa, ulong size, MappingType type)
         {
-            Mapping map = _mappingTree.GetNode(new Mapping(va, 1UL, MappingType.None));
+            _treeLock.EnterWriteLock();
 
-            Update(map, va, pa, size, type);
+            try
+            {
+                Mapping map = _mappingTree.GetNode(new Mapping(va, 1UL, MappingType.None));
+
+                Update(map, va, pa, size, type);
+            }
+            finally
+            {
+                _treeLock.ExitWriteLock();
+            }
         }
 
         private Mapping Update(Mapping map, ulong va, ulong pa, ulong size, MappingType type)
@@ -571,7 +593,9 @@ namespace Ryujinx.Cpu.Jit
 
         public PrivateRange GetFirstPrivateAllocation(ulong va, ulong size, out ulong nextVa)
         {
-            lock (_treeLock)
+            _treeLock.EnterReadLock();
+
+            try
             {
                 PrivateMapping map = _privateTree.GetNode(new PrivateMapping(va, 1UL, default));
 
@@ -587,18 +611,43 @@ namespace Ryujinx.Cpu.Jit
                         Math.Min(map.PrivateAllocation.Size - startOffset, size));
                 }
             }
+            finally
+            {
+                _treeLock.ExitReadLock();
+            }
 
             return PrivateRange.Empty;
         }
 
-        public bool HasPrivateAllocation(ulong va, ulong size)
+        public bool HasPrivateAllocation(ulong va, ulong size, ulong startVa, ulong startSize, ref PrivateRange range)
         {
-            lock (_treeLock)
+            _treeLock.EnterReadLock();
+
+            try
             {
                 PrivateMapping map = _privateTree.GetNode(new PrivateMapping(va, size, default));
 
-                return map != null && map.PrivateAllocation.IsValid;
+                if (map != null && map.PrivateAllocation.IsValid)
+                {
+                    if (map.Address <= startVa && map.EndAddress >= startVa + startSize)
+                    {
+                        ulong startOffset = startVa - map.Address;
+
+                        range = new(
+                            map.PrivateAllocation.Memory,
+                            map.PrivateAllocation.Offset + startOffset,
+                            Math.Min(map.PrivateAllocation.Size - startOffset, startSize));
+                    }
+
+                    return true;
+                }
             }
+            finally
+            {
+                _treeLock.ExitReadLock();
+            }
+
+            return false;
         }
 
         public void Dispose()
