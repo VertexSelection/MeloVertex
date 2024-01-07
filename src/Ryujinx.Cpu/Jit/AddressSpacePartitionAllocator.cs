@@ -2,6 +2,7 @@ using Ryujinx.Common.Collections;
 using Ryujinx.Memory;
 using Ryujinx.Memory.Tracking;
 using System;
+using System.Threading;
 
 namespace Ryujinx.Cpu.Jit
 {
@@ -100,41 +101,70 @@ namespace Ryujinx.Cpu.Jit
             }
 
             private readonly IntrusiveRedBlackTree<Mapping> _mappingTree;
+            private readonly ReaderWriterLockSlim _treeLock;
 
             public Block(MemoryTracking tracking, MemoryBlock memory, ulong size) : base(memory, size)
             {
                 _tracking = tracking;
                 _memoryEh = new(memory, null, tracking, VirtualMemoryEvent);
                 _mappingTree = new();
+                _treeLock = new();
             }
 
             public void AddMapping(ulong offset, ulong size, ulong va, ulong endVa, int bridgeSize)
             {
-                _mappingTree.Add(new(offset, size, va, endVa, bridgeSize));
+                _treeLock.EnterWriteLock();
+
+                try
+                {
+                    _mappingTree.Add(new(offset, size, va, endVa, bridgeSize));
+                }
+                finally
+                {
+                    _treeLock.ExitWriteLock();
+                }
             }
 
             public void RemoveMapping(ulong offset, ulong size)
             {
-                _mappingTree.Remove(_mappingTree.GetNode(new Mapping(offset, size, 0, 0, 0)));
+                _treeLock.EnterWriteLock();
+
+                try
+                {
+                    _mappingTree.Remove(_mappingTree.GetNode(new Mapping(offset, size, 0, 0, 0)));
+                }
+                finally
+                {
+                    _treeLock.ExitWriteLock();
+                }
             }
 
             private bool VirtualMemoryEvent(ulong address, ulong size, bool write)
             {
-                Mapping map = _mappingTree.GetNode(new Mapping(address, size, 0, 0, 0));
+                _treeLock.EnterReadLock();
 
-                if (map == null)
+                try
                 {
-                    return false;
+                    Mapping map = _mappingTree.GetNode(new Mapping(address, size, 0, 0, 0));
+
+                    if (map == null)
+                    {
+                        return false;
+                    }
+
+                    address -= map.Address;
+
+                    if (address >= (map.EndVa - map.Va))
+                    {
+                        address -= (ulong)(map.BridgeSize / 2);
+                    }
+
+                    return _tracking.VirtualMemoryEvent(map.Va + address, size, write);
                 }
-
-                address -= map.Address;
-
-                if (address >= (map.EndVa - map.Va))
+                finally
                 {
-                    address -= (ulong)(map.BridgeSize / 2);
+                    _treeLock.ExitReadLock();
                 }
-
-                return _tracking.VirtualMemoryEvent(map.Va + address, size, write);
             }
 
             public override void Destroy()

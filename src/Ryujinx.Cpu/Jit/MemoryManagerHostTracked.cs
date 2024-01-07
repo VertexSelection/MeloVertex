@@ -473,14 +473,12 @@ namespace Ryujinx.Cpu.Jit
 
         private bool TryGetVirtualContiguous(ulong va, int size, out MemoryBlock memory, out ulong offset)
         {
-            if (_addressSpace.HasAnyPrivateAllocation(va, (ulong)size))
+            if (_addressSpace.HasAnyPrivateAllocation(va, (ulong)size, out PrivateRange range))
             {
                 // If we have a private allocation overlapping the range,
                 // this the access is only considered contiguous if it covers the entire range.
 
-                PrivateRange range = _addressSpace.GetFirstPrivateAllocation(va, (ulong)size, out _);
-
-                if (range.Memory != null && range.Size == (ulong)size)
+                if (range.Memory != null)
                 {
                     memory = range.Memory;
                     offset = range.Offset;
@@ -499,9 +497,6 @@ namespace Ryujinx.Cpu.Jit
 
             return IsPhysicalContiguous(va, size);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsPhysicalContiguousAndMapped(ulong va, int size) => IsPhysicalContiguous(va, size) && IsMapped(va);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsPhysicalContiguous(ulong va, int size)
