@@ -10,12 +10,15 @@ namespace Ryujinx.Cpu.Jit
     {
         private const ulong GuestPageSize = 0x1000;
 
-        class PageProtection : IntrusiveRedBlackTreeNode<PageProtection>, IComparable<PageProtection>
+        [ThreadStatic]
+        private static PageProtection _dummyProtection;
+
+        class PageProtection : IntrusiveRedBlackTreeNode<PageProtection>, IComparable<PageProtection>, IComparable<ulong>
         {
             public readonly AddressSpacePartitionAllocation Memory;
             public readonly ulong Offset;
-            public readonly ulong Address;
-            public readonly ulong Size;
+            public ulong Address;
+            public ulong Size;
 
             private MemoryBlock _viewBlock;
 
@@ -63,9 +66,25 @@ namespace Ryujinx.Cpu.Jit
                     return 1;
                 }
             }
+
+            public int CompareTo(ulong address)
+            {
+                if (address < Address)
+                {
+                    return -1;
+                }
+                else if (address <= Address + Size - 1UL)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return 1;
+                }
+            }
         }
 
-        private readonly IntrusiveRedBlackTree<PageProtection> _protectionTree;
+        private readonly AddressIntrusiveRedBlackTree<PageProtection> _protectionTree;
 
         public AddressSpacePageProtections()
         {
@@ -99,7 +118,7 @@ namespace Ryujinx.Cpu.Jit
         {
             ulong pageSize = MemoryBlock.GetPageSize();
 
-            PageProtection pageProtection = _protectionTree.GetNode(new PageProtection(default, 0, va, 1));
+            PageProtection pageProtection = _protectionTree.GetNode(va);
 
             if (pageProtection == null)
             {
@@ -310,7 +329,21 @@ namespace Ryujinx.Cpu.Jit
 
         private PageProtection GetLowestOverlap(ulong va, ulong size)
         {
-            PageProtection pageProtection = _protectionTree.GetNode(new PageProtection(default, 0, va, size));
+            PageProtection lookup = _dummyProtection;
+
+            if (lookup == null)
+            {
+                lookup = new(default, 0, va, size);
+                
+                _dummyProtection = lookup;
+            }
+            else
+            {
+                lookup.Address = va;
+                lookup.Size = size;
+            }
+
+            PageProtection pageProtection = _protectionTree.GetNode(lookup);
 
             if (pageProtection == null)
             {

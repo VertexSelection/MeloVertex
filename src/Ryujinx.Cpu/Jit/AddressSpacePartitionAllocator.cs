@@ -61,7 +61,7 @@ namespace Ryujinx.Cpu.Jit
             private readonly MemoryTracking _tracking;
             private readonly MemoryEhMeilleure _memoryEh;
 
-            private class Mapping : IntrusiveRedBlackTreeNode<Mapping>, IComparable<Mapping>
+            private class Mapping : IntrusiveRedBlackTreeNode<Mapping>, IComparable<Mapping>, IComparable<ulong>
             {
                 public ulong Address { get; }
                 public ulong Size { get; }
@@ -94,9 +94,25 @@ namespace Ryujinx.Cpu.Jit
                         return 1;
                     }
                 }
+
+                public int CompareTo(ulong address)
+                {
+                    if (address < Address)
+                    {
+                        return -1;
+                    }
+                    else if (address <= EndAddress - 1UL)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+                }
             }
 
-            private readonly IntrusiveRedBlackTree<Mapping> _mappingTree;
+            private readonly AddressIntrusiveRedBlackTree<Mapping> _mappingTree;
             private readonly object _lock;
 
             public Block(MemoryTracking tracking, MemoryBlock memory, ulong size, object locker) : base(memory, size)
@@ -114,7 +130,7 @@ namespace Ryujinx.Cpu.Jit
 
             public void RemoveMapping(ulong offset, ulong size)
             {
-                _mappingTree.Remove(_mappingTree.GetNode(new Mapping(offset, size, 0, 0, 0)));
+                _mappingTree.Remove(_mappingTree.GetNode(offset));
             }
 
             private bool VirtualMemoryEvent(ulong address, ulong size, bool write)
@@ -123,7 +139,7 @@ namespace Ryujinx.Cpu.Jit
 
                 lock (_lock)
                 {
-                    map = _mappingTree.GetNode(new Mapping(address, size, 0, 0, 0));
+                    map = _mappingTree.GetNode(address);
                 }
 
                 if (map == null)
