@@ -48,11 +48,8 @@ namespace Ryujinx.Cpu.Jit
 
         public void Dispose()
         {
-            lock (_owner.Lock)
-            {
-                _allocation.Block.RemoveMapping(_allocation.Offset, _allocation.Size);
-                _owner.Free(_allocation.Block, _allocation.Offset, _allocation.Size);
-            }
+            _allocation.Block.RemoveMapping(_allocation.Offset, _allocation.Size);
+            _owner.Free(_allocation.Block, _allocation.Offset, _allocation.Size);
         }
     }
 
@@ -101,70 +98,48 @@ namespace Ryujinx.Cpu.Jit
             }
 
             private readonly IntrusiveRedBlackTree<Mapping> _mappingTree;
-            private readonly ReaderWriterLockSlim _treeLock;
+            private readonly object _lock;
 
-            public Block(MemoryTracking tracking, MemoryBlock memory, ulong size) : base(memory, size)
+            public Block(MemoryTracking tracking, MemoryBlock memory, ulong size, object locker) : base(memory, size)
             {
                 _tracking = tracking;
                 _memoryEh = new(memory, null, tracking, VirtualMemoryEvent);
                 _mappingTree = new();
-                _treeLock = new();
+                _lock = locker;
             }
 
             public void AddMapping(ulong offset, ulong size, ulong va, ulong endVa, int bridgeSize)
             {
-                _treeLock.EnterWriteLock();
-
-                try
-                {
-                    _mappingTree.Add(new(offset, size, va, endVa, bridgeSize));
-                }
-                finally
-                {
-                    _treeLock.ExitWriteLock();
-                }
+                _mappingTree.Add(new(offset, size, va, endVa, bridgeSize));
             }
 
             public void RemoveMapping(ulong offset, ulong size)
             {
-                _treeLock.EnterWriteLock();
-
-                try
-                {
-                    _mappingTree.Remove(_mappingTree.GetNode(new Mapping(offset, size, 0, 0, 0)));
-                }
-                finally
-                {
-                    _treeLock.ExitWriteLock();
-                }
+                _mappingTree.Remove(_mappingTree.GetNode(new Mapping(offset, size, 0, 0, 0)));
             }
 
             private bool VirtualMemoryEvent(ulong address, ulong size, bool write)
             {
-                _treeLock.EnterReadLock();
+                Mapping map;
 
-                try
+                lock (_lock)
                 {
-                    Mapping map = _mappingTree.GetNode(new Mapping(address, size, 0, 0, 0));
-
-                    if (map == null)
-                    {
-                        return false;
-                    }
-
-                    address -= map.Address;
-
-                    if (address >= (map.EndVa - map.Va))
-                    {
-                        address -= (ulong)(map.BridgeSize / 2);
-                    }
-
-                    return _tracking.VirtualMemoryEvent(map.Va + address, size, write);
+                    map = _mappingTree.GetNode(new Mapping(address, size, 0, 0, 0));
                 }
-                finally
+
+                if (map == null)
                 {
-                    _treeLock.ExitReadLock();
+                    return false;
                 }
+
+                address -= map.Address;
+
+                if (address >= (map.EndVa - map.Va))
+                {
+                    address -= (ulong)(map.BridgeSize / 2);
+                }
+
+                return _tracking.VirtualMemoryEvent(map.Va + address, size, write);
             }
 
             public override void Destroy()
@@ -176,29 +151,25 @@ namespace Ryujinx.Cpu.Jit
         }
 
         private readonly MemoryTracking _tracking;
+        private readonly object _lock;
 
-        public object Lock { get; }
-
-        public AddressSpacePartitionAllocator(MemoryTracking tracking) : base(DefaultBlockAlignment, MemoryAllocationFlags.Reserve | MemoryAllocationFlags.ViewCompatible)
+        public AddressSpacePartitionAllocator(MemoryTracking tracking, object locker) : base(DefaultBlockAlignment, MemoryAllocationFlags.Reserve | MemoryAllocationFlags.ViewCompatible)
         {
             _tracking = tracking;
-            Lock = new();
+            _lock = locker;
         }
 
         public AddressSpacePartitionAllocation Allocate(ulong va, ulong size, int bridgeSize)
         {
-            lock (Lock)
-            {
-                AddressSpacePartitionAllocation allocation = new(this, Allocate(size + (ulong)bridgeSize, MemoryBlock.GetPageSize(), CreateBlock));
-                allocation.RegisterMapping(va, va + size, bridgeSize);
+            AddressSpacePartitionAllocation allocation = new(this, Allocate(size + (ulong)bridgeSize, MemoryBlock.GetPageSize(), CreateBlock));
+            allocation.RegisterMapping(va, va + size, bridgeSize);
 
-                return allocation;
-            }
+            return allocation;
         }
 
         private Block CreateBlock(MemoryBlock memory, ulong size)
         {
-            return new Block(_tracking, memory, size);
+            return new Block(_tracking, memory, size, _lock);
         }
     }
 }

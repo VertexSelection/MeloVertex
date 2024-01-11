@@ -21,7 +21,7 @@ namespace Ryujinx.Cpu.Jit
         {
             _backingMemory = backingMemory;
             _partitions = new();
-            _asAllocator = new(tracking);
+            _asAllocator = new(tracking, _partitions);
             _updatePtCallback = updatePtCallback;
         }
 
