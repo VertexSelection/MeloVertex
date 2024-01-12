@@ -2,6 +2,7 @@ using OpenTK.Graphics.OpenGL;
 using Ryujinx.Common.Memory;
 using Ryujinx.Graphics.GAL;
 using System;
+using System.Buffers;
 
 namespace Ryujinx.Graphics.OpenGL.Image
 {
@@ -54,20 +55,24 @@ namespace Ryujinx.Graphics.OpenGL.Image
             throw new NotImplementedException();
         }
 
-        public void SetData(SpanOrArray<byte> data)
+        public void SetData(IMemoryOwner<byte> data)
         {
-            var dataSpan = data.AsSpan();
+            var dataSpan = data.Memory.Span;
 
             Buffer.SetData(_buffer, _bufferOffset, dataSpan[..Math.Min(dataSpan.Length, _bufferSize)]);
+
+            data.Dispose();
         }
 
-        public void SetData(SpanOrArray<byte> data, int layer, int level)
+        public void SetData(IMemoryOwner<byte> data, int layer, int level)
         {
+            data.Dispose();
             throw new NotSupportedException();
         }
 
-        public void SetData(SpanOrArray<byte> data, int layer, int level, Rectangle<int> region)
+        public void SetData(IMemoryOwner<byte> data, int layer, int level, Rectangle<int> region)
         {
+            data.Dispose();
             throw new NotSupportedException();
         }
 

@@ -2,6 +2,7 @@ using Ryujinx.Common.Memory;
 using Ryujinx.Graphics.GAL;
 using Silk.NET.Vulkan;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using Format = Ryujinx.Graphics.GAL.Format;
 using VkBuffer = Silk.NET.Vulkan.Buffer;
@@ -656,19 +657,27 @@ namespace Ryujinx.Graphics.Vulkan
             return GetDataFromBuffer(result, size, result);
         }
 
-        public void SetData(SpanOrArray<byte> data)
+        public void SetData(ReadOnlySpan<byte> data)
         {
             SetData(data, 0, 0, Info.GetLayers(), Info.Levels, singleSlice: false);
         }
 
-        public void SetData(SpanOrArray<byte> data, int layer, int level)
+        public void SetData(IMemoryOwner<byte> data)
         {
-            SetData(data, layer, level, 1, 1, singleSlice: true);
+            SetData(data.Memory.Span);
+            data.Dispose();
         }
 
-        public void SetData(SpanOrArray<byte> data, int layer, int level, Rectangle<int> region)
+        public void SetData(IMemoryOwner<byte> data, int layer, int level)
         {
-            SetData(data, layer, level, 1, 1, singleSlice: true, region);
+            SetData(data.Memory.Span, layer, level, 1, 1, singleSlice: true);
+            data.Dispose();
+        }
+
+        public void SetData(IMemoryOwner<byte> data, int layer, int level, Rectangle<int> region)
+        {
+            SetData(data.Memory.Span, layer, level, 1, 1, singleSlice: true, region);
+            data.Dispose();
         }
 
         private void SetData(ReadOnlySpan<byte> data, int layer, int level, int layers, int levels, bool singleSlice, Rectangle<int>? region = null)

@@ -3,6 +3,7 @@ using Ryujinx.Common;
 using Ryujinx.Common.Memory;
 using Ryujinx.Graphics.GAL;
 using System;
+using System.Buffers;
 using System.Diagnostics;
 
 namespace Ryujinx.Graphics.OpenGL.Image
@@ -448,10 +449,8 @@ namespace Ryujinx.Graphics.OpenGL.Image
             }
         }
 
-        public void SetData(SpanOrArray<byte> data)
+        public void SetData(ReadOnlySpan<byte> dataSpan)
         {
-            var dataSpan = data.AsSpan();
-
             if (Format == Format.S8UintD24Unorm)
             {
                 dataSpan = FormatConverter.ConvertS8D24ToD24S8(dataSpan);
@@ -466,9 +465,16 @@ namespace Ryujinx.Graphics.OpenGL.Image
             }
         }
 
-        public void SetData(SpanOrArray<byte> data, int layer, int level)
+        public void SetData(IMemoryOwner<byte> data)
         {
-            var dataSpan = data.AsSpan();
+            SetData(data.Memory.Span);
+
+            data.Dispose();
+        }
+
+        public void SetData(IMemoryOwner<byte> data, int layer, int level)
+        {
+            var dataSpan = data.Memory.Span;
 
             if (Format == Format.S8UintD24Unorm)
             {
@@ -485,11 +491,13 @@ namespace Ryujinx.Graphics.OpenGL.Image
                     ReadFrom2D((IntPtr)ptr, layer, level, 0, 0, width, height);
                 }
             }
+
+            data.Dispose();
         }
 
-        public void SetData(SpanOrArray<byte> data, int layer, int level, Rectangle<int> region)
+        public void SetData(IMemoryOwner<byte> data, int layer, int level, Rectangle<int> region)
         {
-            var dataSpan = data.AsSpan();
+            var dataSpan = data.Memory.Span;
 
             if (Format == Format.S8UintD24Unorm)
             {
@@ -514,6 +522,8 @@ namespace Ryujinx.Graphics.OpenGL.Image
                         BitUtils.AlignUp(wInBlocks * Info.BytesPerPixel, 4) * hInBlocks);
                 }
             }
+
+            data.Dispose();
         }
 
         public void ReadFromPbo(int offset, int size)
