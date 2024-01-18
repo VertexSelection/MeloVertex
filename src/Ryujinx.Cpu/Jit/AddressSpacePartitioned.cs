@@ -9,6 +9,8 @@ namespace Ryujinx.Cpu.Jit
 {
     class AddressSpacePartitioned : IDisposable
     {
+        public static readonly bool Use4KBProtection = false;
+
         private const int PartitionBits = 25;
         private const ulong PartitionSize = 1UL << PartitionBits;
 
@@ -89,27 +91,65 @@ namespace Ryujinx.Cpu.Jit
             }
         }
 
-        public void Reprotect(ulong va, ulong size, MemoryPermission protection, MemoryTracking tracking)
+        public void Reprotect(ulong va, ulong size, MemoryPermission protection)
         {
             ulong endVa = va + size;
 
-            while (va < endVa)
+            if (Use4KBProtection)
             {
-                AddressSpacePartition partition = FindPartition(va);
-
-                if (partition == null)
+                lock (_partitions)
                 {
-                    va += PartitionSize - (va & (PartitionSize - 1));
+                    while (va < endVa)
+                    {
+                        AddressSpacePartition partition = FindPartition(va);
 
-                    continue;
+                        if (partition == null)
+                        {
+                            va += PartitionSize - (va & (PartitionSize - 1));
+
+                            continue;
+                        }
+
+                        (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
+
+                        partition.Reprotect(clampedVa, clampedEndVa - clampedVa, protection, _asAllocator, this, _updatePtCallback);
+
+                        va += clampedEndVa - clampedVa;
+                    }
                 }
-
-                (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
-
-                partition.Reprotect(clampedVa, clampedEndVa - clampedVa, protection);
-
-                va += clampedEndVa - clampedVa;
             }
+            else
+            {
+                while (va < endVa)
+                {
+                    AddressSpacePartition partition = FindPartition(va);
+
+                    if (partition == null)
+                    {
+                        va += PartitionSize - (va & (PartitionSize - 1));
+
+                        continue;
+                    }
+
+                    (ulong clampedVa, ulong clampedEndVa) = ClampRange(partition, va, endVa);
+
+                    partition.ReprotectAligned(clampedVa, clampedEndVa - clampedVa, protection);
+
+                    va += clampedEndVa - clampedVa;
+                }
+            }
+        }
+
+        public PrivateRange GetPrivateAllocation(ulong va)
+        {
+            AddressSpacePartition partition = FindPartition(va);
+
+            if (partition == null)
+            {
+                return PrivateRange.Empty;
+            }
+
+            return partition.GetPrivateAllocation(va);
         }
 
         public PrivateRange GetFirstPrivateAllocation(ulong va, ulong size, out ulong nextVa)
@@ -226,7 +266,7 @@ namespace Ryujinx.Cpu.Jit
         private int FindPartitionIndexLocked(ulong va)
         {
             int left = 0;
-            int middle = 0;
+            int middle;
             int right = _partitions.Count - 1;
 
             while (left <= right)

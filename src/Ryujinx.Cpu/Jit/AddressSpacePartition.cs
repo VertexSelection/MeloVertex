@@ -98,10 +98,6 @@ namespace Ryujinx.Cpu.Jit
 
             public PrivateMapping(ulong address, ulong size, PrivateMemoryAllocation privateAllocation)
             {
-                if (size == 0)
-                {
-                    throw new Exception("huh? size is 0");
-                }
                 Address = address;
                 Size = size;
                 PrivateAllocation = privateAllocation;
@@ -169,6 +165,7 @@ namespace Ryujinx.Cpu.Jit
         private readonly PrivateMemoryAllocator _privateMemoryAllocator;
         private readonly IntrusiveRedBlackTree<Mapping> _mappingTree;
         private readonly IntrusiveRedBlackTree<PrivateMapping> _privateTree;
+        private readonly AddressSpacePageProtections _pageProtections;
 
         private readonly ReaderWriterLockSlim _treeLock;
 
@@ -190,6 +187,7 @@ namespace Ryujinx.Cpu.Jit
             _privateMemoryAllocator = new PrivateMemoryAllocator(DefaultBlockAlignment, MemoryAllocationFlags.Mirrorable);
             _mappingTree = new IntrusiveRedBlackTree<Mapping>();
             _privateTree = new IntrusiveRedBlackTree<PrivateMapping>();
+            _pageProtections = new AddressSpacePageProtections();
             _treeLock = new ReaderWriterLockSlim();
 
             _mappingTree.Add(new Mapping(address, size, MappingType.None));
@@ -240,6 +238,8 @@ namespace Ryujinx.Cpu.Jit
             }
 
             Update(va, pa, size, MappingType.Private);
+
+            _pageProtections.UpdateMappings(this, va, size);
         }
 
         public void Unmap(ulong va, ulong size)
@@ -258,9 +258,11 @@ namespace Ryujinx.Cpu.Jit
             }
 
             Update(va, 0UL, size, MappingType.None);
+
+            _pageProtections.Remove(va, size);
         }
 
-        public void Reprotect(ulong va, ulong size, MemoryPermission protection)
+        public void ReprotectAligned(ulong va, ulong size, MemoryPermission protection)
         {
             Debug.Assert(va >= Address);
             Debug.Assert(va + size <= EndAddress);
@@ -280,6 +282,19 @@ namespace Ryujinx.Cpu.Jit
 
                 _lastPageProtection = protection;
             }
+        }
+
+        public void Reprotect(
+            ulong va,
+            ulong size,
+            MemoryPermission protection,
+            AddressSpacePartitionAllocator asAllocator,
+            AddressSpacePartitioned addressSpace,
+            Action<ulong, IntPtr, ulong> updatePtCallback)
+        {
+            ulong endVa = va + size;
+
+            _pageProtections.Reprotect(asAllocator, addressSpace, this, va, endVa, protection, updatePtCallback);
         }
 
         public IntPtr GetPointer(ulong va, ulong size)
@@ -315,6 +330,8 @@ namespace Ryujinx.Cpu.Jit
                     updatePtCallback(EndAddress - _hostPageSize, _baseMemory.GetPointer(Size, _hostPageSize), _hostPageSize);
 
                     _hasBridgeAtEnd = true;
+
+                    _pageProtections.UpdateMappings(partitionAfter, EndAddress, GuestPageSize);
                 }
                 else
                 {
@@ -326,6 +343,8 @@ namespace Ryujinx.Cpu.Jit
                     }
 
                     _hasBridgeAtEnd = false;
+
+                    _pageProtections.Remove(EndAddress, GuestPageSize);
                 }
 
                 _cachedFirstPagePa = firstPagePa;
@@ -346,6 +365,8 @@ namespace Ryujinx.Cpu.Jit
             _cachedLastPagePa = ulong.MaxValue;
 
             _hasBridgeAtEnd = false;
+
+            _pageProtections.Remove(EndAddress, GuestPageSize);
         }
 
         private (MemoryBlock, ulong) GetFirstPageMemoryAndOffset()
@@ -390,6 +411,27 @@ namespace Ryujinx.Cpu.Jit
             }
 
             return (_backingMemory, _lastPagePa.Value & ~(_hostPageSize - 1));
+        }
+
+        public PrivateRange GetPrivateAllocation(ulong va)
+        {
+            _treeLock.EnterReadLock();
+
+            try
+            {
+                PrivateMapping map = _privateTree.GetNode(new PrivateMapping(va, 1UL, default));
+
+                if (map != null && map.PrivateAllocation.IsValid)
+                {
+                    return new(map.PrivateAllocation.Memory, map.PrivateAllocation.Offset + (va - map.Address), map.Size - (va - map.Address));
+                }
+            }
+            finally
+            {
+                _treeLock.ExitReadLock();
+            }
+
+            return PrivateRange.Empty;
         }
 
         private void Update(ulong va, ulong pa, ulong size, MappingType type)
@@ -654,7 +696,8 @@ namespace Ryujinx.Cpu.Jit
         {
             GC.SuppressFinalize(this);
 
-            _privateMemoryAllocator?.Dispose();
+            _privateMemoryAllocator.Dispose();
+            _pageProtections.Dispose();
             _baseMemory.Dispose();
         }
     }

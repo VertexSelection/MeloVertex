@@ -2,7 +2,6 @@ using Ryujinx.Common.Collections;
 using Ryujinx.Memory;
 using Ryujinx.Memory.Tracking;
 using System;
-using System.Threading;
 
 namespace Ryujinx.Cpu.Jit
 {
@@ -163,6 +162,14 @@ namespace Ryujinx.Cpu.Jit
         {
             AddressSpacePartitionAllocation allocation = new(this, Allocate(size + (ulong)bridgeSize, MemoryBlock.GetPageSize(), CreateBlock));
             allocation.RegisterMapping(va, va + size, bridgeSize);
+
+            return allocation;
+        }
+
+        public AddressSpacePartitionAllocation AllocatePage(ulong va, ulong size)
+        {
+            AddressSpacePartitionAllocation allocation = new(this, Allocate(size, MemoryBlock.GetPageSize(), CreateBlock));
+            allocation.RegisterMapping(va, va + size, 0);
 
             return allocation;
         }

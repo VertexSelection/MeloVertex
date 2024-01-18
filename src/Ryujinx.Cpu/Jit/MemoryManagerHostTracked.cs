@@ -71,7 +71,7 @@ namespace Ryujinx.Cpu.Jit
         /// <param name="invalidAccessHandler">Optional function to handle invalid memory accesses</param>
         public MemoryManagerHostTracked(MemoryBlock backingMemory, ulong addressSpaceSize, InvalidAccessHandler invalidAccessHandler)
         {
-            Tracking = new MemoryTracking(this, (int)MemoryBlock.GetPageSize(), invalidAccessHandler);
+            Tracking = new MemoryTracking(this, AddressSpacePartitioned.Use4KBProtection ? PageSize : (int)MemoryBlock.GetPageSize(), invalidAccessHandler);
 
             _backingMemory = backingMemory;
             _pageTable = new PageTable<ulong>();
@@ -990,7 +990,7 @@ namespace Ryujinx.Cpu.Jit
                 _ => MemoryPermission.None,
             };
 
-            _addressSpace.Reprotect(va, size, protection, Tracking);
+            _addressSpace.Reprotect(va, size, protection);
         }
 
         /// <summary>
