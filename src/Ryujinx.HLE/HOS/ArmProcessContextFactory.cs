@@ -72,7 +72,7 @@ namespace Ryujinx.HLE.HOS
 
                 AddressSpace addressSpace = null;
 
-                if ((mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe) && (!for64Bit || MemoryBlock.GetPageSize() <= 0x1000))
+                if ((mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe) && (MemoryBlock.GetPageSize() <= 0x1000))
                 {
                     if (!AddressSpace.TryCreate(context.Memory, addressSpaceSize, MemoryBlock.GetPageSize() == MemoryManagerHostMapped.PageSize, out addressSpace))
                     {
