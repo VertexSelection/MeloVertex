@@ -9,7 +9,7 @@ namespace Ryujinx.Cpu.Jit
 {
     class AddressSpacePartitioned : IDisposable
     {
-        public static readonly bool Use4KBProtection = false;
+        public static readonly bool Use4KBProtection = true;
 
         private const int PartitionBits = 25;
         private const ulong PartitionSize = 1UL << PartitionBits;

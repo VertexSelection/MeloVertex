@@ -1628,7 +1628,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             // on those platforms.
             if (!_physicalMemory.Supports4KBPages && !Storage.Info.IsLinear && !_context.IsGpuThread())
             {
-                return;
+                //return;
             }
 
             // If size is zero, we have nothing to flush.
