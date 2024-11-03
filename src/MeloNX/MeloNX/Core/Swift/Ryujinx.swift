@@ -98,7 +98,9 @@ class Ryujinx {
         // Fixes the Stubs.DispatchLoop Crash
         args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
         if config.fullscreen {
-            args.append(contentsOf: ["--fullscreen", String(config.fullscreen)])
+            // args.append(contentsOf: ["--fullscreen", String(config.fullscreen)])
+            args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
+            // exclusive-fullscreen
         }
         // Debug Logs
         args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])

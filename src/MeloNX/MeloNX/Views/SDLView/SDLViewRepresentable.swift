@@ -7,13 +7,14 @@
 
 import UIKit
 import SwiftUI
+import SDL2
 
 struct SDLViewRepresentable: UIViewRepresentable {
-    let configure: () -> Void
+    let configure: (UInt32) -> Void
     func makeUIView(context: Context) -> SDLView {
         // Configure (start ryu) before initialsing SDLView so SDLView can get the SDL_Window from Ryu
-        configure()
         let view = SDLView(frame: .zero)
+        configure(SDL_GetWindowID(view.sdlwin))
         return view
             
     }
