@@ -35,21 +35,24 @@ class Ryujinx {
         }
         
         isRunning = true
-
+        // Start The Emulation on the main thread
         DispatchQueue.main.async {
             do {
                 let args = self.buildCommandLineArgs(from: config)
+                
+                // Convert Arguments to ones that Ryujinx can Read
                 let cArgs = args.map { strdup($0) }
                 defer { cArgs.forEach { free($0) } }
-
                 var argvPtrs = cArgs
+                
+                // Start the emulation
                 let result = main_ryujinx_sdl(Int32(args.count), &argvPtrs)
-
+                
                 if result != 0 {
                     self.isRunning = false
                     throw RyujinxError.executionError(code: result)
                 }
-                
+                // Start The Emulation loop (probably not needed)
                 self.runEmulationLoop()
             } catch {
                 self.isRunning = false
@@ -87,27 +90,29 @@ class Ryujinx {
 
         // Add the game path
         args.append(config.gamepath)
-        
+        // Starts with vulkan
         args.append("--graphics-backend")
         args.append("Vulkan")
+        // Fixes the Stubs.DispatchLoop Crash
         args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
         args.append(contentsOf: ["--fullscreen", "true"])
+        // Debug Logs
         args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])
         args.append(contentsOf: ["--enable-trace-logs", String(config.tracelogs)])
 
-        // Add list input IDs option
+        // List the input ids
         if config.listinputids {
             args.append(contentsOf: ["--list-inputs-ids"])
         }
         
-        // Add input IDs, limiting to the first 4
+        // Append the input ids (limit to 4 just in case)
         if !config.inputids.isEmpty {
             config.inputids.prefix(4).enumerated().forEach { index, inputId in
                 args.append(contentsOf: ["--input-id-\(index + 1)", inputId])
             }
         }
 
-        // Add any additional arguments
+        // Apped any additional arguments
         args.append(contentsOf: config.additionalArgs)
 
         return args

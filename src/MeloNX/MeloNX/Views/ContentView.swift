@@ -15,10 +15,12 @@ struct ContentView: View {
     
     init() {
         // Initialize SDL
-        SDL_SetMainReady()
-        SDL_iPhoneSetEventPump(SDL_TRUE)
-        
-        SDL_Init(SDL_INIT_VIDEO)
+        DispatchQueue.main.async {
+            SDL_SetMainReady()
+            SDL_iPhoneSetEventPump(SDL_TRUE)
+            
+            SDL_Init(SDL_INIT_VIDEO)
+        }
     }
     
     func setupVirtualController() {
@@ -48,7 +50,7 @@ struct ContentView: View {
 
                 
                 let config = Ryujinx.Configuration(gamepath: game.path, debuglogs: true, tracelogs: true, listinputids: false, inputids: ["1-47150005-05ac-0000-0100-00004f066d01"])
-                
+                // Starts the emulation
                 do {
                     try Ryujinx().start(with: config)
                 } catch {
