@@ -173,3 +173,4 @@ PublishProfiles/
 
 # Glade backup files
 *.glade~
+src/MeloNX/MeloNX/Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib
