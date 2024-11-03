@@ -11,43 +11,68 @@ import SDL2
 
 class SDLView: UIView {
     var sdlwin: OpaquePointer?
-    var mtkview: UnsafeMutableRawPointer?
-
+    private var sdlWindowID: UInt32 = 1  // Adjust this ID based on Ryujinx window ID
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
-        makeSDLWindow()
+        startSDLWindowRetrieval()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        makeSDLWindow()
-        
+        startSDLWindowRetrieval()
+    }
+
+    private func startSDLWindowRetrieval() {
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            self.makeSDLWindow()
+            
+            // Stop the timer once the window is successfully retrieved
+            if self.sdlwin != nil {
+                timer.invalidate()
+            }
+        }
     }
 
     private func makeSDLWindow() {
-        DispatchQueue.main.async { [self] in
-            
-            // Gets window created from Ryujinx
-            sdlwin = SDL_GetWindowFromID(1)
-            
-            // Check if it got the window.
-            guard sdlwin != nil else {
-                print("Error getting SDL window: \(String(cString: SDL_GetError()))")
-                return
-            }
-            // Create metal View from the Window
-            mtkview = SDL_Metal_CreateView(sdlwin)
-            if mtkview == nil {
-                print("Failed to create SDL Metal view.")
-                return
-            }
-            
-            // Convert Metal View to Sublayer
-            if let metalLayerPointer = SDL_Metal_GetLayer(mtkview) {
-                let metalLayer = Unmanaged<CAMetalLayer>.fromOpaque(metalLayerPointer).takeUnretainedValue()
-                metalLayer.device = MTLCreateSystemDefaultDevice()
-                layer.addSublayer(metalLayer)
-            }
+        // Attempt to retrieve the SDL window created by Ryujinx
+        sdlwin = SDL_GetWindowFromID(sdlWindowID)
+        
+        // Check if we successfully retrieved the SDL window
+        guard sdlwin != nil else {
+            print("Error getting SDL window: \(String(cString: SDL_GetError()))")
+            return
         }
+        
+        print("SDL window retrieved successfully.")
+        
+        // Position SDL window over this UIView
+        DispatchQueue.main.async {
+            self.syncSDLWindowPosition()
+        }
+    }
+    
+    private func syncSDLWindowPosition() {
+        guard let sdlwin = sdlwin else { return }
+        DispatchQueue.main.async {
+            
+            // Get the frame of the UIView in screen coordinates
+            let viewFrameInWindow = self.convert(self.bounds, to: nil)
+            
+            // Set the SDL window position and size to match the UIView frame
+            SDL_SetWindowPosition(sdlwin, Int32(viewFrameInWindow.origin.x), Int32(viewFrameInWindow.origin.y))
+            SDL_SetWindowSize(sdlwin, Int32(viewFrameInWindow.width), Int32(viewFrameInWindow.height))
+            
+            // Bring SDL window to the front
+            SDL_RaiseWindow(sdlwin)
+        }
+        
+        print("SDL window positioned over SDLView.")
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Adjust SDL window whenever layout changes
+        syncSDLWindowPosition()
     }
 }

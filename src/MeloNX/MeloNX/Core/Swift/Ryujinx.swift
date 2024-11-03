@@ -17,14 +17,16 @@ class Ryujinx {
         let debuglogs: Bool
         let tracelogs: Bool
         let listinputids: Bool
+        let fullscreen: Bool
         var additionalArgs: [String]
 
-        init(gamepath: String, additionalArgs: [String] = [], debuglogs: Bool = false, tracelogs: Bool = false, listinputids: Bool = false, inputids: [String] = []) {
+        init(gamepath: String, additionalArgs: [String] = [], debuglogs: Bool = false, tracelogs: Bool = false, listinputids: Bool = false, inputids: [String] = [], ryufullscreen: Bool = false) {
             self.gamepath = gamepath
             self.debuglogs = debuglogs
             self.tracelogs = tracelogs
             self.inputids = inputids
             self.listinputids = listinputids
+            self.fullscreen = ryufullscreen
             self.additionalArgs = additionalArgs
         }
     }
@@ -87,7 +89,7 @@ class Ryujinx {
 
     private func buildCommandLineArgs(from config: Configuration) -> [String] {
         var args: [String] = []
-
+        
         // Add the game path
         args.append(config.gamepath)
         // Starts with vulkan
@@ -95,7 +97,9 @@ class Ryujinx {
         args.append("Vulkan")
         // Fixes the Stubs.DispatchLoop Crash
         args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
-        args.append(contentsOf: ["--fullscreen", "true"])
+        if config.fullscreen {
+            args.append(contentsOf: ["--fullscreen", String(config.fullscreen)])
+        }
         // Debug Logs
         args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])
         args.append(contentsOf: ["--enable-trace-logs", String(config.tracelogs)])
