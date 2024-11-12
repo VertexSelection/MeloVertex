@@ -54,12 +54,9 @@ struct ContentView: View {
     }
     
     func start(displayid: UInt32) {
-        setupVirtualController()
         
-        if theWindow == nil {
-            // Ensure theWindow is set
-            theWindow = UIApplication.shared.windows.first
-        }
+        
+        
         
         let config = Ryujinx.Configuration(
             gamepath: game!.path,
@@ -72,9 +69,19 @@ struct ContentView: View {
             inputids: ["1-47150005-05ac-0000-0100-00004f066d01"],
             ryufullscreen: true
         )
+        
+        
         // Start the emulation
         do {
+            if theWindow == nil {
+                // Ensure theWindow is set
+                theWindow = UIApplication.shared.windows.first
+            }
+            setupVirtualController()
+            
             try Ryujinx().start(with: config)
+            
+            
         } catch {
             print("Error \(error.localizedDescription)")
         }
