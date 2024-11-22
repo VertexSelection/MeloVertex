@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4E551F202CF128540096A2DF /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E80AA622CD7122800029585 /* GameController.framework */; };
 		4E80AA212CD705DD00029585 /* SDL in Frameworks */ = {isa = PBXBuildFile; productRef = 4E80AA202CD705DD00029585 /* SDL */; };
-		CA5941A82CE3142E00C2BC10 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E80AA622CD7122800029585 /* GameController.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,13 +64,33 @@
 			attributesByRelativePath = {
 				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (CodeSignOnCopy, );
 				"Dependencies/Dynamic Libraries/libMoltenVK.dylib" = (CodeSignOnCopy, );
+				"Dependencies/Dynamic Libraries/libavcodec.dylib" = (CodeSignOnCopy, );
+				"Dependencies/Dynamic Libraries/libavutil.dylib" = (CodeSignOnCopy, );
 				Dependencies/XCFrameworks/MoltenVK.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/SDL2.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libSPIRV.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libavcodec.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libavfilter.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libavformat.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libavutil.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libswresample.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libswscale.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libteakra.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 			};
 			buildPhase = 4E80AA092CD6FAA800029585 /* Embed Libraries */;
 			membershipExceptions = (
+				"Dependencies/Dynamic Libraries/libavcodec.dylib",
+				"Dependencies/Dynamic Libraries/libavutil.dylib",
 				"Dependencies/Dynamic Libraries/libMoltenVK.dylib",
 				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib",
+				Dependencies/XCFrameworks/libavcodec.xcframework,
+				Dependencies/XCFrameworks/libavfilter.xcframework,
+				Dependencies/XCFrameworks/libavformat.xcframework,
+				Dependencies/XCFrameworks/libavutil.xcframework,
+				Dependencies/XCFrameworks/libSPIRV.xcframework,
+				Dependencies/XCFrameworks/libswresample.xcframework,
+				Dependencies/XCFrameworks/libswscale.xcframework,
+				Dependencies/XCFrameworks/libteakra.xcframework,
 				Dependencies/XCFrameworks/MoltenVK.xcframework,
 				Dependencies/XCFrameworks/SDL2.xcframework,
 			);
@@ -104,7 +124,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CA5941A82CE3142E00C2BC10 /* GameController.framework in Frameworks */,
+				4E551F202CF128540096A2DF /* GameController.framework in Frameworks */,
 				4E80AA212CD705DD00029585 /* SDL in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -489,6 +509,15 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
@@ -531,6 +560,15 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);

@@ -7,9 +7,18 @@
 
 import Foundation
 import SwiftUI
+import SDL2
+import GameController
+
+struct Controller: Identifiable {
+    let id: String
+    let name: String
+}
 
 class Ryujinx {
     private var isRunning = false
+    
+    @Published var controllerMap: [Controller] = []
     
     public struct Configuration {
         let gamepath: String
@@ -96,15 +105,22 @@ class Ryujinx {
         args.append("--graphics-backend")
         args.append("Vulkan")
         // Fixes the Stubs.DispatchLoop Crash
+        // args.append(contentsOf: ["--memory-manager-mode", "HostMapped"])
         args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
         if config.fullscreen {
             // args.append(contentsOf: ["--fullscreen", String(config.fullscreen)])
             args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
+            args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
+            args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
             // exclusive-fullscreen
         }
         // Debug Logs
-        args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])
-        args.append(contentsOf: ["--enable-trace-logs", String(config.tracelogs)])
+        
+        args.append(contentsOf: ["--disable-shader-cache", "true"])
+        args.append(contentsOf: ["--disable-docked-mode", "true"])
+        args.append(contentsOf: ["--enable-texture-recompression", "true"])
+        // args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])
+        // args.append(contentsOf: ["--enable-trace-logs", String(config.tracelogs)])
 
         // List the input ids
         if config.listinputids {
@@ -123,8 +139,33 @@ class Ryujinx {
 
         return args
     }
+    
+    func getConnectedControllers() {
+        
+
+        // Retrieve all connected controllers
+        let controllers = GCController.controllers()
+        
+        for controller in controllers {
+            if let controllerID = controller.vendorName {
+                // Assuming controller's name is used as the ID
+                let controllerName = controller.vendorName ?? "Unknown Controller"
+                
+                // You can customize the key format here
+                DispatchQueue.main.async {
+                    self.controllerMap.append(Controller(id: controllerID, name: controllerName))
+                }
+            }
+        }
+        
+    }
+
+
 
     static func log(_ message: String) {
         print("[Ryujinx] \(message)")
     }
 }
+
+
+

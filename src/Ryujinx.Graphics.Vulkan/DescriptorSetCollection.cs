@@ -130,6 +130,7 @@ namespace Ryujinx.Graphics.Vulkan
             {
                 Console.WriteLine($"Buffer Handle: {info.ImageView.Handle}");
             }
+            Console.WriteLine($"BaseBinding: {baseBinding}, Type: {type}, ImageInfo Length: {imageInfo.Length}");
 
 
             fixed (DescriptorImageInfo* pImageInfo = imageInfo)

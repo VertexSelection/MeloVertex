@@ -107,6 +107,8 @@ namespace Ryujinx.Graphics.Vulkan
             SupportsMultiView = supportsMultiView;
             SupportsNullDescriptors = supportsNullDescriptors;
             SupportsPushDescriptors = supportsPushDescriptors;
+            // SupportsNullDescriptors = (OperatingSystem.IsIOS() ? false : supportsNullDescriptors);
+            // SupportsPushDescriptors = false;
             SupportsPrimitiveTopologyListRestart = supportsPrimitiveTopologyListRestart;
             SupportsPrimitiveTopologyPatchListRestart = supportsPrimitiveTopologyPatchListRestart;
             SupportsTransformFeedback = supportsTransformFeedback;

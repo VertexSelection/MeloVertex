@@ -13,15 +13,16 @@ struct ContentView: View {
     @State public var theWindow: UIWindow? = nil
     @State private var virtualController: GCVirtualController?
     @State var game: URL? = nil
+    @State var controllerss: [Controller] = []
     
     init() {
+        setMoltenVKSettings()
         // Initialize SDL
         DispatchQueue.main.async { [self] in
             SDL_SetMainReady()
             SDL_iPhoneSetEventPump(SDL_TRUE)
             SDL_Init(SDL_INIT_VIDEO)
             
-            // Apply the window patch early
             patchMakeKeyAndVisible()
         }
     }
@@ -43,40 +44,65 @@ struct ContentView: View {
     }
     
     var body: some View {
+        
+        
         if let game {
-            
-            SDLViewRepresentable { displayid in
-                start(displayid: displayid)
-            }
+            Text("Loading...")
+                .onAppear {
+                    start(displayid: 0)
+                }
         } else {
-            GameListView(startemu: $game)
+            HStack {
+                GameListView(startemu: $game)
+                    .onAppear() {
+                        Ryujinx().getConnectedControllers()
+                    }
+                /*
+                List {
+                    ForEach(Ryujinx().controllerMap) { controllers in
+                        Button {
+                            if controllerss.contains(where: { $0.id == controllers.id }) {
+                                controllerss.removeAll(where: { $0.id == controllers.id })
+                            } else {
+                                controllerss.append(controllers)
+                            }
+                        } label: {
+                            if controllerss.contains(where: { $0.id == controllers.id }) {
+                                HStack {
+                                    Text(controllers.name)
+                                    Spacer()
+                                    Text("enabled")
+                                }
+                            } else {
+                                Text(controllers.name)
+                            }
+                        }
+                    }
+                 
+                }
+                 */
+            }
         }
     }
     
     func start(displayid: UInt32) {
         
-        
-        
-        
         let config = Ryujinx.Configuration(
             gamepath: game!.path,
             additionalArgs: [
-                "--display-id", String(displayid)
+                // "--display-id", String(displayid)
+                "--expand-ram", "false"
             ],
             debuglogs: true,
             tracelogs: true,
             listinputids: false,
-            inputids: ["1-47150005-05ac-0000-0100-00004f066d01"],
+            inputids: ["1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
             ryufullscreen: true
         )
         
         
         // Start the emulation
         do {
-            if theWindow == nil {
-                // Ensure theWindow is set
-                theWindow = UIApplication.shared.windows.first
-            }
             setupVirtualController()
             
             try Ryujinx().start(with: config)
@@ -93,6 +119,30 @@ struct ContentView: View {
            let m2 = class_getInstanceMethod(uiwindowClass, #selector(UIWindow.wdb_makeKeyAndVisible)) {
             method_exchangeImplementations(m1, m2)
         }
+    }
+    
+    
+    private func setMoltenVKSettings() {
+        
+        
+        let settings: [String: String] = [
+            "MVK_DEBUG": "0",
+            "MVK_CONFIG_DEBUG": "1",
+            // "MVK_CONFIG_PREALLOCATE_DESCRIPTORS": "1",
+            // "MVK_CONFIG_VK_SEMAPHORE_SUPPORT_STYLE": "1",
+            // "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS": "1",
+            "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE": "512",
+            "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS": "1",
+            "MVK_USE_METAL_PRIVATE_API": "1",
+            // "MVK_CONFIG_RESUME_LOST_DEVICE": "0",
+            "MVK_CONFIG_USE_METAL_PRIVATE_API": "1",
+            // "MVK_CONFIG_ALLOW_METAL_NON_STANDARD_IMAGE_COPIES": "1"
+        ]
+        
+        settings.forEach { strins in
+            setenv(strins.key, strins.value, 1)
+        }
+        
     }
 }
 

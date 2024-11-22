@@ -13,17 +13,15 @@ struct GameListView: View {
     @State private var games: [URL] = []
 
     var body: some View {
-        NavigationView {
-            List(games, id: \.self) { game in
-                Button {
-                    startemu = game
-                } label: {
-                    Text(game.lastPathComponent)
-                }
+        List(games, id: \.self) { game in
+            Button {
+                startemu = game
+            } label: {
+                Text(game.lastPathComponent)
             }
-            .navigationTitle("Games")
-            .onAppear(perform: loadGames)
         }
+        .navigationTitle("Games")
+        .onAppear(perform: loadGames)
     }
 
     private func loadGames() {

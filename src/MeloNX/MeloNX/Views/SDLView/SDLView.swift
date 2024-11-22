@@ -44,7 +44,7 @@ class SDLView: UIView {
             0,
             width,
             height,
-            defaultFlags | fullscreenFlag | getWindowFlags()
+            defaultFlags | getWindowFlags() // | fullscreenFlag | getWindowFlags()
         )
 
         // Check if we successfully retrieved the SDL window

@@ -8,6 +8,7 @@
 import UIKit
 import SwiftUI
 import SDL2
+import GameController
 
 struct SDLViewRepresentable: UIViewRepresentable {
     let configure: (UInt32) -> Void
@@ -22,4 +23,5 @@ struct SDLViewRepresentable: UIViewRepresentable {
     func updateUIView(_ uiView: SDLView, context: Context) {
         
     }
+    
 }
