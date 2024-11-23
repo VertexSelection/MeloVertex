@@ -73,7 +73,8 @@ namespace Ryujinx.Graphics.Vulkan
     {
         if (info.Buffer.Handle == 0)
         {
-            throw new Exception("One of the buffers in bufferInfo is null or uninitialized.");
+            return;
+            // throw new Exception("One of the buffers in bufferInfo is null or uninitialized.");
         }
     }
 

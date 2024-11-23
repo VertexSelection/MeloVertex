@@ -96,7 +96,7 @@ struct ContentView: View {
             debuglogs: true,
             tracelogs: true,
             listinputids: false,
-            inputids: ["1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
+            inputids: [], // "1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
             ryufullscreen: true
         )
         
@@ -134,7 +134,7 @@ struct ContentView: View {
             "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE": "512",
             "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS": "1",
             "MVK_USE_METAL_PRIVATE_API": "1",
-            // "MVK_CONFIG_RESUME_LOST_DEVICE": "0",
+            // "MVK_CONFIG_RESUME_LOST_DEVICE": "1",
             "MVK_CONFIG_USE_METAL_PRIVATE_API": "1",
             // "MVK_CONFIG_ALLOW_METAL_NON_STANDARD_IMAGE_COPIES": "1"
         ]

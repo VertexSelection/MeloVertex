@@ -423,7 +423,7 @@ namespace Ryujinx.Graphics.Vulkan
                 {
                     SType = StructureType.PhysicalDeviceRobustness2FeaturesExt,
                     PNext = pExtendedFeatures,
-                    NullDescriptor = supportedFeaturesRobustness2.NullDescriptor,
+                    // NullDescriptor = supportedFeaturesRobustness2.NullDescriptor,
                 };
 
                 pExtendedFeatures = &featuresRobustness2;
