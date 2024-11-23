@@ -96,7 +96,7 @@ struct ContentView: View {
             tracelogs: true,
             listinputids: false,
             inputids: ["1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
-            ryufullscreen: false
+            ryufullscreen: true
             
         )
         

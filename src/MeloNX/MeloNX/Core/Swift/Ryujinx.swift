@@ -96,9 +96,9 @@ class Ryujinx {
         args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
         if config.fullscreen {
             // args.append(contentsOf: ["--fullscreen", String(config.fullscreen)])
-            //args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
-            // args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
-           //  args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
+            args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
+            args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
+            args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
             // exclusive-fullscreen
         }
         // Debug Logs
@@ -106,8 +106,8 @@ class Ryujinx {
         args.append(contentsOf: ["--disable-shader-cache", "true"])
         args.append(contentsOf: ["--disable-docked-mode", "true"])
         args.append(contentsOf: ["--enable-texture-recompression", "true"])
-        // args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])
-        // args.append(contentsOf: ["--enable-trace-logs", String(config.tracelogs)])
+        args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])
+        args.append(contentsOf: ["--enable-trace-logs", String(config.tracelogs)])
 
         // List the input ids
         if config.listinputids {
@@ -117,7 +117,7 @@ class Ryujinx {
         // Append the input ids (limit to 4 just in case)
         if !config.inputids.isEmpty {
             config.inputids.prefix(4).enumerated().forEach { index, inputId in
-                args.append(contentsOf: ["--input-id-\(index + 1)", inputId])
+                // args.append(contentsOf: ["--input-id-\(index + 1)", inputId])
             }
         }
 
