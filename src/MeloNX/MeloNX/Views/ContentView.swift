@@ -47,10 +47,15 @@ struct ContentView: View {
         
         
         if let game {
-            Text("Loading...")
-                .onAppear {
+            ZStack {
+                SDLViewRepresentable { displayid in
                     start(displayid: 0)
                 }
+                Text("Loading...")
+                    .onAppear {
+                       // start(displayid: 0)
+                    }
+            }
         } else {
             HStack {
                 GameListView(startemu: $game)
@@ -92,10 +97,10 @@ struct ContentView: View {
             additionalArgs: [
                 // "--display-id", String(displayid)
             ],
-            debuglogs: true,
-            tracelogs: true,
+            debuglogs: false,
+            tracelogs: false,
             listinputids: false,
-            inputids: ["1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
+            inputids: [], //"1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
             ryufullscreen: true
             
         )
@@ -129,7 +134,8 @@ struct ContentView: View {
             "MVK_DEBUG": "1",
             "MVK_CONFIG_DEBUG": "1",
             "MVK_CONFIG_PREALLOCATE_DESCRIPTORS": "1",
-            // "MVK_CONFIG_VK_SEMAPHORE_SUPPORT_STYLE": "1",
+            "MVK_CONFIG_TEXTURE_1D_AS_2D": "0",
+            "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS": "0",
             "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS": "3",
             "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE": "512",
             "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS": "1",
@@ -140,7 +146,7 @@ struct ContentView: View {
         ]
         
         settings.forEach { strins in
-            setenv(strins.key, strins.value, 1)
+           setenv(strins.key, strins.value, 1)
         }
         
     }
