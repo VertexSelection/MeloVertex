@@ -107,7 +107,7 @@ namespace Ryujinx.Graphics.Vulkan
 
             _shaders = internalShaders;
 
-            bool usePushDescriptors = /*!isMinimal && VulkanConfiguration.UsePushDescriptors &&*/ _gd.Capabilities.SupportsPushDescriptors;
+            bool usePushDescriptors = !isMinimal && VulkanConfiguration.UsePushDescriptors && _gd.Capabilities.SupportsPushDescriptors;
 
             _plce = gd.PipelineLayoutCache.GetOrCreate(gd, device, resourceLayout.Sets, usePushDescriptors);
 

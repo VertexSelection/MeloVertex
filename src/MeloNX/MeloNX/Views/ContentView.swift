@@ -40,7 +40,7 @@ struct ContentView: View {
         
         let controller = GCVirtualController(configuration: configuration)
         self.virtualController = controller
-        controller.connect()
+        self.virtualController?.connect()
     }
     
     var body: some View {
@@ -91,13 +91,13 @@ struct ContentView: View {
             gamepath: game!.path,
             additionalArgs: [
                 // "--display-id", String(displayid)
-                "--expand-ram", "false"
             ],
             debuglogs: true,
             tracelogs: true,
             listinputids: false,
-            inputids: [], // "1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
-            ryufullscreen: true
+            inputids: ["1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
+            ryufullscreen: false
+            
         )
         
         
@@ -126,15 +126,15 @@ struct ContentView: View {
         
         
         let settings: [String: String] = [
-            "MVK_DEBUG": "0",
+            "MVK_DEBUG": "1",
             "MVK_CONFIG_DEBUG": "1",
-            // "MVK_CONFIG_PREALLOCATE_DESCRIPTORS": "1",
+            "MVK_CONFIG_PREALLOCATE_DESCRIPTORS": "1",
             // "MVK_CONFIG_VK_SEMAPHORE_SUPPORT_STYLE": "1",
-            // "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS": "1",
+            "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS": "3",
             "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE": "512",
             "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS": "1",
             "MVK_USE_METAL_PRIVATE_API": "1",
-            // "MVK_CONFIG_RESUME_LOST_DEVICE": "1",
+            "MVK_CONFIG_RESUME_LOST_DEVICE": "1",
             "MVK_CONFIG_USE_METAL_PRIVATE_API": "1",
             // "MVK_CONFIG_ALLOW_METAL_NON_STANDARD_IMAGE_COPIES": "1"
         ]
@@ -150,16 +150,9 @@ extension UIWindow {
     @objc func wdb_makeKeyAndVisible() {
         print("Making window key and visible...")
         
-        if #available(iOS 13.0, *) {
-            self.windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
-        }
+        self.windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
         
         self.wdb_makeKeyAndVisible()
-        
-        // Update ContentView's reference to this window instance
-        if let rootView = self.rootViewController as? UIHostingController<ContentView> {
-            rootView.rootView.theWindow = self
-        }
     }
 }
 

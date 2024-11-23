@@ -19,7 +19,7 @@ namespace ARMeilleure.Translation.Cache
 
         private const int CodeAlignment = 4; // Bytes.
         private const int CacheSize = 2047 * 1024 * 1024;
-        private const int CacheSizeIOS = 512 * 768 * 1024;
+        private const int CacheSizeIOS = 512 * 1024 * 1024;
 
         private static ReservedRegion _jitRegion;
         private static JitCacheInvalidation _jitCacheInvalidator;

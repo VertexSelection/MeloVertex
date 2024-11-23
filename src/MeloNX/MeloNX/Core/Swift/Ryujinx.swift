@@ -63,8 +63,6 @@ class Ryujinx {
                     self.isRunning = false
                     throw RyujinxError.executionError(code: result)
                 }
-                // Start The Emulation loop (probably not needed)
-                self.runEmulationLoop()
             } catch {
                 self.isRunning = false
                 Self.log("Emulation failed to start: \(error)")
@@ -72,17 +70,6 @@ class Ryujinx {
         }
     }
 
-    private func runEmulationLoop() {
-        let runLoop = RunLoop.current
-        let port = Port()
-        runLoop.add(port, forMode: .default)
-        
-        while isRunning && runLoop.run(mode: .default, before: .distantFuture) {
-            autoreleasepool { }
-        }
-
-        Self.log("Emulation loop ended")
-    }
 
     func stop() throws {
         guard isRunning else {
@@ -109,9 +96,9 @@ class Ryujinx {
         args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
         if config.fullscreen {
             // args.append(contentsOf: ["--fullscreen", String(config.fullscreen)])
-            args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
-            args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
-            args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
+            //args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
+            // args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
+           //  args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
             // exclusive-fullscreen
         }
         // Debug Logs
