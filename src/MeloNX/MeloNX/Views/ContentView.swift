@@ -61,12 +61,9 @@ struct ContentView: View {
             
             if let game {
                 ZStack {
-                    SDLViewRepresentable { displayid in
-                        start(displayid: 0)
-                    }
                     Text("Loading...")
                         .onAppear {
-                            // start(displayid: 0)
+                            start(displayid: 0)
                         }
                 }
             } else {
