@@ -15,6 +15,8 @@ extern "C" {
 // Declare the main_ryujinx_sdl function, matching the signature
 int main_ryujinx_sdl(int argc, char **argv);
 
+const char* get_game_controllers();
+
 #ifdef __cplusplus
 }
 #endif

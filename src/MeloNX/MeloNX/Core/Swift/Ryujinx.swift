@@ -10,7 +10,7 @@ import SwiftUI
 import SDL2
 import GameController
 
-struct Controller: Identifiable {
+struct Controller: Identifiable, Hashable {
     let id: String
     let name: String
 }
@@ -133,23 +133,33 @@ class Ryujinx {
         return args
     }
     
-    func getConnectedControllers() {
+    func getConnectedControllers() -> [Controller] {
         
-
-        // Retrieve all connected controllers
-        let controllers = GCController.controllers()
+        guard let jsonPtr = get_game_controllers() else {
+            return []
+        }
         
-        for controller in controllers {
-            if let controllerID = controller.vendorName {
-                // Assuming controller's name is used as the ID
-                let controllerName = controller.vendorName ?? "Unknown Controller"
-                
-                // You can customize the key format here
-                DispatchQueue.main.async {
-                    self.controllerMap.append(Controller(id: controllerID, name: controllerName))
+        // Convert the unmanaged memory (C string) to a Swift String
+        let jsonString = String(cString: jsonPtr)
+        
+        var controllers: [Controller] = []
+        
+        // Splitting the string by newline
+        let lines = jsonString.components(separatedBy: "\n")
+        
+        // Parsing each line
+        for line in lines {
+            if line.contains(":") {
+                let parts = line.components(separatedBy: ":")
+                if parts.count == 2 {
+                    let id = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+                    let name = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                    controllers.append(Controller(id: id, name: name))
                 }
             }
         }
+        
+        return controllers
         
     }
 

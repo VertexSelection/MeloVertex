@@ -39,6 +39,13 @@ using System.Threading;
 using ConfigGamepadInputId = Ryujinx.Common.Configuration.Hid.Controller.GamepadInputId;
 using ConfigStickInputId = Ryujinx.Common.Configuration.Hid.Controller.StickInputId;
 using Key = Ryujinx.Common.Configuration.Hid.Key;
+using System.Linq;
+
+public class GamepadInfo
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+}
 
 namespace Ryujinx.Headless.SDL2
 {
@@ -123,6 +130,38 @@ namespace Ryujinx.Headless.SDL2
             Parser.Default.ParseArguments<Options>(args)
             .WithParsed(Load)
             .WithNotParsed(errors => errors.Output());
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "get_game_controllers")]
+        public static unsafe IntPtr GetGamepadList()
+        {
+            List<GamepadInfo> gamepads = new List<GamepadInfo>();
+            IGamepad gamepad;
+            _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
+
+            // Collect gamepads from the keyboard driver
+            foreach (string id in _inputManager.KeyboardDriver.GamepadsIds)
+            {
+                gamepad = _inputManager.KeyboardDriver.GetGamepad(id);
+                gamepads.Add(new GamepadInfo { Id = id, Name = gamepad.Name });
+                gamepad.Dispose();
+            }
+
+            // Collect gamepads from the gamepad driver
+            foreach (string id in _inputManager.GamepadDriver.GamepadsIds)
+            {
+                gamepad = _inputManager.GamepadDriver.GetGamepad(id);
+                gamepads.Add(new GamepadInfo { Id = id, Name = gamepad.Name });
+                gamepad.Dispose();
+            }
+
+            // Serialize the gamepad list to a custom string format
+            string result = string.Join("\n", gamepads.Select(g => $"{g.Id}:{g.Name}")); // Ensure System.Linq is available
+
+            // Convert the string to unmanaged memory
+            IntPtr ptr = Marshal.StringToHGlobalAnsi(result);
+
+            return ptr;
         }
 
         private static InputConfig HandlePlayerConfiguration(string inputProfileName, string inputId, PlayerIndex index)

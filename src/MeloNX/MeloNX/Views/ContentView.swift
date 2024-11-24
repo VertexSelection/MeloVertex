@@ -18,7 +18,8 @@ struct ContentView: View {
     @State public var theWindow: UIWindow? = nil
     @State private var virtualController: GCVirtualController?
     @State var game: URL? = nil
-    @State var controllerss: [Controller] = []
+    @State var controllersList: [Controller] = []
+    @State var currentControllers: [Controller] = []
     
     @State private var settings: [MoltenVKSettings] = [
         MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"),
@@ -56,40 +57,54 @@ struct ContentView: View {
     }
     
     var body: some View {
-        
-        
-        if let game {
-            ZStack {
-                SDLViewRepresentable { displayid in
-                    start(displayid: 0)
+        NavigationStack {
+            
+            if let game {
+                ZStack {
+                    SDLViewRepresentable { displayid in
+                        start(displayid: 0)
+                    }
+                    Text("Loading...")
+                        .onAppear {
+                            // start(displayid: 0)
+                        }
                 }
-                Text("Loading...")
-                    .onAppear {
-                       // start(displayid: 0)
-                    }
-            }
-        } else {
-            HStack {
-                GameListView(startemu: $game)
-                    .onAppear() {
-                        Ryujinx().getConnectedControllers()
-                    }
-                
-                List {
-                    ForEach($settings, id: \.self) { $setting in
-                        HStack {
-                            Text(setting.string)
-                                .padding()
-                            TextField("Value", text: $setting.value)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .onChange(of: setting.value) { newValue in
-                                    setenv(setting.string, newValue, 1)
+            } else {
+                HStack {
+                    GameListView(startemu: $game)
+                        .onAppear() {
+                            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+                                controllersList = Ryujinx().getConnectedControllers()
+                                controllersList.removeAll(where: { $0.id == "0" })
+                            }
+                        }
+                    
+                    List {
+                        Button {
+                            controllersList = Ryujinx().getConnectedControllers()
+                            controllersList.removeAll(where: { $0.id == "0" })
+                        } label: {
+                            Text("Refresh")
+                        }
+                        ForEach(controllersList, id: \.self) { controller in
+                            
+                            Button {
+                                if currentControllers.contains(where: { $0.id == controller.id }) {
+                                    currentControllers.removeAll(where: { $0.id == controller.id })
+                                } else {
+                                    currentControllers.append(controller)
                                 }
+                            } label: {
+                                Text(controller.name)
+                            }
+                            Spacer()
+                            if currentControllers.contains(where: { $0.id == controller.id }) {
+                                Image(systemName: "checkmark.circle.fill")
+                            }
                         }
                     }
-                 
+                    
                 }
-                 
             }
         }
     }
@@ -104,7 +119,7 @@ struct ContentView: View {
             debuglogs: false,
             tracelogs: false,
             listinputids: false,
-            inputids: ["1-dc180005-045e-0000-130b-0000ff870001"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
+            inputids: currentControllers.map(\.id),// "1-dc180005-045e-0000-130b-0000ff870001"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
             ryufullscreen: true
             
         )
