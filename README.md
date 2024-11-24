@@ -15,7 +15,7 @@
 
 ## Compatibility
 
-As of October 2024, MeloNX can only play the audio of games, As of November we are very close to video
+As of October 2024, MeloNX can only play the audio of games, As of November a lot of games run and the memory hsage is messed up.
 
 ## Usage
 
