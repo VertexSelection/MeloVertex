@@ -110,7 +110,7 @@ namespace Ryujinx.Graphics.Vulkan
             _textures.AsSpan().Fill(initialImageInfo);
             _images.AsSpan().Fill(initialImageInfo);
 
-            if (gd.Capabilities.SupportsNullDescriptors)
+            if (gd.Capabilities.SupportsNullDescriptors && !OperatingSystem.IsIOS())
             {
                 // If null descriptors are supported, we can pass null as the handle.
                 _dummyBuffer = null;
@@ -580,9 +580,12 @@ namespace Ryujinx.Graphics.Vulkan
                             {
                                 texture.Sampler = _dummySampler.GetSampler().Get(cbs).Value;
                             }
+
+                            Span<DescriptorImageInfo> singleTexture = textures.Slice(i, 1);
+                            dsc.UpdateImages(0, binding + i, singleTexture, DescriptorType.CombinedImageSampler);
                         }
 
-                        dsc.UpdateImages(0, binding, textures[..count], DescriptorType.CombinedImageSampler);
+                        // dsc.UpdateImages(0, binding, textures[..count], DescriptorType.CombinedImageSampler);
                     }
                     else
                     {
@@ -605,9 +608,11 @@ namespace Ryujinx.Graphics.Vulkan
                         for (int i = 0; i < count; i++)
                         {
                             images[i].ImageView = _imageRefs[binding + i]?.Get(cbs).Value ?? default;
+                            Span<DescriptorImageInfo> singleImage = images.Slice(i, 1);
+                            dsc.UpdateImages(0, binding + i, singleImage, DescriptorType.StorageImage);
                         }
 
-                        dsc.UpdateImages(0, binding, images[..count], DescriptorType.StorageImage);
+                        // dsc.UpdateImages(0, binding, images[..count], DescriptorType.StorageImage);
                     }
                     else
                     {

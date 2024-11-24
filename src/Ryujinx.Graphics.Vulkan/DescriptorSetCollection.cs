@@ -130,6 +130,7 @@ namespace Ryujinx.Graphics.Vulkan
             {
                 Console.WriteLine($"Buffer Handle: {info.ImageView.Handle}");
             }
+            Console.WriteLine($"SetIndex: {setIndex}, BaseBinding: {baseBinding}, DescriptorType: {type}, ImageInfo Count: {imageInfo.Length}");
 
 
             fixed (DescriptorImageInfo* pImageInfo = imageInfo)
@@ -140,7 +141,7 @@ namespace Ryujinx.Graphics.Vulkan
                     DstSet = _descriptorSets[setIndex],
                     DstBinding = (uint)baseBinding,
                     DescriptorType = type,
-                    DescriptorCount = (uint)1,
+                    DescriptorCount = (uint)imageInfo.Length,
                     PImageInfo = pImageInfo,
                 };
 
@@ -179,7 +180,7 @@ namespace Ryujinx.Graphics.Vulkan
                             DstSet = _descriptorSets[setIndex],
                             DstBinding = (uint)(baseBinding + i),
                             DescriptorType = DescriptorType.CombinedImageSampler,
-                            DescriptorCount = (uint)count,
+                            DescriptorCount = 1,
                             PImageInfo = pImageInfo,
                         };
 
@@ -235,7 +236,7 @@ namespace Ryujinx.Graphics.Vulkan
                             DstSet = _descriptorSets[setIndex],
                             DstBinding = (uint)baseBinding + i,
                             DescriptorType = type,
-                            DescriptorCount = count,
+                            DescriptorCount = 1,
                             PTexelBufferView = pTexelBufferView + i,
                         };
 

@@ -9,20 +9,32 @@ import SwiftUI
 import SDL2
 import GameController
 
+struct MoltenVKSettings: Codable, Hashable {
+    let string: String
+    var value: String
+}
+
 struct ContentView: View {
     @State public var theWindow: UIWindow? = nil
     @State private var virtualController: GCVirtualController?
     @State var game: URL? = nil
     @State var controllerss: [Controller] = []
     
+    @State private var settings: [MoltenVKSettings] = [
+        MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"),
+        MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "0"),
+        MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "1024"),
+        MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", value: "0"),
+        MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1")
+    ]
+    
     init() {
-        setMoltenVKSettings()
         // Initialize SDL
         DispatchQueue.main.async { [self] in
+            setMoltenVKSettings()
             SDL_SetMainReady()
             SDL_iPhoneSetEventPump(SDL_TRUE)
             SDL_Init(SDL_INIT_VIDEO)
-            
             patchMakeKeyAndVisible()
         }
     }
@@ -62,30 +74,22 @@ struct ContentView: View {
                     .onAppear() {
                         Ryujinx().getConnectedControllers()
                     }
-                /*
+                
                 List {
-                    ForEach(Ryujinx().controllerMap) { controllers in
-                        Button {
-                            if controllerss.contains(where: { $0.id == controllers.id }) {
-                                controllerss.removeAll(where: { $0.id == controllers.id })
-                            } else {
-                                controllerss.append(controllers)
-                            }
-                        } label: {
-                            if controllerss.contains(where: { $0.id == controllers.id }) {
-                                HStack {
-                                    Text(controllers.name)
-                                    Spacer()
-                                    Text("enabled")
+                    ForEach($settings, id: \.self) { $setting in
+                        HStack {
+                            Text(setting.string)
+                                .padding()
+                            TextField("Value", text: $setting.value)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .onChange(of: setting.value) { newValue in
+                                    setenv(setting.string, newValue, 1)
                                 }
-                            } else {
-                                Text(controllers.name)
-                            }
                         }
                     }
                  
                 }
-                 */
+                 
             }
         }
     }
@@ -100,7 +104,7 @@ struct ContentView: View {
             debuglogs: false,
             tracelogs: false,
             listinputids: false,
-            inputids: [], //"1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
+            inputids: ["1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
             ryufullscreen: true
             
         )
@@ -128,27 +132,9 @@ struct ContentView: View {
     
     
     private func setMoltenVKSettings() {
-        
-        
-        let settings: [String: String] = [
-            "MVK_DEBUG": "1",
-            "MVK_CONFIG_DEBUG": "1",
-            "MVK_CONFIG_PREALLOCATE_DESCRIPTORS": "1",
-            "MVK_CONFIG_TEXTURE_1D_AS_2D": "0",
-            "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS": "0",
-            "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS": "3",
-            "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE": "512",
-            "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS": "1",
-            "MVK_USE_METAL_PRIVATE_API": "1",
-            "MVK_CONFIG_RESUME_LOST_DEVICE": "1",
-            "MVK_CONFIG_USE_METAL_PRIVATE_API": "1",
-            // "MVK_CONFIG_ALLOW_METAL_NON_STANDARD_IMAGE_COPIES": "1"
-        ]
-        
-        settings.forEach { strins in
-           setenv(strins.key, strins.value, 1)
+        settings.forEach { setting in
+            setenv(setting.string, setting.value, 1)
         }
-        
     }
 }
 
