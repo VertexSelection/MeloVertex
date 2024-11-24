@@ -84,19 +84,20 @@ struct ContentView: View {
                             Text("Refresh")
                         }
                         ForEach(controllersList, id: \.self) { controller in
-                            
-                            Button {
-                                if currentControllers.contains(where: { $0.id == controller.id }) {
-                                    currentControllers.removeAll(where: { $0.id == controller.id })
-                                } else {
-                                    currentControllers.append(controller)
+                            HStack {
+                                Button {
+                                    if currentControllers.contains(where: { $0.id == controller.id }) {
+                                        currentControllers.removeAll(where: { $0.id == controller.id })
+                                    } else {
+                                        currentControllers.append(controller)
+                                    }
+                                } label: {
+                                    Text(controller.name)
                                 }
-                            } label: {
-                                Text(controller.name)
-                            }
-                            Spacer()
-                            if currentControllers.contains(where: { $0.id == controller.id }) {
-                                Image(systemName: "checkmark.circle.fill")
+                                Spacer()
+                                if currentControllers.contains(where: { $0.id == controller.id }) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                }
                             }
                         }
                     }
