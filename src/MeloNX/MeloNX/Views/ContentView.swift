@@ -104,7 +104,7 @@ struct ContentView: View {
             debuglogs: false,
             tracelogs: false,
             listinputids: false,
-            inputids: ["1-1fd70005-057e-0000-0920-0000ff870000"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
+            inputids: ["1-dc180005-045e-0000-130b-0000ff870001"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
             ryufullscreen: true
             
         )

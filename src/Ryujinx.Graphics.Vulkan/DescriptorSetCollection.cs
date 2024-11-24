@@ -50,6 +50,8 @@ namespace Ryujinx.Graphics.Vulkan
         public unsafe void UpdateBuffers(int setIndex, int baseBinding, ReadOnlySpan<DescriptorBufferInfo> bufferInfo, DescriptorType type)
 {
 
+    /*
+
     // DEBUG: Validate inputs
     if (bufferInfo.Length == 0)
     {
@@ -76,6 +78,7 @@ namespace Ryujinx.Graphics.Vulkan
             throw new Exception("One of the buffers in bufferInfo is null or uninitialized.");
         }
     }
+    */
 
     // Proceed if all checks pass
     fixed (DescriptorBufferInfo* pBufferInfo = bufferInfo)
@@ -116,6 +119,7 @@ namespace Ryujinx.Graphics.Vulkan
 
         public unsafe void UpdateImages(int setIndex, int baseBinding, ReadOnlySpan<DescriptorImageInfo> imageInfo, DescriptorType type)
         {
+            /*
 
             // DEBUG: Check if imageInfo is Empty
             if (imageInfo.Length == 0)
@@ -131,6 +135,7 @@ namespace Ryujinx.Graphics.Vulkan
                 Console.WriteLine($"Buffer Handle: {info.ImageView.Handle}");
             }
             Console.WriteLine($"SetIndex: {setIndex}, BaseBinding: {baseBinding}, DescriptorType: {type}, ImageInfo Count: {imageInfo.Length}");
+            */
 
 
             fixed (DescriptorImageInfo* pImageInfo = imageInfo)

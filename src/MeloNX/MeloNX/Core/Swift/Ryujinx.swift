@@ -88,9 +88,11 @@ class Ryujinx {
         
         // Add the game path
         args.append(config.gamepath)
+        
         // Starts with vulkan
         args.append("--graphics-backend")
         args.append("Vulkan")
+        
         // Fixes the Stubs.DispatchLoop Crash
         // args.append(contentsOf: ["--memory-manager-mode", "HostMapped"])
         args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
@@ -101,11 +103,11 @@ class Ryujinx {
             args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
             // exclusive-fullscreen
         }
-        // Debug Logs
-        
-        args.append(contentsOf: ["--disable-shader-cache", "true"])
+        args.append(contentsOf: ["--disable-vsync", "true"]) // ios already forces vsync
+        args.append(contentsOf: ["--disable-shader-cache", "false"])
         args.append(contentsOf: ["--disable-docked-mode", "true"])
         args.append(contentsOf: ["--enable-texture-recompression", "true"])
+        
         if config.debuglogs {
             args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])
         }
