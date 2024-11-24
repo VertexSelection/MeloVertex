@@ -23,7 +23,7 @@
                <BreakpointActionProxy
                   ActionExtensionID = "Xcode.BreakpointAction.DebuggerCommand">
                   <ActionContent
-                     consoleCommand = "process handle --stop false SIGUSR1">
+                     consoleCommand = "process handle -s false -n false">
                   </ActionContent>
                </BreakpointActionProxy>
             </Actions>
@@ -43,6 +43,31 @@
             endingLineNumber = "60"
             landmarkName = "makeSDLWindow()"
             landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "900AC928-2B0F-4BBE-A47D-D6B17570E9BB"
+            shouldBeEnabled = "Yes"
+            nameForDebugger = "SIGUSR1-Disable"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MeloNX/Views/ContentView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "131"
+            endingLineNumber = "131"
+            landmarkName = "start(displayid:)"
+            landmarkType = "7">
+            <Actions>
+               <BreakpointActionProxy
+                  ActionExtensionID = "Xcode.BreakpointAction.DebuggerCommand">
+                  <ActionContent
+                     consoleCommand = "process handle --stop false SIGUSR1">
+                  </ActionContent>
+               </BreakpointActionProxy>
+            </Actions>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

@@ -20,25 +20,48 @@ class Ryujinx {
     
     @Published var controllerMap: [Controller] = []
     
-    public struct Configuration {
-        let gamepath: String
-        let inputids: [String]
-        let debuglogs: Bool
-        let tracelogs: Bool
-        let listinputids: Bool
-        let fullscreen: Bool
+    public struct Configuration : Codable {
+        var gamepath: String
+        var inputids: [String]
+        var debuglogs: Bool
+        var tracelogs: Bool
+        var listinputids: Bool
+        var fullscreen: Bool
+        var hostMappedMemory: Bool
+        var disableVSync: Bool
+        var disableShaderCache: Bool
+        var disableDockedMode: Bool
+        var enableTextureRecompression: Bool
         var additionalArgs: [String]
 
-        init(gamepath: String, additionalArgs: [String] = [], debuglogs: Bool = false, tracelogs: Bool = false, listinputids: Bool = false, inputids: [String] = [], ryufullscreen: Bool = false) {
+        init(gamepath: String,
+             inputids: [String] = [],
+             debuglogs: Bool = false,
+             tracelogs: Bool = false,
+             listinputids: Bool = false,
+             fullscreen: Bool = false,
+             hostMappedMemory: Bool = false,
+             disableVSync: Bool = true,
+             disableShaderCache: Bool = false,
+             disableDockedMode: Bool = true,
+             enableTextureRecompression: Bool = true,
+             additionalArgs: [String] = []) {
             self.gamepath = gamepath
+            self.inputids = inputids
             self.debuglogs = debuglogs
             self.tracelogs = tracelogs
-            self.inputids = inputids
             self.listinputids = listinputids
-            self.fullscreen = ryufullscreen
+            self.fullscreen = fullscreen
+            self.disableVSync = disableVSync
+            self.disableShaderCache = disableShaderCache
+            self.disableDockedMode = disableDockedMode
+            self.enableTextureRecompression = enableTextureRecompression
             self.additionalArgs = additionalArgs
+            self.hostMappedMemory = hostMappedMemory
         }
     }
+
+
     
     func start(with config: Configuration) throws {
         guard !isRunning else {
@@ -94,25 +117,36 @@ class Ryujinx {
         args.append("Vulkan")
         
         // Fixes the Stubs.DispatchLoop Crash
-        // args.append(contentsOf: ["--memory-manager-mode", "HostMapped"])
-        args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
+        if config.hostMappedMemory {
+            args.append(contentsOf: ["--memory-manager-mode", "HostMapped"])
+        } else {
+            args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
+        }
         if config.fullscreen {
-            // args.append(contentsOf: ["--fullscreen", String(config.fullscreen)])
             args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
             args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
             args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
-            // exclusive-fullscreen
         }
-        args.append(contentsOf: ["--disable-vsync", "true"]) // ios already forces vsync
-        args.append(contentsOf: ["--disable-shader-cache", "false"])
-        args.append(contentsOf: ["--disable-docked-mode", "true"])
-        args.append(contentsOf: ["--enable-texture-recompression", "true"])
+        
+        // Adding default args directly into additionalArgs
+        if config.disableVSync {
+            args.append("--disable-vsync")
+        }
+        if config.disableShaderCache {
+            args.append("--disable-shader-cache")
+        }
+        if config.disableDockedMode {
+            args.append("--disable-docked-mode")
+        }
+        if config.enableTextureRecompression {
+            args.append("--enable-texture-recompression")
+        }
         
         if config.debuglogs {
-            args.append(contentsOf: ["--enable-debug-logs", String(config.debuglogs)])
+            args.append(contentsOf: ["--enable-debug-logs"])
         }
         if config.tracelogs {
-            args.append(contentsOf: ["--enable-trace-logs", String(config.tracelogs)])
+            args.append(contentsOf: ["--enable-trace-logs"])
         }
 
         // List the input ids

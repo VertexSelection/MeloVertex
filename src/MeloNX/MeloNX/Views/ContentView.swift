@@ -20,6 +20,7 @@ struct ContentView: View {
     @State var game: URL? = nil
     @State var controllersList: [Controller] = []
     @State var currentControllers: [Controller] = []
+    @State var config: Ryujinx.Configuration = Ryujinx.Configuration(gamepath: "")
     
     @State private var settings: [MoltenVKSettings] = [
         MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"),
@@ -77,26 +78,35 @@ struct ContentView: View {
                         }
                     
                     List {
-                        Button {
-                            controllersList = Ryujinx().getConnectedControllers()
-                            controllersList.removeAll(where: { $0.id == "0" })
-                        } label: {
-                            Text("Refresh")
+                        Section("Settings") {
+                            NavigationLink {
+                                SettingsView(config: $config)
+                            } label: {
+                                Text("Config")
+                            }
                         }
-                        ForEach(controllersList, id: \.self) { controller in
-                            HStack {
-                                Button {
-                                    if currentControllers.contains(where: { $0.id == controller.id }) {
-                                        currentControllers.removeAll(where: { $0.id == controller.id })
-                                    } else {
-                                        currentControllers.append(controller)
+                        Section("Controller") {
+                            Button {
+                                controllersList = Ryujinx().getConnectedControllers()
+                                controllersList.removeAll(where: { $0.id == "0" })
+                            } label: {
+                                Text("Refresh")
+                            }
+                            ForEach(controllersList, id: \.self) { controller in
+                                HStack {
+                                    Button {
+                                        if currentControllers.contains(where: { $0.id == controller.id }) {
+                                            currentControllers.removeAll(where: { $0.id == controller.id })
+                                        } else {
+                                            currentControllers.append(controller)
+                                        }
+                                    } label: {
+                                        Text(controller.name)
                                     }
-                                } label: {
-                                    Text(controller.name)
-                                }
-                                Spacer()
-                                if currentControllers.contains(where: { $0.id == controller.id }) {
-                                    Image(systemName: "checkmark.circle.fill")
+                                    Spacer()
+                                    if currentControllers.contains(where: { $0.id == controller.id }) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                    }
                                 }
                             }
                         }
@@ -109,30 +119,41 @@ struct ContentView: View {
     
     func start(displayid: UInt32) {
         
-        let config = Ryujinx.Configuration(
-            gamepath: game!.path,
-            additionalArgs: [
-                // "--display-id", String(displayid)
-            ],
-            debuglogs: false,
-            tracelogs: false,
-            listinputids: false,
-            inputids: currentControllers.map(\.id),// "1-dc180005-045e-0000-130b-0000ff870001"], // "2-1fd70005-057e-0000-0920-0000ff870000"],
-            ryufullscreen: true
+        if let game {
+            self.config.gamepath = game.path
             
-        )
-        
-        
-        // Start the emulation
-        do {
-            setupVirtualController()
+            allocateSixGB()
             
-            try Ryujinx().start(with: config)
+            // Start the emulation
+            do {
+                setupVirtualController()
+                
+                try Ryujinx().start(with: config)
+                
+                
+            } catch {
+                print("Error \(error.localizedDescription)")
+            }
+        } else {
             
-            
-        } catch {
-            print("Error \(error.localizedDescription)")
         }
+        
+    }
+    
+    func allocateSixGB() -> UnsafeMutableRawPointer? {
+
+        let physicalMemory = ProcessInfo.processInfo.physicalMemory
+        let totalMemoryInGB = Double(physicalMemory) / (1024 * 1024 * 1024)
+        let mem = totalMemoryInGB - 1
+        print(mem)
+        // Allocate memory
+        let pointer = UnsafeMutableRawPointer.allocate(byteCount: Int(mem), alignment: MemoryLayout<UInt8>.alignment)
+
+        // Optionally initialize the memory
+        pointer.initializeMemory(as: UInt8.self, repeating: 0, count: Int(mem))
+
+        print("Successfully allocated 6GB of memory.")
+        return pointer
     }
     
     func patchMakeKeyAndVisible() {
@@ -145,10 +166,32 @@ struct ContentView: View {
     
     
     private func setMoltenVKSettings() {
+        
+        if let configs = loadSettings() {
+            self.config = configs
+            print(configs)
+        }
+        
         settings.forEach { setting in
             setenv(setting.string, setting.value, 1)
         }
     }
+    
+}
+func loadSettings() -> Ryujinx.Configuration? {
+    guard let jsonString = UserDefaults.standard.string(forKey: "config") else {
+        return nil
+    }
+    
+    do {
+        let decoder = JSONDecoder()
+        if let data = jsonString.data(using: .utf8) {
+            return try decoder.decode(Ryujinx.Configuration.self, from: data)
+        }
+    } catch {
+        print("Failed to load settings: \(error)")
+    }
+    return nil
 }
 
 extension UIWindow {
