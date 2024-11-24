@@ -122,6 +122,8 @@ struct ContentView: View {
         if let game {
             self.config.gamepath = game.path
             
+            self.config.inputids = currentControllers.map(\.id)
+            
             allocateSixGB()
             
             // Start the emulation
