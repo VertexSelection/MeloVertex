@@ -63,10 +63,10 @@ struct ContentView: View {
             
             if let game {
                 ZStack {
-                    Text("Loading...")
-                        .onAppear {
-                            start(displayid: 0)
-                        }
+
+                }
+                .onAppear {
+                    start(displayid: 0)
                 }
             } else {
                 HStack {

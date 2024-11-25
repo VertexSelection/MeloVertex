@@ -41,20 +41,21 @@ class Ryujinx {
         var tracelogs: Bool
         var listinputids: Bool
         var fullscreen: Bool
-        var hostMappedMemory: Bool
+        var memoryManagerMode: String
         var disableVSync: Bool
         var disableShaderCache: Bool
         var disableDockedMode: Bool
         var enableTextureRecompression: Bool
         var additionalArgs: [String]
+        
 
         init(gamepath: String,
              inputids: [String] = [],
              debuglogs: Bool = false,
              tracelogs: Bool = false,
              listinputids: Bool = false,
-             fullscreen: Bool = false,
-             hostMappedMemory: Bool = true,
+             fullscreen: Bool = true,
+             memoryManagerMode: String = "HostMapped",
              disableVSync: Bool = true,
              disableShaderCache: Bool = false,
              disableDockedMode: Bool = true,
@@ -71,7 +72,7 @@ class Ryujinx {
             self.disableDockedMode = disableDockedMode
             self.enableTextureRecompression = enableTextureRecompression
             self.additionalArgs = additionalArgs
-            self.hostMappedMemory = hostMappedMemory
+            self.memoryManagerMode = memoryManagerMode
         }
     }
 
@@ -131,11 +132,7 @@ class Ryujinx {
         args.append("Vulkan")
         
         // Fixes the Stubs.DispatchLoop Crash
-        if config.hostMappedMemory {
-            args.append(contentsOf: ["--memory-manager-mode", "HostMapped"])
-        } else {
-            args.append(contentsOf: ["--memory-manager-mode", "SoftwarePageTable"])
-        }
+        args.append(contentsOf: ["--memory-manager-mode", config.memoryManagerMode])
         if config.fullscreen {
             args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
             args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])

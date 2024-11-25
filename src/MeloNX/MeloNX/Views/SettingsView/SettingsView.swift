@@ -11,39 +11,51 @@ struct SettingsView: View {
     @Binding var config: Ryujinx.Configuration
     @Binding var MoltenVKSettings: [MoltenVKSettings]
     
+    var memoryManagerModes = [
+        ("HostMapped", "Host (fast)"),
+        ("HostMappedUnsafe", "Host Unchecked (fast, unstable / unsafe)"),
+        ("SoftwarePageTable", "Software")
+    ]
+    
     var body: some View {
         Form {
-            Section(header: Text("Ryujinx")) {
-                Section(header: Text("Graphics and Performance")) {
-                    Toggle("Fullscreen", isOn: $config.fullscreen)
-                    Toggle("Disable V-Sync", isOn: $config.disableVSync)
-                    Toggle("Disable Shader Cache", isOn: $config.disableShaderCache)
-                    Toggle("Enable Texture Recompression", isOn: $config.enableTextureRecompression)
+            Section(header: Text("Graphics and Performance")) {
+                Toggle("Ryujinx Fullscreen", isOn: $config.fullscreen)
+                Toggle("Disable V-Sync", isOn: $config.disableVSync)
+                Toggle("Disable Shader Cache", isOn: $config.disableShaderCache)
+                Toggle("Enable Texture Recompression", isOn: $config.enableTextureRecompression)
+            }
+            
+            Section(header: Text("Input Settings")) {
+                Toggle("List Input IDs", isOn: $config.listinputids)
+                // Toggle("Host Mapped Memory", isOn: $config.hostMappedMemory)
+                Toggle("Disable Docked Mode", isOn: $config.disableDockedMode)
+            }
+            
+            Section(header: Text("Logging Settings")) {
+                Toggle("Enable Debug Logs", isOn: $config.debuglogs)
+                Toggle("Enable Trace Logs", isOn: $config.tracelogs)
+            }
+            Section(header: Text("CPU Mode")) {
+                Picker("Memory Manager Mode", selection: $config.memoryManagerMode) {
+                    ForEach(memoryManagerModes, id: \.0) { key, displayName in
+                        Text(displayName).tag(key)
+                    }
                 }
+                .pickerStyle(MenuPickerStyle()) // Dropdown style
+            }
+            
+            Section(header: Text("Additional Settings")) {
+                //TextField("Game Path", text: $config.gamepath)
                 
-                Section(header: Text("Input Settings")) {
-                    Toggle("List Input IDs", isOn: $config.listinputids)
-                    Toggle("Host Mapped Memory", isOn: $config.hostMappedMemory)
-                    Toggle("Disable Docked Mode", isOn: $config.disableDockedMode)
-                }
-                
-                Section(header: Text("Logging Settings")) {
-                    Toggle("Enable Debug Logs", isOn: $config.debuglogs)
-                    Toggle("Enable Trace Logs", isOn: $config.tracelogs)
-                }
-                
-                Section(header: Text("Game Settings")) {
-                    //TextField("Game Path", text: $config.gamepath)
-                    
-                    TextField("Additional Arguments", text: Binding(
-                        get: {
-                            config.additionalArgs.joined(separator: ", ")
-                        },
-                        set: { newValue in
-                            config.additionalArgs = newValue.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
-                        }
-                    ))
-                }
+                TextField("Additional Arguments", text: Binding(
+                    get: {
+                        config.additionalArgs.joined(separator: ", ")
+                    },
+                    set: { newValue in
+                        config.additionalArgs = newValue.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+                    }
+                ))
             }
         }
         .onAppear {
