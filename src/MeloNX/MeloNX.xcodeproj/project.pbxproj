@@ -75,7 +75,6 @@
 				Dependencies/XCFrameworks/libavutil.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/libswresample.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/libswscale.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libteakra.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 			};
 			buildPhase = 4E80AA092CD6FAA800029585 /* Embed Libraries */;
 			membershipExceptions = (
@@ -90,7 +89,6 @@
 				Dependencies/XCFrameworks/libSPIRV.xcframework,
 				Dependencies/XCFrameworks/libswresample.xcframework,
 				Dependencies/XCFrameworks/libswscale.xcframework,
-				Dependencies/XCFrameworks/libteakra.xcframework,
 				Dependencies/XCFrameworks/MoltenVK.xcframework,
 				Dependencies/XCFrameworks/SDL2.xcframework,
 			);
@@ -496,7 +494,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportsDocumentBrowser = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -572,7 +570,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportsDocumentBrowser = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

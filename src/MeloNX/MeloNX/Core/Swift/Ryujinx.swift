@@ -15,6 +15,20 @@ struct Controller: Identifiable, Hashable {
     let name: String
 }
 
+struct iOSNav<Content: View>: View {
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        if #available(iOS 16, *) {
+            NavigationStack(root: content)
+        } else {
+            NavigationView(content: content)
+                .navigationViewStyle(StackNavigationViewStyle())
+                .navigationViewStyle(.stack)
+        }
+    }
+}
+
 class Ryujinx {
     private var isRunning = false
     
@@ -40,7 +54,7 @@ class Ryujinx {
              tracelogs: Bool = false,
              listinputids: Bool = false,
              fullscreen: Bool = false,
-             hostMappedMemory: Bool = false,
+             hostMappedMemory: Bool = true,
              disableVSync: Bool = true,
              disableShaderCache: Bool = false,
              disableDockedMode: Bool = true,

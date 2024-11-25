@@ -11,7 +11,8 @@ import GameController
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String
-    var value: String
+    var bool: Bool?
+    var value: String?
 }
 
 struct ContentView: View {
@@ -22,11 +23,11 @@ struct ContentView: View {
     @State var currentControllers: [Controller] = []
     @State var config: Ryujinx.Configuration = Ryujinx.Configuration(gamepath: "")
     
-    @State private var settings: [MoltenVKSettings] = [
-        MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"),
-        MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "0"),
+    @State var settings: [MoltenVKSettings] = [
+        // MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: ""),
+        // MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "1"),
         MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "1024"),
-        MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", value: "0"),
+        MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", value: "1"),
         MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1")
     ]
     
@@ -58,7 +59,7 @@ struct ContentView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        iOSNav {
             
             if let game {
                 ZStack {
@@ -80,7 +81,7 @@ struct ContentView: View {
                     List {
                         Section("Settings") {
                             NavigationLink {
-                                SettingsView(config: $config)
+                                SettingsView(config: $config, MoltenVKSettings: $settings)
                             } label: {
                                 Text("Config")
                             }
@@ -146,7 +147,7 @@ struct ContentView: View {
 
         let physicalMemory = ProcessInfo.processInfo.physicalMemory
         let totalMemoryInGB = Double(physicalMemory) / (1024 * 1024 * 1024)
-        let mem = totalMemoryInGB - 1
+        let mem = totalMemoryInGB
         print(mem)
         // Allocate memory
         let pointer = UnsafeMutableRawPointer.allocate(byteCount: Int(mem), alignment: MemoryLayout<UInt8>.alignment)
