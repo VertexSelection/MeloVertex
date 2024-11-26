@@ -34,9 +34,14 @@ class Ryujinx {
     
     @Published var controllerMap: [Controller] = []
     
+    static let shared = Ryujinx()
+    
+    private init() {}
+    
     public struct Configuration : Codable {
         var gamepath: String
         var inputids: [String]
+        var resscale: Float
         var debuglogs: Bool
         var tracelogs: Bool
         var listinputids: Bool
@@ -56,11 +61,13 @@ class Ryujinx {
              listinputids: Bool = false,
              fullscreen: Bool = true,
              memoryManagerMode: String = "HostMapped",
-             disableVSync: Bool = true,
+             disableVSync: Bool = false,
              disableShaderCache: Bool = false,
-             disableDockedMode: Bool = true,
+             disableDockedMode: Bool = false,
              enableTextureRecompression: Bool = true,
-             additionalArgs: [String] = []) {
+             additionalArgs: [String] = [],
+             resscale: Float = 1.00
+        ) {
             self.gamepath = gamepath
             self.inputids = inputids
             self.debuglogs = debuglogs
@@ -73,9 +80,9 @@ class Ryujinx {
             self.enableTextureRecompression = enableTextureRecompression
             self.additionalArgs = additionalArgs
             self.memoryManagerMode = memoryManagerMode
+            self.resscale = resscale
         }
     }
-
 
     
     func start(with config: Configuration) throws {
@@ -84,6 +91,7 @@ class Ryujinx {
         }
         
         isRunning = true
+        
         // Start The Emulation on the main thread
         DispatchQueue.main.async {
             do {
@@ -137,6 +145,10 @@ class Ryujinx {
             args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
             args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
             args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
+        }
+        
+        if config.resscale != 1 {
+            args.append(contentsOf: ["--resolution-scale", String(config.resscale)])
         }
         
         // Adding default args directly into additionalArgs

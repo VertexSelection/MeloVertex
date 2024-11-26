@@ -73,7 +73,7 @@ struct ContentView: View {
                     GameListView(startemu: $game)
                         .onAppear() {
                             Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
-                                controllersList = Ryujinx().getConnectedControllers()
+                                controllersList = Ryujinx.shared.getConnectedControllers()
                                 controllersList.removeAll(where: { $0.id == "0" })
                             }
                         }
@@ -88,7 +88,7 @@ struct ContentView: View {
                         }
                         Section("Controller") {
                             Button {
-                                controllersList = Ryujinx().getConnectedControllers()
+                                controllersList = Ryujinx.shared.getConnectedControllers()
                                 controllersList.removeAll(where: { $0.id == "0" })
                             } label: {
                                 Text("Refresh")
@@ -128,10 +128,12 @@ struct ContentView: View {
             allocateSixGB()
             
             // Start the emulation
+            
+            print("Is MetalHud Enabled? " + (MTLHud.shared.isEnabled ? "yeah" : "nope"))
             do {
                 setupVirtualController()
                 
-                try Ryujinx().start(with: config)
+                try Ryujinx.shared.start(with: config)
                 
                 
             } catch {
