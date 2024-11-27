@@ -15,7 +15,7 @@
 
 ## Compatibility
 
-MeloNX works on iPhobe X and later and iPad 7th Gen and later. A lot of games work.
+MeloNX works on iPhone X and later and iPad 7th Gen and later. A lot of games work.
 
 ## Usage
 
