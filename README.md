@@ -19,4 +19,4 @@ MeloNX works on iPhone X and later and iPad 7th Gen and later. A lot of games wo
 
 ## Usage
 
-To run MeloNX on your iOS device, at least 8GB of RAM is recommended to ensure stability. For full instructions, refer to our [Setup Guide](https://github.com/MeloNX-Emu/MeloNX/wiki/Setup-Guide).
+To run MeloNX on your iOS device, at least 4GB of RAM is recommended to ensure stability. For full instructions, refer to our [Setup Guide](https://github.com/MeloNX-Emu/MeloNX/wiki/Setup-Guide).
