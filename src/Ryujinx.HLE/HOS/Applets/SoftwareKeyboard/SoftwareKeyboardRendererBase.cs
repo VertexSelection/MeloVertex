@@ -107,35 +107,53 @@ namespace Ryujinx.HLE.HOS.Applets.SoftwareKeyboard
             CreateFonts(uiTheme.FontFamily);
         }
 
-        private void CreateFonts(string uiThemeFontFamily)
+private void CreateFonts(string uiThemeFontFamily)
+{
+    // Try a list of fonts in case any of them is not available in the system.
+    string[] availableFonts = { uiThemeFontFamily };
+
+    // If it's iOS, we'll want to use a more appropriate set of fonts.
+    if (OperatingSystem.IsIOS())
+    {
+        availableFonts = new string[] {
+            "Chalkboard",
+            "Chalkboard",  // San Francisco is the default font on iOS
+            "Chalkboard", // Legacy iOS font
+            "Chalkboard"           // Common system font
+        };
+    }
+    else
+    {
+        // Fallback for other platforms (e.g., Android, Windows, etc.)
+        availableFonts = new string[] {
+            uiThemeFontFamily,
+            "Liberation Sans",
+            "FreeSans",
+            "DejaVu Sans",
+            "Lucida Grande"
+        };
+    }
+
+    // Try to create the fonts with the selected font families
+    foreach (string fontFamily in availableFonts)
+    {
+        try
         {
-            // Try a list of fonts in case any of them is not available in the system.
+            _messageFont = SystemFonts.CreateFont(fontFamily, 26, FontStyle.Regular);
+            _inputTextFont = SystemFonts.CreateFont(fontFamily, _inputTextFontSize, FontStyle.Regular);
+            _labelsTextFont = SystemFonts.CreateFont(fontFamily, 24, FontStyle.Regular);
 
-            string[] availableFonts = {
-                uiThemeFontFamily,
-                "Liberation Sans",
-                "FreeSans",
-                "DejaVu Sans",
-                "Lucida Grande",
-            };
-
-            foreach (string fontFamily in availableFonts)
-            {
-                try
-                {
-                    _messageFont = SystemFonts.CreateFont(fontFamily, 26, FontStyle.Regular);
-                    _inputTextFont = SystemFonts.CreateFont(fontFamily, _inputTextFontSize, FontStyle.Regular);
-                    _labelsTextFont = SystemFonts.CreateFont(fontFamily, 24, FontStyle.Regular);
-
-                    return;
-                }
-                catch
-                {
-                }
-            }
-
-            throw new Exception($"None of these fonts were found in the system: {String.Join(", ", availableFonts)}!");
+            return;
         }
+        catch
+        {
+            // If the font creation fails, try the next font family
+        }
+    }
+
+    throw new Exception($"None of these fonts were found in the system: {String.Join(", ", availableFonts)}!");
+}
+
 
         private static Color ToColor(ThemeColor color, byte? overrideAlpha = null, bool flipRgb = false)
         {

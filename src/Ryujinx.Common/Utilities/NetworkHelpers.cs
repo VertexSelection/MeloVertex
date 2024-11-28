@@ -1,3 +1,4 @@
+using System;
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -10,12 +11,13 @@ namespace Ryujinx.Common.Utilities
         {
             IPInterfaceProperties properties = adapter.GetIPProperties();
 
-            if (isPreferred || (properties.GatewayAddresses.Count > 0 && properties.DnsAddresses.Count > 0))
+            // Skip problematic checks on non-Windows and iOS platforms
+            if (isPreferred || OperatingSystem.IsWindows() || properties.UnicastAddresses.Count > 0)
             {
                 foreach (UnicastIPAddressInformation info in properties.UnicastAddresses)
                 {
                     // Only accept an IPv4 address
-                    if (info.Address.GetAddressBytes().Length == 4)
+                    if (info.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                     {
                         return (properties, info);
                     }
@@ -44,8 +46,9 @@ namespace Ryujinx.Common.Utilities
             {
                 bool isPreferred = adapter.Id == guid;
 
-                // Ignore loopback and non IPv4 capable interface.
-                if (isPreferred || (targetProperties == null && adapter.NetworkInterfaceType != NetworkInterfaceType.Loopback && adapter.Supports(NetworkInterfaceComponent.IPv4)))
+                // Ignore loopback and ensure the adapter supports IPv4
+                if (isPreferred || 
+                   (targetProperties == null && adapter.NetworkInterfaceType != NetworkInterfaceType.Loopback && adapter.Supports(NetworkInterfaceComponent.IPv4)))
                 {
                     (IPInterfaceProperties properties, UnicastIPAddressInformation info) = GetLocalInterface(adapter, isPreferred);
 
@@ -77,7 +80,13 @@ namespace Ryujinx.Common.Utilities
 
         public static IPAddress ConvertUint(uint ipAddress)
         {
-            return new IPAddress(new byte[] { (byte)((ipAddress >> 24) & 0xFF), (byte)((ipAddress >> 16) & 0xFF), (byte)((ipAddress >> 8) & 0xFF), (byte)(ipAddress & 0xFF) });
+            return new IPAddress(new byte[] 
+            { 
+                (byte)((ipAddress >> 24) & 0xFF), 
+                (byte)((ipAddress >> 16) & 0xFF), 
+                (byte)((ipAddress >> 8) & 0xFF), 
+                (byte)(ipAddress & 0xFF) 
+            });
         }
     }
 }

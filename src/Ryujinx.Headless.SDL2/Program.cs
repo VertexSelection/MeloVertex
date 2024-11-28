@@ -127,10 +127,16 @@ namespace Ryujinx.Headless.SDL2
                 };
             }
 
-            Parser.Default.ParseArguments<Options>(args)
-            .WithParsed(Load)
-            .WithNotParsed(errors => errors.Output());
+            var result = Parser.Default.ParseArguments<Options>(args)
+             .WithParsed(options =>
+             {
+                  Load(options);  // Load is called with the parsed options
+             })
+              .WithNotParsed(errors => errors.Output());
+
+
         }
+
 
         [UnmanagedCallersOnly(EntryPoint = "get_game_controllers")]
         public static unsafe IntPtr GetGamepadList()
@@ -164,7 +170,7 @@ namespace Ryujinx.Headless.SDL2
             return ptr;
         }
 
-        private static InputConfig HandlePlayerConfiguration(string inputProfileName, string inputId, PlayerIndex index)
+        private static InputConfig HandlePlayerConfiguration(string inputProfileName, string inputId, PlayerIndex index, Options option)
         {
             if (inputId == null)
             {
@@ -264,8 +270,9 @@ namespace Ryujinx.Headless.SDL2
                     };
                 }
                 else
-                {
-                    bool isNintendoStyle = gamepadName.Contains("Nintendo");
+                {   
+                    bool isAppleController = gamepadName.Contains("Apple") ? option.OnScreenCorrespond : false;
+                    bool isNintendoStyle = gamepadName.Contains("Nintendo") || isAppleController;
 
                     config = new StandardControllerInputConfig
                     {
@@ -461,9 +468,9 @@ namespace Ryujinx.Headless.SDL2
             _enableKeyboard = option.EnableKeyboard;
             _enableMouse = option.EnableMouse;
 
-            static void LoadPlayerConfiguration(string inputProfileName, string inputId, PlayerIndex index)
+            static void LoadPlayerConfiguration(string inputProfileName, string inputId, PlayerIndex index, Options option)
             {
-                InputConfig inputConfig = HandlePlayerConfiguration(inputProfileName, inputId, index);
+                InputConfig inputConfig = HandlePlayerConfiguration(inputProfileName, inputId, index, option);
 
                 if (inputConfig != null)
                 {
@@ -471,15 +478,15 @@ namespace Ryujinx.Headless.SDL2
                 }
             }
 
-            LoadPlayerConfiguration(option.InputProfile1Name, option.InputId1, PlayerIndex.Player1);
-            LoadPlayerConfiguration(option.InputProfile2Name, option.InputId2, PlayerIndex.Player2);
-            LoadPlayerConfiguration(option.InputProfile3Name, option.InputId3, PlayerIndex.Player3);
-            LoadPlayerConfiguration(option.InputProfile4Name, option.InputId4, PlayerIndex.Player4);
-            LoadPlayerConfiguration(option.InputProfile5Name, option.InputId5, PlayerIndex.Player5);
-            LoadPlayerConfiguration(option.InputProfile6Name, option.InputId6, PlayerIndex.Player6);
-            LoadPlayerConfiguration(option.InputProfile7Name, option.InputId7, PlayerIndex.Player7);
-            LoadPlayerConfiguration(option.InputProfile8Name, option.InputId8, PlayerIndex.Player8);
-            LoadPlayerConfiguration(option.InputProfileHandheldName, option.InputIdHandheld, PlayerIndex.Handheld);
+            LoadPlayerConfiguration(option.InputProfile1Name, option.InputId1, PlayerIndex.Player1, option);
+            LoadPlayerConfiguration(option.InputProfile2Name, option.InputId2, PlayerIndex.Player2, option);
+            LoadPlayerConfiguration(option.InputProfile3Name, option.InputId3, PlayerIndex.Player3, option);
+            LoadPlayerConfiguration(option.InputProfile4Name, option.InputId4, PlayerIndex.Player4, option);
+            LoadPlayerConfiguration(option.InputProfile5Name, option.InputId5, PlayerIndex.Player5, option);
+            LoadPlayerConfiguration(option.InputProfile6Name, option.InputId6, PlayerIndex.Player6, option);
+            LoadPlayerConfiguration(option.InputProfile7Name, option.InputId7, PlayerIndex.Player7, option);
+            LoadPlayerConfiguration(option.InputProfile8Name, option.InputId8, PlayerIndex.Player8, option);
+            LoadPlayerConfiguration(option.InputProfileHandheldName, option.InputIdHandheld, PlayerIndex.Handheld, option);
 
             if (_inputConfiguration.Count == 0)
             {
@@ -627,7 +634,7 @@ namespace Ryujinx.Headless.SDL2
                 options.AudioVolume,
                 options.UseHypervisor ?? true,
                 options.MultiplayerLanInterfaceId,
-                Common.Configuration.Multiplayer.MultiplayerMode.Disabled);
+                Common.Configuration.Multiplayer.MultiplayerMode.LdnMitm);
 
             return new Switch(configuration);
         }

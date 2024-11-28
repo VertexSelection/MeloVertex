@@ -31,6 +31,9 @@ namespace Ryujinx.Headless.SDL2
 
         // Input
 
+        [Option("correct-ons-controller", Required = false, Default = false, HelpText = "Makes the on-screen controller (iOS) buttons correspond to what they show.")]
+        public bool OnScreenCorrespond { get; set; }
+
         [Option("input-profile-1", Required = false, HelpText = "Set the input profile in use for Player 1.")]
         public string InputProfile1Name { get; set; }
 

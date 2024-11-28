@@ -59,7 +59,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		4E80AA0A2CD6FAA800029585 /* Exceptions for "MeloNX" folder in "Embed Libraries" phase from "MeloNX" target */ = {
+		4E9A82F32CF87822006D7086 /* Exceptions for "MeloNX" folder in "Embed Libraries" phase from "MeloNX" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			attributesByRelativePath = {
 				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (CodeSignOnCopy, );
@@ -68,13 +68,13 @@
 				"Dependencies/Dynamic Libraries/libavutil.dylib" = (CodeSignOnCopy, );
 				Dependencies/XCFrameworks/MoltenVK.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/SDL2.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libSPIRV.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/libavcodec.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/libavfilter.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/libavformat.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/libavutil.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/libswresample.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 				Dependencies/XCFrameworks/libswscale.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				Dependencies/XCFrameworks/libteakra.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 			};
 			buildPhase = 4E80AA092CD6FAA800029585 /* Embed Libraries */;
 			membershipExceptions = (
@@ -86,9 +86,9 @@
 				Dependencies/XCFrameworks/libavfilter.xcframework,
 				Dependencies/XCFrameworks/libavformat.xcframework,
 				Dependencies/XCFrameworks/libavutil.xcframework,
-				Dependencies/XCFrameworks/libSPIRV.xcframework,
 				Dependencies/XCFrameworks/libswresample.xcframework,
 				Dependencies/XCFrameworks/libswscale.xcframework,
+				Dependencies/XCFrameworks/libteakra.xcframework,
 				Dependencies/XCFrameworks/MoltenVK.xcframework,
 				Dependencies/XCFrameworks/SDL2.xcframework,
 			);
@@ -100,7 +100,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				4E80AA1D2CD7015100029585 /* Exceptions for "MeloNX" folder in "MeloNX" target */,
-				4E80AA0A2CD6FAA800029585 /* Exceptions for "MeloNX" folder in "Embed Libraries" phase from "MeloNX" target */,
+				4E9A82F32CF87822006D7086 /* Exceptions for "MeloNX" folder in "Embed Libraries" phase from "MeloNX" target */,
 			);
 			path = MeloNX;
 			sourceTree = "<group>";
@@ -542,6 +542,18 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
@@ -606,6 +618,18 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",

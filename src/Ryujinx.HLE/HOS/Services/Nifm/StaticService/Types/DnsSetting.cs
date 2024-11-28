@@ -1,6 +1,7 @@
 using System;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Net;
 
 namespace Ryujinx.HLE.HOS.Services.Nifm.StaticService.Types
 {
@@ -15,16 +16,23 @@ namespace Ryujinx.HLE.HOS.Services.Nifm.StaticService.Types
         public DnsSetting(IPInterfaceProperties interfaceProperties)
         {
             IsDynamicDnsEnabled = OperatingSystem.IsWindows() && interfaceProperties.IsDynamicDnsEnabled;
+        
+            IPAddress ip = IPAddress.Parse("1.1.1.1");
 
-            if (interfaceProperties.DnsAddresses.Count == 0)
-            {
-                PrimaryDns = new IpV4Address();
-                SecondaryDns = new IpV4Address();
-            }
-            else
-            {
-                PrimaryDns = new IpV4Address(interfaceProperties.DnsAddresses[0]);
-                SecondaryDns = new IpV4Address(interfaceProperties.DnsAddresses[interfaceProperties.DnsAddresses.Count > 1 ? 1 : 0]);
+            if (OperatingSystem.IsIOS()) {
+                PrimaryDns = new IpV4Address(ip);
+                SecondaryDns = new IpV4Address(ip);
+            } else {
+                if (interfaceProperties.DnsAddresses.Count == 0)
+                {
+                    PrimaryDns = new IpV4Address();
+                    SecondaryDns = new IpV4Address();
+                }
+                else
+                {
+                    PrimaryDns = new IpV4Address(interfaceProperties.DnsAddresses[0]);
+                   SecondaryDns = new IpV4Address(interfaceProperties.DnsAddresses[interfaceProperties.DnsAddresses.Count > 1 ? 1 : 0]);
+                }
             }
         }
     }

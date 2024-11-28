@@ -44,6 +44,8 @@ class Ryujinx {
         var resscale: Float
         var debuglogs: Bool
         var tracelogs: Bool
+        var nintendoinput: Bool
+        var enableInternet: Bool
         var listinputids: Bool
         var fullscreen: Bool
         var memoryManagerMode: String
@@ -64,6 +66,8 @@ class Ryujinx {
              disableVSync: Bool = false,
              disableShaderCache: Bool = false,
              disableDockedMode: Bool = false,
+             nintendoinput: Bool = true,
+             enableInternet: Bool = false,
              enableTextureRecompression: Bool = true,
              additionalArgs: [String] = [],
              resscale: Float = 1.00
@@ -81,6 +85,8 @@ class Ryujinx {
             self.additionalArgs = additionalArgs
             self.memoryManagerMode = memoryManagerMode
             self.resscale = resscale
+            self.nintendoinput = nintendoinput
+            self.enableInternet = enableInternet
         }
     }
 
@@ -149,6 +155,13 @@ class Ryujinx {
         
         if config.resscale != 1 {
             args.append(contentsOf: ["--resolution-scale", String(config.resscale)])
+        }
+        
+        if config.nintendoinput {
+            args.append("--correct-ons-controller")
+        }
+        if config.enableInternet {
+            args.append("--enable-internet-connection")
         }
         
         // Adding default args directly into additionalArgs

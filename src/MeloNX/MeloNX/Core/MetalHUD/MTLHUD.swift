@@ -23,6 +23,7 @@ class MTLHud {
     static let shared = MTLHud()
     
     private init() {
+        openMetalDylib()
         if UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED") {
             enable()
         } else {
