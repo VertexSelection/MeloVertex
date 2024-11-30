@@ -11,8 +11,8 @@ import SDL2
 import GameController
 
 struct Controller: Identifiable, Hashable {
-    let id: String
-    let name: String
+    var id: String
+    var name: String
 }
 
 struct iOSNav<Content: View>: View {
@@ -205,6 +205,7 @@ class Ryujinx {
     
     func getConnectedControllers() -> [Controller] {
         
+
         guard let jsonPtr = get_game_controllers() else {
             return []
         }

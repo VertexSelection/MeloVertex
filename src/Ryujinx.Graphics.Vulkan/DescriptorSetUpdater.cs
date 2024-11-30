@@ -110,7 +110,7 @@ namespace Ryujinx.Graphics.Vulkan
             _textures.AsSpan().Fill(initialImageInfo);
             _images.AsSpan().Fill(initialImageInfo);
 
-            if (gd.Capabilities.SupportsNullDescriptors && !OperatingSystem.IsIOS())
+            if (gd.Capabilities.SupportsNullDescriptors)
             {
                 // If null descriptors are supported, we can pass null as the handle.
                 _dummyBuffer = null;
