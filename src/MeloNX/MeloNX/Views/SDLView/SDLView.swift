@@ -9,6 +9,7 @@ import UIKit
 import MetalKit
 import SDL2
 
+/*
 class SDLView: UIView {
     var sdlwin: OpaquePointer?
     
@@ -82,3 +83,6 @@ class SDLView: UIView {
         syncSDLWindowPosition()
     }
 }
+
+*/
+

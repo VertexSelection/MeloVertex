@@ -150,20 +150,19 @@ struct ContentView: View {
     private func setupEmulation() {
         virtualController?.disconnect()
         
+        guard let game = game else { return }
+        
         if controllersList.first(where: { $0 == onscreencontroller}) != nil {
             controllerCallback = {
                 DispatchQueue.main.async {
                     controllersList = Ryujinx.shared.getConnectedControllers()
-                    
                     print(currentControllers)
                     start(displayid: 1)
                 }
             }
             
-            
             showVirtualController()
         } else {
-            
             DispatchQueue.main.async {
                 print(currentControllers)
                 start(displayid: 1)
@@ -172,16 +171,17 @@ struct ContentView: View {
     }
     
     private func refreshControllersList() {
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
-            controllersList = Ryujinx.shared.getConnectedControllers()
-            var controller = controllersList.first(where: { $0.name.hasPrefix("Apple")})
-            self.onscreencontroller = (controller ?? Controller(id: "", name: ""))
-            if controllersList.count > 2 {
-                let controller = controllersList[2]
-                currentControllers.append(controller)
-                
-            } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
-                currentControllers.append(controller)
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: false) { _ in
+            DispatchQueue.main.async {
+                controllersList = Ryujinx.shared.getConnectedControllers()
+                var controller = controllersList.first(where: { $0.name.hasPrefix("Apple")})
+                self.onscreencontroller = (controller ?? Controller(id: "", name: ""))
+                if controllersList.count > 2 {
+                    let controller = controllersList[2]
+                    currentControllers.append(controller)
+                } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
+                    currentControllers.append(controller)
+                }
             }
         }
     }
@@ -200,7 +200,6 @@ struct ContentView: View {
         config.gamepath = game.path
         config.inputids = currentControllers.map(\.id)
         
-        allocateMemory()
         
         do {
             try Ryujinx.shared.start(with: config)
@@ -209,16 +208,6 @@ struct ContentView: View {
         }
     }
     
-    private func allocateMemory() {
-        let physicalMemory = ProcessInfo.processInfo.physicalMemory
-        let totalMemoryInGB = Double(physicalMemory) / (1024 * 1024 * 1024)
-        
-        let pointer = UnsafeMutableRawPointer.allocate(
-            byteCount: Int(totalMemoryInGB),
-            alignment: MemoryLayout<UInt8>.alignment
-        )
-        pointer.initializeMemory(as: UInt8.self, repeating: 0, count: Int(totalMemoryInGB))
-    }
     
     private func setMoltenVKSettings() {
         if let configs = loadSettings() {
