@@ -158,7 +158,7 @@ class Ryujinx {
         }
         
         if config.nintendoinput {
-            // args.append("--correct-ons-controller")
+            args.append("--correct-ons-controller")
         }
         if config.enableInternet {
             args.append("--enable-internet-connection")

@@ -25,7 +25,7 @@ struct ContentView: View {
     @State private var config: Ryujinx.Configuration
     @State private var settings: [MoltenVKSettings]
     @State private var isVirtualControllerActive: Bool = false
-    @State var onscreencontroller: Controller?
+    @State var onscreencontroller: Controller = Controller(id: "", name: "")
     
     // MARK: - Initialization
     init() {
@@ -85,6 +85,9 @@ struct ContentView: View {
             Section("Settings") {
                 NavigationLink("Config") {
                     SettingsView(config: $config, MoltenVKSettings: $settings)
+                        .onAppear() {
+                            virtualController?.disconnect()
+                        }
                 }
             }
             
@@ -171,21 +174,13 @@ struct ContentView: View {
     private func refreshControllersList() {
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
             controllersList = Ryujinx.shared.getConnectedControllers()
-            var controller = controllersList.first(where: { $0.name == "Apple Touch Controller" })
-            
-            controllersList.removeAll(where: { $0.name == "Apple Touch Controller" })
-            
-            controller?.name = "On-Screen Controller"
-            
-            onscreencontroller = controller
-            
-            controllersList.append(controller!)
-            // controllersList.removeAll(where: { $0.name == "Apple Touch Controller" })
+            var controller = controllersList.first(where: { $0.name.hasPrefix("Apple")})
+            self.onscreencontroller = (controller ?? Controller(id: "", name: ""))
             if controllersList.count > 2 {
                 let controller = controllersList[2]
                 currentControllers.append(controller)
                 
-            } else if let controller = controllersList.first(where: { $0.id == controller?.id }), !controllersList.isEmpty {
+            } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
                 currentControllers.append(controller)
             }
         }
