@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @Binding var config: Ryujinx.Configuration
     @Binding var MoltenVKSettings: [MoltenVKSettings]
+    @AppStorage("ignoreJIT") var ignoreJIT: Bool = false
     
     var memoryManagerModes = [
         ("HostMapped", "Host (fast)"),
@@ -31,6 +32,7 @@ struct SettingsView: View {
                     Toggle("Enable Texture Recompression", isOn: $config.enableTextureRecompression)
                     Toggle("Disable Docked Mode", isOn: $config.disableDockedMode)
                     Resolution(value: $config.resscale)
+                    
                     Toggle("Enable Metal HUD", isOn: $metalHUDEnabled)
                         .onChange(of: metalHUDEnabled) { newValue in
                             if newValue {
@@ -70,7 +72,7 @@ struct SettingsView: View {
                     //TextField("Game Path", text: $config.gamepath)
                     
                     Text("PageSize \(String(Int(getpagesize())))")
-                    
+                    Toggle("Ignore JIT Enabeld Popup", isOn: $ignoreJIT)
                     TextField("Additional Arguments", text: Binding(
                         get: {
                             config.additionalArgs.joined(separator: ", ")

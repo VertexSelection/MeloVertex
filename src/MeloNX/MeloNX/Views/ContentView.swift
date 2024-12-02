@@ -8,6 +8,8 @@
 import SwiftUI
 import SDL2
 import GameController
+import Darwin
+import UIKit
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String
@@ -26,18 +28,23 @@ struct ContentView: View {
     @State private var settings: [MoltenVKSettings]
     @State private var isVirtualControllerActive: Bool = false
     @State var onscreencontroller: Controller = Controller(id: "", name: "")
+    @AppStorage("JIT") var isJITEnabled: Bool = false
+    @AppStorage("ignoreJIT") var ignoreJIT: Bool = false
     
     // MARK: - Initialization
     init() {
-        let defaultConfig = Ryujinx.Configuration(gamepath: "")
+        let defaultConfig = loadSettings() ?? Ryujinx.Configuration(gamepath: "")
         _config = State(initialValue: defaultConfig)
         
         let defaultSettings: [MoltenVKSettings] = [
-            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "1024"),
+            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "2048"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1")
         ]
+        
         _settings = State(initialValue: defaultSettings)
+        
+        print("JIT Enabled: \(isJITEnabled)")
         
         initializeSDL()
     }
@@ -91,12 +98,18 @@ struct ContentView: View {
                 }
             }
             
-            Section("Controller") {
+            
+            Section {
                 Button("Refresh", action: refreshControllersList)
-                Divider()
                 ForEach(controllersList, id: \.self) { controller in
                     controllerRow(for: controller)
                 }
+            } header: {
+                Text("Controllers")
+            } footer: {
+                Text("If no controllers are selected, the keyboard will be used.")
+                    .font(.footnote)
+                    .foregroundColor(.gray)
             }
         }
     }
@@ -148,40 +161,57 @@ struct ContentView: View {
     }
     
     private func setupEmulation() {
-        virtualController?.disconnect()
+        if !isJITEnabled {
+            virtualController?.disconnect()
         
-        guard let game = game else { return }
-        
-        if controllersList.first(where: { $0 == onscreencontroller}) != nil {
             controllerCallback = {
                 DispatchQueue.main.async {
                     controllersList = Ryujinx.shared.getConnectedControllers()
+                    
                     print(currentControllers)
                     start(displayid: 1)
                 }
             }
             
+            
             showVirtualController()
         } else {
-            DispatchQueue.main.async {
-                print(currentControllers)
-                start(displayid: 1)
+            showAlert(title: "JIT Not Enabled", message: "JIT is Required for Emulation. Please use a JIT enabler to Enable JIT", showOk: true) { pressedok in
+                if pressedok, !ignoreJIT {
+                    game = nil
+                } else if pressedok, ignoreJIT {
+                    virtualController?.disconnect()
+                    controllerCallback = {
+                        DispatchQueue.main.async {
+                            controllersList = Ryujinx.shared.getConnectedControllers()
+                            
+                            print(currentControllers)
+                            start(displayid: 1)
+                        }
+                    }
+                    
+                    
+                    showVirtualController()
+                }
             }
         }
     }
     
     private func refreshControllersList() {
-        Timer.scheduledTimer(withTimeInterval: 1, repeats: false) { _ in
-            DispatchQueue.main.async {
-                controllersList = Ryujinx.shared.getConnectedControllers()
-                var controller = controllersList.first(where: { $0.name.hasPrefix("Apple")})
-                self.onscreencontroller = (controller ?? Controller(id: "", name: ""))
-                if controllersList.count > 2 {
-                    let controller = controllersList[2]
-                    currentControllers.append(controller)
-                } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
-                    currentControllers.append(controller)
-                }
+        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+            controllersList = Ryujinx.shared.getConnectedControllers()
+            
+            if let onscreen = controllersList.first(where: { $0.name.hasPrefix("Apple")}) {
+                self.onscreencontroller = onscreen
+            }
+            
+            controllersList.removeAll(where: { $0.id == "0"})
+            
+            if controllersList.count > 2 {
+                let controller =  controllersList[2]
+                currentControllers.append(controller)
+            } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
+                currentControllers.append(controller)
             }
         }
     }
@@ -194,12 +224,37 @@ struct ContentView: View {
         }
     }
     
+
+    func showAlert(title: String, message: String, showOk: Bool, completion: @escaping (Bool) -> Void) {
+        DispatchQueue.main.async {
+            if let mainWindow = UIApplication.shared.windows.last {
+                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+                
+                if showOk {
+                    let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+                        completion(true)
+                    }
+
+                    alert.addAction(okAction)
+                } else {
+                    completion(false)
+                }
+                
+                mainWindow.rootViewController?.present(alert, animated: true, completion: nil)
+            }
+        }
+    }
+
+    
     private func start(displayid: UInt32) {
         guard let game else { return }
         
         config.gamepath = game.path
-        config.inputids = currentControllers.map(\.id)
+        config.inputids = Array(Set(currentControllers.map(\.id)))
         
+        if config.inputids.isEmpty {
+            config.inputids.append("0")
+        }
         
         do {
             try Ryujinx.shared.start(with: config)
@@ -207,12 +262,9 @@ struct ContentView: View {
             print("Error: \(error.localizedDescription)")
         }
     }
-    
+
     
     private func setMoltenVKSettings() {
-        if let configs = loadSettings() {
-            self.config = configs
-        }
         
         settings.forEach { setting in
             setenv(setting.string, setting.value, 1)
@@ -234,3 +286,4 @@ func loadSettings() -> Ryujinx.Configuration? {
         return nil
     }
 }
+
