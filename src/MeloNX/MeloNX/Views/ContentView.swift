@@ -161,7 +161,7 @@ struct ContentView: View {
     }
     
     private func setupEmulation() {
-        if !isJITEnabled {
+        if isJITEnabled {
             virtualController?.disconnect()
         
             controllerCallback = {
