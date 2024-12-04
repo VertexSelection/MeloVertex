@@ -1,28 +1,34 @@
 # How to compile MeloNX using macOS
 
 ## Prerequisites
-- [dotnet 8.0](<https://dotnet.microsoft.com/en-us/download/dotnet/8.0>)
-- a computer with macOS
+- [.NET 8.0](<https://dotnet.microsoft.com/en-us/download/dotnet/8.0>)
+- A computer with macOS
 
-1. Open Terminal
+## Compiling
+1. Clone the Git Repo and build Ryujinx
+    ```
+       git clone https://github.com/melonx-emu/melonx/tree/XC-ios-ht
+       cd melonx
+       ./compile.sh -x
+    ```
 
-2. Run the command = git clone https://github.com/melonx-emu/melonx/tree/XC-ios-ht
+2. Open the Xcode project, stored at MeloNX/src/MeloNX
 
-3. In terminal run = `cd MeloNX`
-
-4. Again in terminal type in 
-```./compile.sh -x```
-
-5. Open Xcode file store at .../MeloNX/src/MeloNX and remove Paid Entititlments:
-  ```Increased Debugging Memory Limit```
-  ```Extended Virtual Addressing```
-
-6. Make sure the Ryujinx.SDL2.Headless dylib is put in as embed and sign in settings
+3. Make sure `Ryujinx.SDL2.Headless.dylib` is set to `Embed & Sign` in the General settings for the Xcode project
   
-7. Change the Identifier if the app to whatever u want and change the developer account
+4. Signing & Capabilities
+    Change your 'Team' to your Developer Account (free or paid) and change Bundle Identifier to<br>
+    `com.*your name*.MeloNX`
 
-8. Build and run
+6. Build and Run
+    `CMD+R`
 
-9. Check the [post-setup guide](<https://github.com/melonx-emu/melonx/tree/XC-ios-ht/postsetup.md>)
+7. Check the [post-setup guide](<https://github.com/melonx-emu/melonx/tree/XC-ios-ht/postsetup.md>)
 
-10. Enjoy the app and run games
+## If you don't have a paid developer account
+Make sure these entitlements are removed if you don't have a paid Apple Developer account
+```
+    Extended Virtual Addressing
+    Increased Debugging Memory Limit
+    Increase Memory Limit
+```
