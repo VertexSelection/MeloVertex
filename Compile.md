@@ -30,5 +30,4 @@ Make sure these entitlements are removed if you don't have a paid Apple Develope
 ```
     Extended Virtual Addressing
     Increased Debugging Memory Limit
-    Increase Memory Limit
 ```
