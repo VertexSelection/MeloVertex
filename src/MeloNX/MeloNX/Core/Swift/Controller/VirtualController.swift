@@ -14,33 +14,27 @@ public var controllerCallback: (() -> Void)?
 var VirtualController: GCVirtualController!
 func showVirtualController() {
     let config = GCVirtualController.Configuration()
-    if UserDefaults.standard.bool(forKey: "RyuDemoControls") {
-        config.elements = [
-            GCInputLeftThumbstick,
-            GCInputButtonA,
-            GCInputButtonB,
-            GCInputButtonX,
-            GCInputButtonY,
-            // GCInputRightThumbstick,
-            GCInputRightTrigger,
-            GCInputLeftTrigger,
-            GCInputLeftShoulder,
-            GCInputRightShoulder
-        ]
-    } else {
-        config.elements = [
-            GCInputLeftThumbstick,
-            GCInputButtonA,
-            GCInputButtonB,
-            GCInputButtonX,
-            GCInputButtonY,
-            GCInputRightThumbstick,
-            GCInputRightTrigger,
-            GCInputLeftTrigger,
-            GCInputLeftShoulder,
-            GCInputRightShoulder
-        ]
+    
+    var controllere = [
+        GCInputLeftThumbstick,
+        GCInputButtonA,
+        GCInputButtonB,
+        GCInputButtonX,
+        GCInputButtonY,
+        // GCInputRightThumbstick,
+        GCInputRightTrigger,
+        GCInputLeftTrigger,
+        GCInputLeftShoulder,
+        GCInputRightShoulder
+    ]
+    
+    if !UserDefaults.standard.bool(forKey: "RyuDemoControls") {
+        
+        controllere.append(GCInputRightThumbstick)
     }
+    
+    config.elements = Set(controllere)
+    
     VirtualController = GCVirtualController(configuration: config)
     VirtualController.connect { err in
         print("controller connect: \(String(describing: err))")

@@ -37,8 +37,8 @@ struct ContentView: View {
         _config = State(initialValue: defaultConfig)
         
         let defaultSettings: [MoltenVKSettings] = [
-            // MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "2048"),
-            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", value: "1"),
+            // MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "512"),
+            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", value: "0"),
             MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1")
         ]
         
@@ -161,40 +161,17 @@ struct ContentView: View {
     }
     
     private func setupEmulation() {
-        if isJITEnabled {
-            virtualController?.disconnect()
+        virtualController?.disconnect()
         
-            controllerCallback = {
-                DispatchQueue.main.async {
-                    controllersList = Ryujinx.shared.getConnectedControllers()
-                    
-                    print(currentControllers)
-                    start(displayid: 1)
-                }
-            }
-            
-            
-            showVirtualController()
-        } else {
-            showAlert(title: "JIT Not Enabled", message: "JIT is Required for Emulation. Please use a JIT enabler to Enable JIT", showOk: true) { pressedok in
-                if pressedok, !ignoreJIT {
-                    game = nil
-                } else if pressedok, ignoreJIT {
-                    virtualController?.disconnect()
-                    controllerCallback = {
-                        DispatchQueue.main.async {
-                            controllersList = Ryujinx.shared.getConnectedControllers()
-                            
-                            print(currentControllers)
-                            start(displayid: 1)
-                        }
-                    }
-                    
-                    
-                    showVirtualController()
-                }
+        controllerCallback = {
+            DispatchQueue.main.async {
+
+                start(displayid: 1)
             }
         }
+            
+            
+        showVirtualController()
     }
     
     private func refreshControllersList() {

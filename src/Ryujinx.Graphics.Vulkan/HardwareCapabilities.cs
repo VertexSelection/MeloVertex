@@ -103,11 +103,7 @@ namespace Ryujinx.Graphics.Vulkan
             SupportsShaderStencilExport = supportsShaderStencilExport;
             SupportsShaderStorageImageMultisample = supportsShaderStorageImageMultisample;
             SupportsConditionalRendering = supportsConditionalRendering;
-            if (OperatingSystem.IsIOS()) { 
-                SupportsExtendedDynamicState = (OperatingSystem.IsOSPlatformVersionAtLeast("iOS", 17) ? supportsExtendedDynamicState : false);
-            } else {
-                SupportsExtendedDynamicState = supportsExtendedDynamicState;
-            }
+            SupportsExtendedDynamicState = supportsExtendedDynamicState;
             SupportsMultiView = supportsMultiView;
             SupportsNullDescriptors = (OperatingSystem.IsIOS() ? false : supportsNullDescriptors);
             SupportsPushDescriptors = supportsPushDescriptors;

@@ -99,7 +99,7 @@ class Ryujinx {
         isRunning = true
         
         // Start The Emulation on the main thread
-        DispatchQueue.main.async {
+        RunLoop.current.perform {
             do {
                 let args = self.buildCommandLineArgs(from: config)
                 
@@ -147,27 +147,22 @@ class Ryujinx {
         
         // Fixes the Stubs.DispatchLoop Crash
         args.append(contentsOf: ["--memory-manager-mode", config.memoryManagerMode])
-        if config.fullscreen {
-            args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
-            args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
-            args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
-        }
+        args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
+        args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
+        args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
         
-        if config.resscale != 1 {
-            args.append(contentsOf: ["--resolution-scale", String(config.resscale)])
-        }
         
         if config.nintendoinput {
-            args.append("--correct-ons-controller")
-        }
-        if config.enableInternet {
-            args.append("--enable-internet-connection")
+            args.append("--correct-controller")
         }
         
         // Adding default args directly into additionalArgs
         if config.disableVSync {
-            args.append("--disable-vsync")
+            // args.append("--disable-vsync")
         }
+        
+        args.append("--disable-vsync")
+        
         if config.disableShaderCache {
             args.append("--disable-shader-cache")
         }

@@ -143,7 +143,10 @@ namespace Ryujinx.Headless.SDL2
         {
             List<GamepadInfo> gamepads = new List<GamepadInfo>();
             IGamepad gamepad;
-            _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
+            if (_inputManager == null)
+            {
+                _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
+            }
 
             // Collect gamepads from the keyboard driver
             foreach (string id in _inputManager.KeyboardDriver.GamepadsIds)
@@ -417,7 +420,10 @@ namespace Ryujinx.Headless.SDL2
             _accountManager = new AccountManager(_libHacHorizonManager.RyujinxClient, option.UserProfile);
             _userChannelPersistence = new UserChannelPersistence();
 
-            _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
+            if (_inputManager == null)
+            {
+                _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
+            }
 
             GraphicsConfig.EnableShaderCache = true;
 
