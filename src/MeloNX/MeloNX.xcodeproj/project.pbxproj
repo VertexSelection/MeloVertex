@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 73;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -49,7 +49,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		4E80AA1D2CD7015100029585 /* Exceptions for "MeloNX" folder in "MeloNX" target */ = {
+		4E80AA1D2CD7015100029585 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -59,23 +59,61 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		4E9A82F32CF87822006D7086 /* Exceptions for "MeloNX" folder in "Embed Libraries" phase from "MeloNX" target */ = {
+		4E9A82F32CF87822006D7086 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			attributesByRelativePath = {
-				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (CodeSignOnCopy, );
-				"Dependencies/Dynamic Libraries/libMoltenVK.dylib" = (CodeSignOnCopy, );
-				"Dependencies/Dynamic Libraries/libavcodec.dylib" = (CodeSignOnCopy, );
-				"Dependencies/Dynamic Libraries/libavutil.dylib" = (CodeSignOnCopy, );
-				Dependencies/XCFrameworks/MoltenVK.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/SDL2.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libSPIRV.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libavcodec.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libavfilter.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libavformat.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libavutil.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libswresample.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libswscale.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
-				Dependencies/XCFrameworks/libteakra.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
+				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (
+					CodeSignOnCopy,
+				);
+				"Dependencies/Dynamic Libraries/libMoltenVK.dylib" = (
+					CodeSignOnCopy,
+				);
+				"Dependencies/Dynamic Libraries/libavcodec.dylib" = (
+					CodeSignOnCopy,
+				);
+				"Dependencies/Dynamic Libraries/libavutil.dylib" = (
+					CodeSignOnCopy,
+				);
+				Dependencies/XCFrameworks/MoltenVK.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/SDL2.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libSPIRV.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libavcodec.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libavfilter.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libavformat.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libavutil.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libswresample.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libswscale.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libteakra.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
 			};
 			buildPhase = 4E80AA092CD6FAA800029585 /* Embed Libraries */;
 			membershipExceptions = (
@@ -98,25 +136,9 @@
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		4E80A98F2CD6F54500029585 /* MeloNX */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				4E80AA1D2CD7015100029585 /* Exceptions for "MeloNX" folder in "MeloNX" target */,
-				4E9A82F32CF87822006D7086 /* Exceptions for "MeloNX" folder in "Embed Libraries" phase from "MeloNX" target */,
-			);
-			path = MeloNX;
-			sourceTree = "<group>";
-		};
-		4E80A9A02CD6F54700029585 /* MeloNXTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MeloNXTests;
-			sourceTree = "<group>";
-		};
-		4E80A9AA2CD6F54700029585 /* MeloNXUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MeloNXUITests;
-			sourceTree = "<group>";
-		};
+		4E80A98F2CD6F54500029585 /* MeloNX */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4E80AA1D2CD7015100029585 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 4E9A82F32CF87822006D7086 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MeloNX; sourceTree = "<group>"; };
+		4E80A9A02CD6F54700029585 /* MeloNXTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MeloNXTests; sourceTree = "<group>"; };
+		4E80A9AA2CD6F54700029585 /* MeloNXUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MeloNXUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -283,7 +305,7 @@
 			packageReferences = (
 				4E80AA1F2CD705DD00029585 /* XCRemoteSwiftPackageReference "SwiftSDL2" */,
 			);
-			preferredProjectObjectVersion = 77;
+			preferredProjectObjectVersion = 60;
 			productRefGroup = 4E80A98E2CD6F54500029585 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -586,6 +608,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				MARKETING_VERSION = 0.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
@@ -653,6 +679,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
