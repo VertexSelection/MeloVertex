@@ -305,7 +305,7 @@
 			packageReferences = (
 				4E80AA1F2CD705DD00029585 /* XCRemoteSwiftPackageReference "SwiftSDL2" */,
 			);
-			preferredProjectObjectVersion = 60;
+			preferredProjectObjectVersion = 56;
 			productRefGroup = 4E80A98E2CD6F54500029585 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
