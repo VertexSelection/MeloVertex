@@ -40,7 +40,10 @@ struct ContentView: View {
         let defaultSettings: [MoltenVKSettings] = [
             // MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "512"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", value: "0"),
-            MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1")
+            MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "1"),
+            MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
+            MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1"),
+            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_APIf", value: "1")
         ]
         
         _settings = State(initialValue: defaultSettings)
@@ -137,13 +140,17 @@ struct ContentView: View {
             
             isVCA = true
             
-            start(displayid: 1)
+            DispatchQueue.main.async {
+                start(displayid: 1)
+            }
             
             
         } else {
             isVCA = false
             
-            start(displayid: 1)
+            DispatchQueue.main.async {
+                start(displayid: 1)
+            }
             
             
         }
