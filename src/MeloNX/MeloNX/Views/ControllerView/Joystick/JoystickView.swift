@@ -39,13 +39,13 @@ public struct Joystick: View {
                 locksInPlace: false)
             .onChange(of: self.joystickMonitor.xyPoint) { newValue in
                 let scaledX = Float(newValue.x)
-                let scaledY = Float(newValue.y) // my dumbass broke this by having -y instead of y :/ 
+                let scaledY = Float(newValue.y) // my dumbass broke this by having -y instead of y :/
                 print("Joystick Position: (\(scaledX), \(scaledY))")
                 
                 if iscool != nil {
-                    Ryujinx.shared.virtualController.thumbstickMoved(.right, x: scaledX, y: scaledY)
+                    Ryujinx.shared.virtualController.thumbstickMoved(.right, x: newValue.x, y: newValue.y)
                 } else {
-                    Ryujinx.shared.virtualController.thumbstickMoved(.left, x: scaledX, y: scaledY)
+                    Ryujinx.shared.virtualController.thumbstickMoved(.left, x: newValue.x, y: newValue.y)
                 }
             }
         }

@@ -87,6 +87,7 @@ struct ControllerView: View {
                 }
             }
         }
+        .padding()
     }
 }
 

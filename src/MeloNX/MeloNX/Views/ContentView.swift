@@ -154,7 +154,7 @@ struct ContentView: View {
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
             controllersList = Ryujinx.shared.getConnectedControllers()
             
-            if let onscreen = controllersList.first(where: { $0.name == "Virtual Controller" }) {
+            if let onscreen = controllersList.first(where: { $0.name == Ryujinx.shared.virtualController.controllername }) {
                 self.onscreencontroller = onscreen
             }
             

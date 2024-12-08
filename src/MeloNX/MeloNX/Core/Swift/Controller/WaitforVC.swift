@@ -33,13 +33,16 @@ func waitforcontroller() {
         }
         
         let controllerView = ControllerView()
-
         let hostingController = UIHostingController(rootView: controllerView)
-        
-        hostingController.view.frame = window.bounds  // Set the frame of the SwiftUI view
+
+        // Create the custom container
+        let containerView = TransparentHostingContainerView(frame: window.bounds)
+        containerView.backgroundColor = .clear
+
+        hostingController.view.frame = containerView.bounds
         hostingController.view.backgroundColor = .clear
-        
-        
+        containerView.addSubview(hostingController.view)
+
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             if findGCControllerView(in: window) == nil {
                 window.addSubview(hostingController.view)
@@ -48,5 +51,16 @@ func waitforcontroller() {
             window.bringSubviewToFront(hostingController.view)
         }
 
+    }
+}
+
+
+class TransparentHostingContainerView: UIView {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        // Check if the point is within the subviews of this container
+        let view = super.hitTest(point, with: event)
+        
+        // Return nil if the touch is outside visible content (passes through to views below)
+        return view === self ? nil : view
     }
 }
