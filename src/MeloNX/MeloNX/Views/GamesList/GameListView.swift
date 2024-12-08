@@ -7,17 +7,33 @@
 
 // MARK: - This will most likely not be used in prod
 import SwiftUI
+import UniformTypeIdentifiers
+
+public struct Game: Identifiable, Equatable {
+    public var id = UUID()
+
+    var containerFolder: URL
+    var fileType: UTType
+    
+    var fileURL: URL
+
+    var titleName: String
+    var titleId: String
+    var developer: String
+    var version: String
+    var icon: Image?
+}
 
 struct GameListView: View {
     @Binding var startemu: URL?
-    @State private var games: [URL] = []
+    @State private var games: [Game] = []
 
     var body: some View {
-        List(games, id: \.self) { game in
+        List($games, id: \.id) { $game in
             Button {
-                startemu = game
+                startemu = $game.wrappedValue.fileURL
             } label: {
-                Text(game.lastPathComponent)
+                Text(game.titleName)
             }
         }
         .navigationTitle("Games")
@@ -42,7 +58,41 @@ struct GameListView: View {
         // Load games only from "roms" folder
         do {
             let files = try fileManager.contentsOfDirectory(at: romsDirectory, includingPropertiesForKeys: nil)
-            games = files
+            
+            files.forEach { fileURLCandidate in
+                do {
+                    let handle = try FileHandle(forReadingFrom: fileURLCandidate)
+                    let fileExtension = (fileURLCandidate.pathExtension as NSString).utf8String
+                    let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
+                    
+                    var gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
+                    
+                    var game = Game(containerFolder: romsDirectory, fileType: .item, fileURL: fileURLCandidate, titleName: "", titleId: "", developer: "", version: "")
+                    
+                    game.titleName = withUnsafePointer(to: &gameInfo.TitleName) {
+                         $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                             String(cString: $0)
+                         }
+                     }
+
+                    game.developer = withUnsafePointer(to: &gameInfo.Developer) {
+                         $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                             String(cString: $0)
+                         }
+                     }
+                    
+                    game.titleId = String(gameInfo.TitleId)
+                    
+                    
+                    game.version = String(gameInfo.Version)
+                    
+                    
+                    games.append(game)
+                } catch {
+                    print(error)
+                }
+            }
+            
         } catch {
             print("Error loading games from roms folder: \(error)")
         }

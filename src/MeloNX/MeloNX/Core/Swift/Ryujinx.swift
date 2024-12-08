@@ -50,7 +50,6 @@ class Ryujinx {
         var listinputids: Bool
         var fullscreen: Bool
         var memoryManagerMode: String
-        var disableVSync: Bool
         var disableShaderCache: Bool
         var disableDockedMode: Bool
         var enableTextureRecompression: Bool
@@ -64,7 +63,6 @@ class Ryujinx {
              listinputids: Bool = false,
              fullscreen: Bool = true,
              memoryManagerMode: String = "HostMapped",
-             disableVSync: Bool = false,
              disableShaderCache: Bool = false,
              disableDockedMode: Bool = false,
              nintendoinput: Bool = true,
@@ -79,7 +77,6 @@ class Ryujinx {
             self.tracelogs = tracelogs
             self.listinputids = listinputids
             self.fullscreen = fullscreen
-            self.disableVSync = disableVSync
             self.disableShaderCache = disableShaderCache
             self.disableDockedMode = disableDockedMode
             self.enableTextureRecompression = enableTextureRecompression
@@ -157,10 +154,6 @@ class Ryujinx {
             args.append("--correct-controller")
         }
         
-        // Adding default args directly into additionalArgs
-        if config.disableVSync {
-            // args.append("--disable-vsync")
-        }
         
         args.append("--disable-vsync")
         

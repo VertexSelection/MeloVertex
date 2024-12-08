@@ -27,7 +27,6 @@ struct SettingsView: View {
             VStack {
                 Section(header: Title("Graphics and Performance")) {
                     Toggle("Ryujinx Fullscreen", isOn: $config.fullscreen)
-                    Toggle("Disable V-Sync", isOn: $config.disableVSync)
                     Toggle("Disable Shader Cache", isOn: $config.disableShaderCache)
                     Toggle("Enable Texture Recompression", isOn: $config.enableTextureRecompression)
                     Toggle("Disable Docked Mode", isOn: $config.disableDockedMode)
@@ -72,7 +71,6 @@ struct SettingsView: View {
                     //TextField("Game Path", text: $config.gamepath)
                     
                     Text("PageSize \(String(Int(getpagesize())))")
-                    Toggle("Ignore JIT Enabeld Popup", isOn: $ignoreJIT)
                     TextField("Additional Arguments", text: Binding(
                         get: {
                             config.additionalArgs.joined(separator: ", ")

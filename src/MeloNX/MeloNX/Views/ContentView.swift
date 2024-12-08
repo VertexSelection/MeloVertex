@@ -130,6 +130,7 @@ struct ContentView: View {
         SDL_SetMainReady()
         SDL_iPhoneSetEventPump(SDL_TRUE)
         SDL_Init(SdlInitFlags)
+        initialize()
     }
     
     private func setupEmulation() {
