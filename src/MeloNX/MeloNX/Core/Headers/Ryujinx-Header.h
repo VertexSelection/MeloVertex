@@ -9,7 +9,7 @@
 #define RyujinxHeader
 
 
-#import "SDL.h"
+#import "SDL2/SDL.h"
 
 #ifdef __cplusplus
 extern "C" {

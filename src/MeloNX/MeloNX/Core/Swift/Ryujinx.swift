@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftUI
-import SDL2
 import GameController
 
 struct Controller: Identifiable, Hashable {

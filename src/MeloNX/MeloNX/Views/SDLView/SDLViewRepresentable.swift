@@ -7,7 +7,6 @@
 
 import UIKit
 import SwiftUI
-import SDL2
 import GameController
 /*
 struct SDLViewRepresentable: UIViewRepresentable {

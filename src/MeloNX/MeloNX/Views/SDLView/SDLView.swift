@@ -7,7 +7,6 @@
 
 import UIKit
 import MetalKit
-import SDL2
 
 /*
 class SDLView: UIView {
