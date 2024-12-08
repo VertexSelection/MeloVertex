@@ -8,6 +8,9 @@
 #ifndef RyujinxHeader
 #define RyujinxHeader
 
+
+#import "SDL.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -2,92 +2,109 @@
 //  VirtualController.swift
 //  MeloNX
 //
-//  Created by Stossy11 on 28/11/2024.
+//  Created by Stossy11 on 8/12/2024.
 //
 
 import Foundation
-import GameController
-import UIKit
 
-public var controllerCallback: (() -> Void)?
-
-var VirtualController: GCVirtualController!
-func showVirtualController() {
-    let config = GCVirtualController.Configuration()
+class VirtualController {
+    private var instanceID: SDL_JoystickID = -1
+    private var controller: OpaquePointer?
     
-    var controllere = [
-        GCInputLeftThumbstick,
-        GCInputButtonA,
-        GCInputButtonB,
-        GCInputButtonX,
-        GCInputButtonY,
-        // GCInputRightThumbstick,
-        GCInputRightTrigger,
-        GCInputLeftTrigger,
-        GCInputLeftShoulder,
-        GCInputRightShoulder
-    ]
+    init() {
+        setupVirtualController()
+    }
     
-    if !UserDefaults.standard.bool(forKey: "RyuDemoControls") {
+    private func setupVirtualController() {
+        // Initialize SDL if not already initialized
+        if SDL_WasInit(Uint32(SDL_INIT_GAMECONTROLLER)) == 0 {
+            SDL_InitSubSystem(Uint32(SDL_INIT_GAMECONTROLLER))
+        }
         
-        controllere.append(GCInputRightThumbstick)
-    }
-    
-    config.elements = Set(controllere)
-    
-    VirtualController = GCVirtualController(configuration: config)
-    VirtualController.connect { err in
-        print("controller connect: \(String(describing: err))")
-        patchMakeKeyAndVisible()
-        if let controllerCallback {
-            controllerCallback()
+        // Create virtual controller
+        instanceID = SDL_JoystickAttachVirtual(SDL_JoystickType(SDL_JOYSTICK_TYPE_GAMECONTROLLER.rawValue), 6, 15, 1)
+        if instanceID < 0 {
+            print("Failed to create virtual joystick: \(String(cString: SDL_GetError()))")
+            return
         }
-    }
-}
-
-func waitforcontroller() {
-    Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
         
-        if let window = UIApplication.shared.windows.first {
-            // Function to recursively search for GCControllerView
-            func findGCControllerView(in view: UIView) -> UIView? {
-                // Check if current view is GCControllerView
-                if String(describing: type(of: view)) == "GCControllerView" {
-                    return view
-                }
-                
-                // Search through subviews
-                for subview in view.subviews {
-                    if let found = findGCControllerView(in: subview) {
-                        return found
-                    }
-                }
-                
-                return nil
-            }
-            
-            if let gcControllerView = findGCControllerView(in: window) {
-                // Found the GCControllerView
-                print("Found GCControllerView:", gcControllerView)
-                
-                if let theWindow = theWindow, (findGCControllerView(in: theWindow) == nil) {
-                    theWindow.addSubview(gcControllerView)
-                    
-                    theWindow.bringSubviewToFront(gcControllerView)
-                }
-            }
+        // Open a game controller for the virtual joystick
+        let joystick = SDL_JoystickFromInstanceID(instanceID)
+        controller = SDL_GameControllerOpen(Int32(instanceID))
+        
+        if controller == nil {
+            print("Failed to create virtual controller: \(String(cString: SDL_GetError()))")
+            return
         }
+    }
+    
+    func updateAxisValue(value: Sint16, forAxis axis: SDL_GameControllerAxis) {
+        guard controller != nil else { return }
+        let joystick = SDL_JoystickFromInstanceID(instanceID)
+        SDL_JoystickSetVirtualAxis(joystick, axis.rawValue, value)
+    }
+    
+    func thumbstickMoved(_ stick: ThumbstickType, x: Float, y: Float) {
+        // Convert float values (-1.0 to 1.0) to SDL axis values (-32768 to 32767)
+        let scaledX = Sint16(x * 32767.0)
+        let scaledY = Sint16(y * 32767.0)
+        
+        if stick == .right {
+            updateAxisValue(value: scaledX, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_RIGHTX.rawValue))
+            updateAxisValue(value: scaledY, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_RIGHTY.rawValue))
+        } else {  // ThumbstickType.left
+            updateAxisValue(value: scaledX, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_LEFTX.rawValue))
+            updateAxisValue(value: scaledY, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_LEFTY.rawValue))
+        }
+    }
+    
+    func setButtonState(_ state: Uint8, for button: VirtualControllerButton) {
+        guard controller != nil else { return }
+        
+        print("Button: \(button.rawValue) {state: \(state)}")
+        if (button == .leftTrigger || button == .rightTrigger) && (state == 1 || state == 0) {
+            let axis: SDL_GameControllerAxis = (button == .leftTrigger) ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT
+            let value: Int = (state == 1) ? 32767 : 0
+            updateAxisValue(value: Sint16(value), forAxis: axis)
+        } else {
+            let joystick = SDL_JoystickFromInstanceID(instanceID)
+            SDL_JoystickSetVirtualButton(joystick, Int32(button.rawValue), state)
+        }
+    }
+    
+    func cleanup() {
+        if let controller = controller {
+            SDL_GameControllerClose(controller)
+            self.controller = nil
+        }
+    }
+    
+    deinit {
+        cleanup()
     }
 }
 
-@available(iOS 15.0, *)
-func reconnectVirtualController() {
-    VirtualController.disconnect()
-    DispatchQueue.main.async {
-        VirtualController.connect { err in
-            print("reconnected: err \(String(describing: err))")
-        }
-    }
+enum VirtualControllerButton: Int {
+    case B
+    case A
+    case Y
+    case X
+    case back
+    case guide
+    case start
+    case leftStick
+    case rightStick
+    case leftShoulder
+    case rightShoulder
+    case dPadUp
+    case dPadDown
+    case dPadLeft
+    case dPadRight
+    case leftTrigger
+    case rightTrigger
 }
 
-
+enum ThumbstickType: Int {
+    case left
+    case right
+}

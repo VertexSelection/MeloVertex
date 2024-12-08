@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4E0DED342D05695D00FEF007 /* SwiftUIJoystick in Frameworks */ = {isa = PBXBuildFile; productRef = 4E0DED332D05695D00FEF007 /* SwiftUIJoystick */; };
 		4E551F202CF128540096A2DF /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E80AA622CD7122800029585 /* GameController.framework */; };
-		4E80AA212CD705DD00029585 /* SDL in Frameworks */ = {isa = PBXBuildFile; productRef = 4E80AA202CD705DD00029585 /* SDL */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -146,8 +146,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E0DED342D05695D00FEF007 /* SwiftUIJoystick in Frameworks */,
 				4E551F202CF128540096A2DF /* GameController.framework in Frameworks */,
-				4E80AA212CD705DD00029585 /* SDL in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,7 +218,7 @@
 			);
 			name = MeloNX;
 			packageProductDependencies = (
-				4E80AA202CD705DD00029585 /* SDL */,
+				4E0DED332D05695D00FEF007 /* SwiftUIJoystick */,
 			);
 			productName = MeloNX;
 			productReference = 4E80A98D2CD6F54500029585 /* MeloNX.app */;
@@ -303,9 +303,9 @@
 			mainGroup = 4E80A9842CD6F54500029585;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				4E80AA1F2CD705DD00029585 /* XCRemoteSwiftPackageReference "SwiftSDL2" */,
+				4E0DED322D05695D00FEF007 /* XCRemoteSwiftPackageReference "SwiftUIJoystick" */,
 			);
-			preferredProjectObjectVersion = 60;
+			preferredProjectObjectVersion = 56;
 			productRefGroup = 4E80A98E2CD6F54500029585 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -612,6 +612,18 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				MARKETING_VERSION = 0.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
@@ -679,6 +691,18 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
@@ -861,21 +885,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		4E80AA1F2CD705DD00029585 /* XCRemoteSwiftPackageReference "SwiftSDL2" */ = {
+		4E0DED322D05695D00FEF007 /* XCRemoteSwiftPackageReference "SwiftUIJoystick" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ctreffs/SwiftSDL2";
+			repositoryURL = "https://github.com/michael94ellis/SwiftUIJoystick";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.4.1;
+				minimumVersion = 1.5.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		4E80AA202CD705DD00029585 /* SDL */ = {
+		4E0DED332D05695D00FEF007 /* SwiftUIJoystick */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 4E80AA1F2CD705DD00029585 /* XCRemoteSwiftPackageReference "SwiftSDL2" */;
-			productName = SDL;
+			package = 4E0DED322D05695D00FEF007 /* XCRemoteSwiftPackageReference "SwiftUIJoystick" */;
+			productName = SwiftUIJoystick;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

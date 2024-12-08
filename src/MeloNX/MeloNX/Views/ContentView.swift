@@ -6,10 +6,11 @@
 //
 
 import SwiftUI
-import SDL2
+// import SDL2
 import GameController
 import Darwin
 import UIKit
+// import SDL
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String
@@ -27,9 +28,9 @@ struct ContentView: View {
     @State private var config: Ryujinx.Configuration
     @State private var settings: [MoltenVKSettings]
     @State private var isVirtualControllerActive: Bool = false
+    @AppStorage("isVirtualController") var isVCA: Bool = true
     @State var onscreencontroller: Controller = Controller(id: "", name: "")
     @AppStorage("JIT") var isJITEnabled: Bool = false
-    @AppStorage("ignoreJIT") var ignoreJIT: Bool = false
     
     // MARK: - Initialization
     init() {
@@ -58,13 +59,6 @@ struct ContentView: View {
                 mainMenuView
             }
         }
-        .onChange(of: isVirtualControllerActive) { newValue in
-            if newValue {
-                createVirtualController()
-            } else {
-                destroyVirtualController()
-            }
-        }
     }
     
     // MARK: - View Components
@@ -79,7 +73,6 @@ struct ContentView: View {
         HStack {
             GameListView(startemu: $game)
                 .onAppear {
-                    createVirtualController()
                     refreshControllersList()
                 }
             
@@ -126,59 +119,42 @@ struct ContentView: View {
         }
     }
     
-    // MARK: - Controller Management
-    private func createVirtualController() {
-        let configuration = GCVirtualController.Configuration()
-        configuration.elements = [
-            /*
-            GCInputLeftThumbstick,
-            GCInputRightThumbstick,
-            GCInputButtonA,
-            GCInputButtonB,
-            GCInputButtonX,
-            GCInputButtonY,
-             */
-        ]
-        
-        virtualController = GCVirtualController(configuration: configuration)
-        virtualController?.connect()
-        
-    }
-    
-    private func destroyVirtualController() {
-        virtualController?.disconnect()
-        virtualController = nil
-    }
     
     // MARK: - Helper Methods
+    var SdlInitFlags: uint = SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO | SDL_INIT_VIDEO;
     private func initializeSDL() {
-        DispatchQueue.main.async {
-            setMoltenVKSettings()
-            SDL_SetMainReady()
-            SDL_iPhoneSetEventPump(SDL_TRUE)
-            SDL_Init(SDL_INIT_VIDEO)
-        }
+        setMoltenVKSettings()
+        SDL_SetMainReady()
+        SDL_iPhoneSetEventPump(SDL_TRUE)
+        SDL_Init(SdlInitFlags)
     }
     
     private func setupEmulation() {
         virtualController?.disconnect()
+        patchMakeKeyAndVisible()
         
-        controllerCallback = {
-            DispatchQueue.main.async {
-
-                start(displayid: 1)
-            }
+        if (currentControllers.first(where: { $0 == onscreencontroller }) != nil) {
+            
+            isVCA = true
+            
+            start(displayid: 1)
+            
+            
+        } else {
+            isVCA = false
+            
+            start(displayid: 1)
+            
+            
         }
-            
-            
-        showVirtualController()
+        // controllerCallback!()
     }
     
     private func refreshControllersList() {
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
             controllersList = Ryujinx.shared.getConnectedControllers()
             
-            if let onscreen = controllersList.first(where: { $0.name.hasPrefix("Apple")}) {
+            if let onscreen = controllersList.first(where: { $0.name == "Virtual Controller" }) {
                 self.onscreencontroller = onscreen
             }
             

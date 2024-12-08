@@ -32,6 +32,8 @@ struct iOSNav<Content: View>: View {
 class Ryujinx {
     private var isRunning = false
     
+    let virtualController = VirtualController()
+    
     @Published var controllerMap: [Controller] = []
     
     static let shared = Ryujinx()

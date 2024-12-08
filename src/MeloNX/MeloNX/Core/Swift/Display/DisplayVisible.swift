@@ -19,13 +19,12 @@ extension UIWindow {
         }
         self.wdb_makeKeyAndVisible()
         theWindow = self
-        if #available(iOS 15.0, *) {
-            // reconnectVirtualController()
-        }
         
         
-        if let window = theWindow {
-            waitforcontroller()
+        if UserDefaults.standard.bool(forKey: "isVirtualController") {
+            if let window = theWindow {
+                waitforcontroller()
+            }
         }
     }
 }
