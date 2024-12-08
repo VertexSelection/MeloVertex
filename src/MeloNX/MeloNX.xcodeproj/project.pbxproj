@@ -65,6 +65,9 @@
 				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (
 					CodeSignOnCopy,
 				);
+				"Dependencies/Dynamic Libraries/libMoltenVK.dylib" = (
+					CodeSignOnCopy,
+				);
 				"Dependencies/Dynamic Libraries/libavcodec.dylib" = (
 					CodeSignOnCopy,
 				);
@@ -116,6 +119,7 @@
 			membershipExceptions = (
 				"Dependencies/Dynamic Libraries/libavcodec.dylib",
 				"Dependencies/Dynamic Libraries/libavutil.dylib",
+				"Dependencies/Dynamic Libraries/libMoltenVK.dylib",
 				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib",
 				Dependencies/XCFrameworks/libavcodec.xcframework,
 				Dependencies/XCFrameworks/libavfilter.xcframework,
@@ -508,6 +512,10 @@
 				DEVELOPMENT_TEAM = 95J8WZ4TN8;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_TESTABILITY = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/XCFrameworks",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeloNX/Info.plist;
 				INFOPLIST_KEY_GCSupportsGameMode = YES;
@@ -621,6 +629,7 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/XCFrameworks",
 				);
 				MARKETING_VERSION = 0.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
@@ -644,6 +653,10 @@
 				DEVELOPMENT_TEAM = 95J8WZ4TN8;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/XCFrameworks",
+				);
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeloNX/Info.plist;
@@ -758,6 +771,7 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/XCFrameworks",
 				);
 				MARKETING_VERSION = 0.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
