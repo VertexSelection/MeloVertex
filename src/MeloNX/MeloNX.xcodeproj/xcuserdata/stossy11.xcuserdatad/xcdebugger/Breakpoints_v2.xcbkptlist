@@ -7,37 +7,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "1F3099D0-0456-4AD5-8EA1-52BABAF2AA89"
-            shouldBeEnabled = "No"
-            nameForDebugger = "Ignore-SIGUSR"
-            ignoreCount = "0"
-            continueAfterRunningActions = "Yes"
-            filePath = "MeloNX/MeloNXApp.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "21"
-            endingLineNumber = "21"
-            landmarkName = "body"
-            landmarkType = "24">
-            <Actions>
-               <BreakpointActionProxy
-                  ActionExtensionID = "Xcode.BreakpointAction.DebuggerCommand">
-                  <ActionContent
-                     consoleCommand = "process handle SIGUSR1 -s false -n false">
-                  </ActionContent>
-               </BreakpointActionProxy>
-               <BreakpointActionProxy
-                  ActionExtensionID = "Xcode.BreakpointAction.DebuggerCommand">
-                  <ActionContent
-                     consoleCommand = "process handle SIGBUS -s false -n false">
-                  </ActionContent>
-               </BreakpointActionProxy>
-            </Actions>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "499F5405-B63B-4623-9332-1E44FC449FD0"
             shouldBeEnabled = "No"
             ignoreCount = "0"
