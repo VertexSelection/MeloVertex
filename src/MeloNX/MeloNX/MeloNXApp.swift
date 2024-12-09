@@ -12,7 +12,7 @@ struct MeloNXApp: App {
     
     init() {
         DispatchQueue.main.async {
-            // drmcheck()
+            drmcheck()
         }
     }
     
@@ -27,7 +27,7 @@ struct MeloNXApp: App {
 func drmcheck() {
     if let deviceid = UIDevice.current.identifierForVendor?.uuidString, let base64device = deviceid.data(using: .utf8)?.base64EncodedString() {
         if let value = Bundle.main.infoDictionary?["MeloID"] as? String {
-            if let url = URL(string: "https://950e-175-32-92-74.ngrok-free.app/auth/\(value)/\(base64device)") {
+            if let url = URL(string: "https://mx.stossy11.com/auth/\(value)/\(base64device)") {
                 // Create a URLSession
                 let session = URLSession.shared
                 
