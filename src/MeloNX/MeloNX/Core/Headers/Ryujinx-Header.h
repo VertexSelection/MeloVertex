@@ -21,7 +21,10 @@ struct GameInfo {
     long TitleId;
     char Developer[256];
     int Version;
+    unsigned char* ImageData; 
+    unsigned int ImageSize;
 };
+
 extern struct GameInfo get_game_info(int, char*);
 // Declare the main_ryujinx_sdl function, matching the signature
 int main_ryujinx_sdl(int argc, char **argv);

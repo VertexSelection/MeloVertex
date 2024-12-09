@@ -273,7 +273,7 @@ namespace Ryujinx.Headless.SDL2
 
             var gameInfo = GetGameInfo(stream, extension);
 
-            return new GameInfoNative(0, gameInfo.TitleName, 0, gameInfo.Developer, 0);
+            return new GameInfoNative(0, gameInfo.TitleName, 0, gameInfo.Developer, 0, gameInfo.Icon);
         }
 
         public static GameInfo? GetGameInfo(Stream gameStream, string extension)
@@ -1376,7 +1376,7 @@ namespace Ryujinx.Headless.SDL2
             return new FileStream(safeHandle, FileAccess.ReadWrite);
         }
 
-        public class GameInfo
+    public class GameInfo
     {
         public double FileSize;
         public string? TitleName;
@@ -1386,32 +1386,62 @@ namespace Ryujinx.Headless.SDL2
         public byte[]? Icon;
     }
 
-    public unsafe struct GameInfoNative
+public unsafe struct GameInfoNative
+{
+    public ulong FileSize;
+    public fixed byte TitleName[512];
+    public ulong TitleId;
+    public fixed byte Developer[256];
+    public uint Version;
+    public byte* ImageData;  // Changed to pointer
+    public uint ImageSize;   // Actual size of image data
+
+    public GameInfoNative(ulong fileSize, string titleName, ulong titleId, string developer, uint version, byte[] imageData)
     {
-        public ulong FileSize;
-        public fixed byte TitleName[512];
-        public ulong TitleId;
-        public fixed byte Developer[256];
-        public uint Version;
+        FileSize = fileSize;
+        TitleId = titleId;
+        Version = version;
 
-        public GameInfoNative(ulong fileSize, string titleName, ulong titleId, string developer, uint version)
+        fixed (byte* developerPtr = Developer)
+        fixed (byte* titleNamePtr = TitleName)
         {
-            FileSize = fileSize;
-            TitleId = titleId;
-            Version = version;
-
-            fixed (byte* developerPtr = Developer)
-            fixed (byte* titleNamePtr = TitleName)
-            {
-                CopyStringToFixedArray(titleName, titleNamePtr, 512);
-                CopyStringToFixedArray(developer, developerPtr, 256);
-            }
+            CopyStringToFixedArray(titleName, titleNamePtr, 512);
+            CopyStringToFixedArray(developer, developerPtr, 256);
         }
 
-        private void CopyStringToFixedArray(string source, byte* destination, int length)
+        if (imageData == null || imageData.Length > 1024 * 1024)
+        {
+            throw new ArgumentException("Image data must not exceed 1 MB.");
+        }
+
+        ImageSize = (uint)imageData.Length;
+        
+        // Allocate unmanaged memory for the image data
+        ImageData = (byte*)Marshal.AllocHGlobal(imageData.Length);
+        
+        // Copy the image data to the allocated memory
+        Marshal.Copy(imageData, 0, (IntPtr)ImageData, imageData.Length);
+    }
+
+    // Don't forget to free the allocated memory
+    public void Dispose()
+    {
+        if (ImageData != null)
+        {
+            Marshal.FreeHGlobal((IntPtr)ImageData);
+            ImageData = null;
+        }
+    }
+        private static void CopyStringToFixedArray(string source, byte* destination, int length)
         {
             var span = new Span<byte>(destination, length);
             Encoding.UTF8.GetBytes(source, span);
+        }
+
+        private static void CopyArrayToFixedArray(byte[] source, byte* destination, int maxLength)
+        {
+            var span = new Span<byte>(destination, maxLength);
+            source.AsSpan().CopyTo(span);
         }
     }
     }

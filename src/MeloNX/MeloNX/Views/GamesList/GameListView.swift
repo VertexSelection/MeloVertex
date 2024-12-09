@@ -205,22 +205,24 @@ struct GameLibraryView: View {
                     var game = Game(containerFolder: romsDirectory, fileType: .item, fileURL: fileURLCandidate, titleName: "", titleId: "", developer: "", version: "")
                     
                     game.titleName = withUnsafePointer(to: &gameInfo.TitleName) {
-                         $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
-                             String(cString: $0)
-                         }
-                     }
-
+                        $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                            String(cString: $0)
+                        }
+                    }
+                    
                     game.developer = withUnsafePointer(to: &gameInfo.Developer) {
-                         $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
-                             String(cString: $0)
-                         }
-                     }
+                        $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                            String(cString: $0)
+                        }
+                    }
                     
                     game.titleId = String(gameInfo.TitleId)
                     
                     
                     game.version = String(gameInfo.Version)
                     
+                    game.icon = game.createImage(from: gameInfo)
+            
                     
                     games.append(game)
                 } catch {
@@ -274,7 +276,7 @@ struct RecentGameCard: View {
         }) {
             VStack(alignment: .leading, spacing: 8) {
                 if let icon = game.icon {
-                    icon
+                    Image(uiImage: icon)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 140, height: 140)
@@ -321,7 +323,7 @@ struct GameListRow: View {
             HStack(spacing: 16) {
                 // Game Icon
                 if let icon = game.icon {
-                    icon
+                    Image(uiImage: icon)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 45, height: 45)
