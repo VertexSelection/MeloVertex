@@ -17,7 +17,7 @@
 3. Make sure `Ryujinx.SDL2.Headless.dylib` is set to `Embed & Sign` in the General settings for the Xcode project
   
 4. Signing & Capabilities
-    Change your 'Team' to your Developer Account (free or paid) and change Bundle Identifier to<br>
+    Change your 'Team' to your Developer Account (free or paid) and change Bundle Identifier to
     `com.*your name*.MeloNX`
 
 6. Build and Run

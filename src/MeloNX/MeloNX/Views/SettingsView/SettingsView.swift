@@ -19,164 +19,253 @@ struct SettingsView: View {
     ]
     
     @AppStorage("RyuDemoControls") var ryuDemo: Bool = false
-    
     @AppStorage("MTL_HUD_ENABLED") var metalHUDEnabled: Bool = false
     
+    @State private var showResolutionInfo = false
+    @State private var searchText = ""
+    
+    var filteredMemoryModes: [(String, String)] {
+        guard !searchText.isEmpty else { return memoryManagerModes }
+        return memoryManagerModes.filter { $0.1.localizedCaseInsensitiveContains(searchText) }
+    }
+    
     var body: some View {
-        ScrollView {
-            VStack {
-                Section(header: Title("Graphics and Performance")) {
-                    Toggle("Ryujinx Fullscreen", isOn: $config.fullscreen)
-                    Toggle("Disable Shader Cache", isOn: $config.disableShaderCache)
-                    Toggle("Enable Texture Recompression", isOn: $config.enableTextureRecompression)
-                    Toggle("Disable Docked Mode", isOn: $config.disableDockedMode)
-                    Resolution(value: $config.resscale)
-                    
-                    Toggle("Enable Metal HUD", isOn: $metalHUDEnabled)
-                        .onChange(of: metalHUDEnabled) { newValue in
-                            if newValue {
-                                MTLHud.shared.enable()
-                            } else {
-                                MTLHud.shared.disable()
+        NavigationStack {
+            List {
+                // Graphics & Performance
+                Section {
+                    Toggle(isOn: $config.fullscreen) {
+                        labelWithIcon("Fullscreen", iconName: "rectangle.expand.vertical")
+                    }
+                    .tint(.blue)
+
+                    Toggle(isOn: $config.disableShaderCache) {
+                        labelWithIcon("Disable Shader Cache", iconName: "memorychip")
+                    }
+                    .tint(.blue)
+
+                    Toggle(isOn: $config.enableTextureRecompression) {
+                        labelWithIcon("Texture Recompression", iconName: "rectangle.compress.vertical")
+                    }
+                    .tint(.blue)
+
+                    Toggle(isOn: $config.disableDockedMode) {
+                        labelWithIcon("Disable Docked Mode", iconName: "dock.rectangle")
+                    }
+                    .tint(.blue)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            labelWithIcon("Resolution Scale", iconName: "magnifyingglass")
+                                .font(.headline)
+                            Spacer()
+                            Button {
+                                showResolutionInfo.toggle()
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .symbolRenderingMode(.hierarchical)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Learn more about Resolution Scale")
+                            .alert(isPresented: $showResolutionInfo) {
+                                Alert(
+                                    title: Text("Resolution Scale"),
+                                    message: Text("Adjust the internal rendering resolution. Higher values improve visuals but may reduce performance."),
+                                    dismissButton: .default(Text("OK"))
+                                )
                             }
                         }
+
+                        Slider(value: $config.resscale, in: 0.1...3.0, step: 0.1) {
+                            Text("Resolution Scale")
+                        } minimumValueLabel: {
+                            Text("0.1x")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        } maximumValueLabel: {
+                            Text("3.0x")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(config.resscale, specifier: "%.2f")x")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+
+                    Toggle(isOn: $metalHUDEnabled) {
+                        labelWithIcon("Metal HUD", iconName: "speedometer")
+                    }
+                    .tint(.blue)
+                    .onChange(of: metalHUDEnabled) { newValue in
+                        // Preserves original functionality
+                        if newValue {
+                            MTLHud.shared.enable()
+                        } else {
+                            MTLHud.shared.disable()
+                        }
+                    }
+                } header: {
+                    Text("Graphics & Performance")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Fine-tune graphics and performance to suit your device and preferences.")
                 }
-                
-                Section(header: Title("Input Settings")) {
-                    Toggle("List Input IDs", isOn: $config.listinputids)
-                    Toggle("Ryujinx Demo On-Screen Controller", isOn: $ryuDemo)
-                    // Toggle("Host Mapped Memory", isOn: $config.hostMappedMemory)
+
+                // Input Settings
+                Section {
+                    Toggle(isOn: $config.listinputids) {
+                        labelWithIcon("List Input IDs", iconName: "list.bullet")
+                    }
+                    .tint(.blue)
+
+                    Toggle(isOn: $ryuDemo) {
+                        labelWithIcon("On-Screen Controller (Demo)", iconName: "hand.draw")
+                    }
+                    .tint(.blue)
+                } header: {
+                    Text("Input Settings")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Configure input devices and on-screen controls for easier navigation and play.")
                 }
-                
-                Section(header: Title("Logging Settings")) {
-                    Toggle("Enable Debug Logs", isOn: $config.debuglogs)
-                    Toggle("Enable Trace Logs", isOn: $config.tracelogs)
+
+                // Logging
+                Section {
+                    Toggle(isOn: $config.debuglogs) {
+                        labelWithIcon("Debug Logs", iconName: "exclamationmark.bubble")
+                    }
+                    .tint(.blue)
+
+                    Toggle(isOn: $config.tracelogs) {
+                        labelWithIcon("Trace Logs", iconName: "waveform.path")
+                    }
+                    .tint(.blue)
+                } header: {
+                    Text("Logging")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Enable logs for troubleshooting or keep them off for a cleaner experience.")
                 }
-                Section(header: Title("CPU Mode")) {
-                    HStack {
-                        Spacer()
-                        Picker("Memory Manager Mode", selection: $config.memoryManagerMode) {
-                            ForEach(memoryManagerModes, id: \.0) { key, displayName in
+
+                // CPU Mode
+                Section {
+                    if filteredMemoryModes.isEmpty {
+                        Text("No matches for \"\(searchText)\"")
+                            .foregroundColor(.secondary)
+                    } else {
+                        Picker(selection: $config.memoryManagerMode) {
+                            ForEach(filteredMemoryModes, id: \.0) { key, displayName in
                                 Text(displayName).tag(key)
                             }
+                        } label: {
+                            labelWithIcon("Memory Manager Mode", iconName: "gearshape")
                         }
-                        .pickerStyle(MenuPickerStyle()) // Dropdown style
                     }
+                } header: {
+                    Text("CPU Mode")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Select how memory is managed. 'Host (fast)' is best for most users.")
                 }
-                
-                
-                
-                Section(header: Title("Additional Settings")) {
-                    //TextField("Game Path", text: $config.gamepath)
-                    
-                    Text("PageSize \(String(Int(getpagesize())))")
-                    TextField("Additional Arguments", text: Binding(
-                        get: {
-                            config.additionalArgs.joined(separator: ", ")
-                        },
-                        set: { newValue in
-                            config.additionalArgs = newValue.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+
+                // Advanced
+                Section {
+                    DisclosureGroup {
+                        HStack {
+                            labelWithIcon("Page Size", iconName: "textformat.size")
+                            Spacer()
+                            Text("\(String(Int(getpagesize())))")
+                                .foregroundColor(.secondary)
                         }
-                    ))
+
+                        TextField("Additional Arguments", text: Binding(
+                            get: {
+                                config.additionalArgs.joined(separator: ", ")
+                            },
+                            set: { newValue in
+                                config.additionalArgs = newValue
+                                    .split(separator: ",")
+                                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                            }
+                        ))
+                        .textInputAutocapitalization(.none)
+                        .disableAutocorrection(true)
+                    } label: {
+                        Text("Advanced Options")
+                    }
+                } header: {
+                    Text("Advanced")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("For advanced users. Adjust page size or add custom arguments for experimental features.")
                 }
             }
-            .padding()
-        }
-        .onAppear {
-            if let configs = loadSettings() {
-                self.config = configs
-                print(configs)
+            // Searching memory modes
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.insetGrouped)
+            // Load and save settings to preserve original functionality
+            .onAppear {
+                if let configs = loadSettings() {
+                    self.config = configs
+                }
+            }
+            .onChange(of: config) { _ in
+                saveSettings()
             }
         }
-        .onChange(of: config) { newValue in
-            print(newValue)
-            saveSettings()
-        }
+        .navigationViewStyle(.stack)
     }
     
     func saveSettings() {
         do {
             let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted // Optional: Makes the JSON easier to read
+            encoder.outputFormatting = .prettyPrinted
             let data = try encoder.encode(config)
             let jsonString = String(data: data, encoding: .utf8)
-            
-            // Save to UserDefaults
             UserDefaults.standard.set(jsonString, forKey: "config")
-            
-            print("Settings saved successfully!")
         } catch {
             print("Failed to save settings: \(error)")
         }
     }
-}
-
-
-struct Resolution: View {
-    @Binding var value: Float
-
-    var body: some View {
-        HStack {
-            Text("Resolution Scale (Custom):")
-            Spacer()
-            
-            Button(action: {
-                if value > 0.1 { // Prevent values going below 0.1
-                    value -= 0.10
-                    value = round(value * 1000) / 1000 // Round to two decimal places
-                }
-                print(value)
-            }) {
-                Text("-")
-                    .frame(width: 30, height: 30)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(5)
-            }
-            
-            TextField("", value: $value, formatter: NumberFormatter.floatFormatter)
-                .multilineTextAlignment(.center)
-                .frame(width: 60)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .keyboardType(.decimalPad)
-            
-            Button(action: {
-                value += 0.10
-                value = round(value * 1000) / 1000 // Round to two decimal places
-                print(value)
-            }) {
-                Text("+")
-                    .frame(width: 30, height: 30)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(5)
-            }
+    
+    // Original loadSettings function assumed to exist
+    func loadSettings() -> Ryujinx.Configuration? {
+        guard let jsonString = UserDefaults.standard.string(forKey: "config"),
+              let data = jsonString.data(using: .utf8) else {
+            return nil
+        }
+        do {
+            let decoder = JSONDecoder()
+            let configs = try decoder.decode(Ryujinx.Configuration.self, from: data)
+            return configs
+        } catch {
+            print("Failed to load settings: \(error)")
+            return nil
         }
     }
-}
-
-extension NumberFormatter {
-    static var floatFormatter: NumberFormatter {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 2
-        formatter.minimumFractionDigits = 2
-        formatter.allowsFloats = true
-        return formatter
-    }
-}
-
-
-struct Title: View {
-    let string: String
     
-    init(_ string: String) {
-        self.string = string
-    }
-    
-    var body: some View {
-        VStack {
-            Text(string)
-                .font(.title2)
-            Divider()
+    @ViewBuilder
+    private func labelWithIcon(_ text: String, iconName: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: iconName)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.blue)
+            Text(text)
         }
+        .font(.body)
     }
 }
