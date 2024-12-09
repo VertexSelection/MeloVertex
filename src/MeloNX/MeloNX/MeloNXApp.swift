@@ -12,7 +12,7 @@ struct MeloNXApp: App {
     
     init() {
         DispatchQueue.main.async {
-            drmcheck()
+            // drmcheck()
         }
     }
     
