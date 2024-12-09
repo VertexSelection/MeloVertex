@@ -146,8 +146,8 @@ class Ryujinx {
         // Fixes the Stubs.DispatchLoop Crash
         args.append(contentsOf: ["--memory-manager-mode", config.memoryManagerMode])
         args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
-        args.append(contentsOf: ["--exclusive-fullscreen-width", "1280"])
-        args.append(contentsOf: ["--exclusive-fullscreen-height", "720"])
+        args.append(contentsOf: ["--exclusive-fullscreen-width", "\(Int(UIScreen.main.bounds.width))"])
+        args.append(contentsOf: ["--exclusive-fullscreen-height", "\(Int(UIScreen.main.bounds.height))"])
         
         
         if config.nintendoinput {
