@@ -1409,17 +1409,15 @@ public unsafe struct GameInfoNative
             CopyStringToFixedArray(developer, developerPtr, 256);
         }
 
-        if (imageData == null || imageData.Length > 1024 * 1024)
+        if (imageData == null || imageData.Length > 4096 * 4096)
         {
-            throw new ArgumentException("Image data must not exceed 1 MB.");
+            throw new ArgumentException("Image data must not exceed 4 MB.");
         }
 
         ImageSize = (uint)imageData.Length;
         
-        // Allocate unmanaged memory for the image data
         ImageData = (byte*)Marshal.AllocHGlobal(imageData.Length);
         
-        // Copy the image data to the allocated memory
         Marshal.Copy(imageData, 0, (IntPtr)ImageData, imageData.Length);
     }
 
