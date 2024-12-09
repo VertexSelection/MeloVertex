@@ -143,8 +143,8 @@ class Ryujinx {
         args.append("--graphics-backend")
         args.append("Vulkan")
         
-        // Fixes the Stubs.DispatchLoop Crash
         args.append(contentsOf: ["--memory-manager-mode", config.memoryManagerMode])
+        
         args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
         args.append(contentsOf: ["--exclusive-fullscreen-width", "\(Int(UIScreen.main.bounds.width))"])
         args.append(contentsOf: ["--exclusive-fullscreen-height", "\(Int(UIScreen.main.bounds.height))"])
@@ -156,6 +156,11 @@ class Ryujinx {
         
         
         args.append("--disable-vsync")
+        
+        
+        if config.resscale != 1.0 {
+            args.append(contentsOf: ["--resolution-scale", String(config.resscale)])
+        }
         
         if config.disableShaderCache {
             args.append("--disable-shader-cache")
