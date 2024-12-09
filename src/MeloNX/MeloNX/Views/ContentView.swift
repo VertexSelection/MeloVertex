@@ -10,6 +10,7 @@ import SwiftUI
 import GameController
 import Darwin
 import UIKit
+import MetalKit
 // import SDL
 
 struct MoltenVKSettings: Codable, Hashable {
@@ -55,12 +56,10 @@ struct ContentView: View {
     
     // MARK: - Body
     var body: some View {
-        iOSNav {
-            if let game {
-                emulationView
-            } else {
-                mainMenuView
-            }
+        if let game {
+            emulationView
+        } else {
+            mainMenuView
         }
     }
     
@@ -73,53 +72,10 @@ struct ContentView: View {
     }
     
     private var mainMenuView: some View {
-        HStack {
-            GameListView(startemu: $game)
-                .onAppear {
-                    refreshControllersList()
-                }
-            
-            settingsListView
-        }
-    }
-    
-    private var settingsListView: some View {
-        List {
-            Section("Settings") {
-                NavigationLink("Config") {
-                    SettingsView(config: $config, MoltenVKSettings: $settings)
-                        .onAppear() {
-                            virtualController?.disconnect()
-                        }
-                }
+        MainTabView(startemu: $game, config: $config, MVKconfig: $settings, controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
+            .onAppear() {
+                refreshControllersList()
             }
-            
-            
-            Section {
-                Button("Refresh", action: refreshControllersList)
-                ForEach(controllersList, id: \.self) { controller in
-                    controllerRow(for: controller)
-                }
-            } header: {
-                Text("Controllers")
-            } footer: {
-                Text("If no controllers are selected, the keyboard will be used.")
-                    .font(.footnote)
-                    .foregroundColor(.gray)
-            }
-        }
-    }
-    
-    private func controllerRow(for controller: Controller) -> some View {
-        HStack {
-            Button(controller.name) {
-                toggleController(controller)
-            }
-            Spacer()
-            if currentControllers.contains(where: { $0.id == controller.id }) {
-                Image(systemName: "checkmark.circle.fill")
-            }
-        }
     }
     
     
@@ -155,36 +111,24 @@ struct ContentView: View {
             
             
         }
-        // controllerCallback!()
     }
     
     private func refreshControllersList() {
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
-            controllersList = Ryujinx.shared.getConnectedControllers()
-            
-            if let onscreen = controllersList.first(where: { $0.name == Ryujinx.shared.virtualController.controllername }) {
-                self.onscreencontroller = onscreen
-            }
-            
-            controllersList.removeAll(where: { $0.id == "0"})
-            
-            if controllersList.count > 2 {
-                let controller =  controllersList[2]
-                currentControllers.append(controller)
-            } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
-                currentControllers.append(controller)
-            }
+        controllersList = Ryujinx.shared.getConnectedControllers()
+        
+        if let onscreen = controllersList.first(where: { $0.name == Ryujinx.shared.virtualController.controllername }) {
+            self.onscreencontroller = onscreen
         }
-    }
-    
-    private func toggleController(_ controller: Controller) {
-        if currentControllers.contains(where: { $0.id == controller.id }) {
-            currentControllers.removeAll(where: { $0.id == controller.id })
-        } else {
+        
+        controllersList.removeAll(where: { $0.id == "0"})
+        
+        if controllersList.count > 2 {
+            let controller =  controllersList[2]
+            currentControllers.append(controller)
+        } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
             currentControllers.append(controller)
         }
     }
-    
 
     func showAlert(title: String, message: String, showOk: Bool, completion: @escaping (Bool) -> Void) {
         DispatchQueue.main.async {

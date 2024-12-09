@@ -44,7 +44,6 @@ struct SettingsView: View {
                 
                 Section(header: Title("Input Settings")) {
                     Toggle("List Input IDs", isOn: $config.listinputids)
-                    Toggle("Nintendo Controller Layout", isOn: $config.nintendoinput)
                     Toggle("Ryujinx Demo On-Screen Controller", isOn: $ryuDemo)
                     // Toggle("Host Mapped Memory", isOn: $config.hostMappedMemory)
                 }
@@ -89,10 +88,10 @@ struct SettingsView: View {
                 print(configs)
             }
         }
-        .navigationTitle("Settings")
-        .navigationBarItems(trailing: Button("Save") {
+        .onChange(of: config) { newValue in
+            print(newValue)
             saveSettings()
-        })
+        }
     }
     
     func saveSettings() {

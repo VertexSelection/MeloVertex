@@ -123,13 +123,8 @@ class VirtualController {
     }
     
     func thumbstickMoved(_ stick: ThumbstickType, x: Double, y: Double) {
-        // Convert float values (-1.0 to 1.0) to SDL axis values (-32768 to 32767)
-        var scaleFactor = 32767.0
-        if UIDevice.current.systemName.contains("iPadOS") {
-            scaleFactor /= (160 * 1.2)
-        } else {
-            scaleFactor /= 160
-        }
+        var scaleFactor = 32767.0 / 160
+
         let scaledX = Int16(min(32767.0, max(-32768.0, x * scaleFactor)))
         let scaledY = Int16(min(32767.0, max(-32768.0, y * scaleFactor)))
         

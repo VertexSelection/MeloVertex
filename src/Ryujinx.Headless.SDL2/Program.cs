@@ -958,7 +958,6 @@ namespace Ryujinx.Headless.SDL2
 
         static void Load(Options option)
         {
-            AppDataManager.Initialize(option.BaseDataDir);
 
             if (_virtualFileSystem == null)
             {

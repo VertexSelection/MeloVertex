@@ -63,8 +63,16 @@ namespace Ryujinx.Common.Configuration
             {
                 appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             }
+            string userProfilePath;
+            if (OperatingSystem.IsIOS()) 
+            {
+                userProfilePath = appDataPath;
+            }
+            else 
+            {
+                userProfilePath = Path.Combine(appDataPath, DefaultBaseDir);
+            }
 
-            string userProfilePath = Path.Combine(appDataPath, DefaultBaseDir);
             string portablePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DefaultPortableDir);
 
             if (Directory.Exists(portablePath))

@@ -39,7 +39,7 @@ class Ryujinx {
     
     private init() {}
     
-    public struct Configuration : Codable {
+    public struct Configuration : Codable, Equatable {
         var gamepath: String
         var inputids: [String]
         var resscale: Float

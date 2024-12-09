@@ -5,41 +5,176 @@
 //  Created by Stossy11 on 3/11/2024.
 //
 
-// MARK: - This will most likely not be used in prod
 import SwiftUI
 import UniformTypeIdentifiers
 
-public struct Game: Identifiable, Equatable {
-    public var id = UUID()
 
-    var containerFolder: URL
-    var fileType: UTType
+struct MainTabView: View {
+    @Binding var startemu: URL?
+    @Binding var config: Ryujinx.Configuration
+    @Binding var MVKconfig: [MoltenVKSettings]
+    @Binding var controllersList: [Controller]
+    @Binding var currentControllers: [Controller]
     
-    var fileURL: URL
-
-    var titleName: String
-    var titleId: String
-    var developer: String
-    var version: String
-    var icon: Image?
+    @Binding var onscreencontroller: Controller
+    
+    var body: some View {
+        TabView {
+            GameLibraryView(startemu: $startemu)
+                .tabItem {
+                    Label("Games", systemImage: "gamecontroller.fill")
+                }
+            
+            SelectControllerView(controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
+                .tabItem {
+                    Label("Controllers", systemImage: "gamecontroller.fill")
+                }
+            
+            SettingsView(config: $config, MoltenVKSettings: $MVKconfig)
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+        }
+    }
 }
 
-struct GameListView: View {
+struct GameLibraryView: View {
     @Binding var startemu: URL?
     @State private var games: [Game] = []
-
+    @State private var searchText = ""
+    @State private var isSearching = false
+    @AppStorage("recentGames") private var recentGamesData: Data = Data()
+    @State private var recentGames: [Game] = []
+    @Environment(\.colorScheme) var colorScheme
+    
+    var filteredGames: [Game] {
+        if searchText.isEmpty {
+            return games
+        }
+        return games.filter {
+            $0.titleName.localizedCaseInsensitiveContains(searchText) ||
+            $0.developer.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+    
     var body: some View {
-        List($games, id: \.id) { $game in
-            Button {
-                startemu = $game.wrappedValue.fileURL
-            } label: {
-                Text(game.titleName)
+        iOSNav {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 20) {
+                    if !isSearching {
+                        Text("Games")
+                            .font(.system(size: 34, weight: .bold))
+                            .padding(.horizontal)
+                            .padding(.top, 12)
+                    }
+                    
+                    if games.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "gamecontroller.fill")
+                                .font(.system(size: 64))
+                                .foregroundColor(.secondary.opacity(0.7))
+                                .padding(.top, 60)
+                            Text("No Games Found")
+                                .font(.title2.bold())
+                                .foregroundColor(.primary)
+                            Text("Add ROM, Keys and Firmware to get started")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                    } else {
+                        if !isSearching && !recentGames.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Recent")
+                                    .font(.title2.bold())
+                                    .padding(.horizontal)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    LazyHStack(spacing: 16) {
+                                        ForEach(recentGames) { game in
+                                            RecentGameCard(game: game, startemu: $startemu)
+                                                .onTapGesture {
+                                                    addToRecentGames(game)
+                                                    startemu = game.fileURL
+                                                }
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("All Games")
+                                    .font(.title2.bold())
+                                    .padding(.horizontal)
+                                
+                                LazyVStack(spacing: 2) {
+                                    ForEach(filteredGames) { game in
+                                        GameListRow(game: game, startemu: $startemu)
+                                            .onTapGesture {
+                                                addToRecentGames(game)
+                                            }
+                                    }
+                                }
+                            }
+                        } else {
+                            LazyVStack(spacing: 2) {
+                                ForEach(filteredGames) { game in
+                                    GameListRow(game: game, startemu: $startemu)
+                                        .onTapGesture {
+                                            addToRecentGames(game)
+                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+                .onAppear {
+                    loadGames()
+                    loadRecentGames()
+                }
             }
         }
-        .navigationTitle("Games")
-        .onAppear(perform: loadGames)
+        .background(Color(.systemGroupedBackground))
+        .searchable(text: $searchText)
+        .onChange(of: searchText) { _ in
+            isSearching = !searchText.isEmpty
+        }
     }
-
+    
+    private func addToRecentGames(_ game: Game) {
+        recentGames.removeAll { $0.id == game.id }
+        
+        recentGames.insert(game, at: 0)
+        
+        if recentGames.count > 5 {
+            recentGames = Array(recentGames.prefix(5))
+        }
+        
+        saveRecentGames()
+    }
+    
+    private func saveRecentGames() {
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(recentGames)
+            recentGamesData = data
+        } catch {
+            print("Error saving recent games: \(error)")
+        }
+    }
+    
+    private func loadRecentGames() {
+        do {
+            let decoder = JSONDecoder()
+            recentGames = try decoder.decode([Game].self, from: recentGamesData)
+        } catch {
+            print("Error loading recent games: \(error)")
+            recentGames = []
+        }
+    }
+    
     private func loadGames() {
         let fileManager = FileManager.default
         guard let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
@@ -54,7 +189,7 @@ struct GameListView: View {
                 print("Failed to create roms directory: \(error)")
             }
         }
-
+        games = []
         // Load games only from "roms" folder
         do {
             let files = try fileManager.contentsOfDirectory(at: romsDirectory, includingPropertiesForKeys: nil)
@@ -96,5 +231,149 @@ struct GameListView: View {
         } catch {
             print("Error loading games from roms folder: \(error)")
         }
+    }
+}
+
+// Make sure your Game model conforms to Codable
+extension Game: Codable {
+    enum CodingKeys: String, CodingKey {
+        case titleName, titleId, developer, version, fileURL
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        titleName = try container.decode(String.self, forKey: .titleName)
+        titleId = try container.decode(String.self, forKey: .titleId)
+        developer = try container.decode(String.self, forKey: .developer)
+        version = try container.decode(String.self, forKey: .version)
+        fileURL = try container.decode(URL.self, forKey: .fileURL)
+        
+        // Initialize other properties
+        self.containerFolder = fileURL.deletingLastPathComponent()
+        self.fileType = .item
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(titleName, forKey: .titleName)
+        try container.encode(titleId, forKey: .titleId)
+        try container.encode(developer, forKey: .developer)
+        try container.encode(version, forKey: .version)
+        try container.encode(fileURL, forKey: .fileURL)
+    }
+}
+
+struct RecentGameCard: View {
+    let game: Game
+    @Binding var startemu: URL?
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Button(action: {
+            startemu = game.fileURL
+        }) {
+            VStack(alignment: .leading, spacing: 8) {
+                if let icon = game.icon {
+                    icon
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 140, height: 140)
+                        .cornerRadius(12)
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ?
+                                  Color(.systemGray5) : Color(.systemGray6))
+                            .frame(width: 140, height: 140)
+                        
+                        Image(systemName: "gamecontroller.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(.gray)
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(game.titleName)
+                        .font(.subheadline.bold())
+                        .lineLimit(1)
+                    
+                    Text(game.developer)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 4)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct GameListRow: View {
+    let game: Game
+    @Binding var startemu: URL?
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Button(action: {
+            startemu = game.fileURL
+        }) {
+            HStack(spacing: 16) {
+                // Game Icon
+                if let icon = game.icon {
+                    icon
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 45, height: 45)
+                        .cornerRadius(8)
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(colorScheme == .dark ?
+                                  Color(.systemGray5) : Color(.systemGray6))
+                            .frame(width: 45, height: 45)
+                        
+                        Image(systemName: "gamecontroller.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.gray)
+                    }
+                }
+                
+                // Game Info
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(game.titleName)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                    
+                    Text(game.developer)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "play.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.accentColor)
+                    .opacity(0.8)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(Color(.systemBackground))
+            .contextMenu {
+                Button {
+                    startemu = game.fileURL
+                } label: {
+                    Label("Play Now", systemImage: "play.fill")
+                }
+                
+                Button {
+                    // Add info action
+                } label: {
+                    Label("Game Info", systemImage: "info.circle")
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 }

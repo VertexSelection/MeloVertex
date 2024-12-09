@@ -116,10 +116,10 @@ private void CreateFonts(string uiThemeFontFamily)
     if (OperatingSystem.IsIOS())
     {
         availableFonts = new string[] {
-            "Chalkboard",
-            "Chalkboard",  // San Francisco is the default font on iOS
-            "Chalkboard", // Legacy iOS font
-            "Chalkboard"           // Common system font
+            "SF Pro",
+            "New York",  
+            "Helvetica Neue", 
+            "Avenir"  
         };
     }
     else

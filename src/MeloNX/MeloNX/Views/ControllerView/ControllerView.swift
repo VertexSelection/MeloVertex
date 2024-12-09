@@ -64,12 +64,12 @@ struct ControllerView: View {
                                 // Spacer()
                                 VStack {
                                     // Spacer()
-                                    ButtonView(button: .start) // Adding the + button
+                                    ButtonView(button: .back) // Adding the + button
                                 }
                                 Spacer()
                                 VStack {
                                     // Spacer()
-                                    ButtonView(button: .back) // Adding the - button
+                                    ButtonView(button: .start) // Adding the - button
                                 }
                                 // Spacer()
                             }
