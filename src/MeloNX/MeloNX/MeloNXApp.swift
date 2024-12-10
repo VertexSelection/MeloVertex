@@ -11,7 +11,7 @@ import UIKit
 @main
 struct MeloNXApp: App {
     
-    @AppStorage("showeddrmcheck") var showed = false
+    @AppStorage("showeddrmcheck") var showed = true
     
     init() {
         DispatchQueue.main.async { [self] in
@@ -21,7 +21,7 @@ struct MeloNXApp: App {
                     if bool {
                         print("Yippee")
                     } else {
-                        exit(0)
+                       //  exit(0)
                     }
                 }
             } else {

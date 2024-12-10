@@ -1411,14 +1411,18 @@ public unsafe struct GameInfoNative
 
         if (imageData == null || imageData.Length > 4096 * 4096)
         {
-            throw new ArgumentException("Image data must not exceed 4 MB.");
+            // throw new ArgumentException("Image data must not exceed 4 MB.");
+            ImageSize = (uint)0;
+            ImageData = null;
         }
-
-        ImageSize = (uint)imageData.Length;
+        else 
+        {
+            ImageSize = (uint)imageData.Length;
         
-        ImageData = (byte*)Marshal.AllocHGlobal(imageData.Length);
+            ImageData = (byte*)Marshal.AllocHGlobal(imageData.Length);
         
-        Marshal.Copy(imageData, 0, (IntPtr)ImageData, imageData.Length);
+            Marshal.Copy(imageData, 0, (IntPtr)ImageData, imageData.Length);
+        }
     }
 
     // Don't forget to free the allocated memory

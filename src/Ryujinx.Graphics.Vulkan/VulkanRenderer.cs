@@ -301,6 +301,10 @@ namespace Ryujinx.Graphics.Vulkan
                 properties.Limits.FramebufferDepthSampleCounts &
                 properties.Limits.FramebufferStencilSampleCounts;
 
+            bool isDynamicStateSupported = OperatingSystem.IsIOS()
+                ? OperatingSystem.IsIOSVersionAtLeast(17) && _physicalDevice.IsDeviceExtensionPresent(ExtExtendedDynamicState.ExtensionName)
+                : _physicalDevice.IsDeviceExtensionPresent(ExtExtendedDynamicState.ExtensionName);
+
             Capabilities = new HardwareCapabilities(
                 _physicalDevice.IsDeviceExtensionPresent("VK_EXT_index_type_uint8"),
                 supportsCustomBorderColor,
@@ -316,7 +320,7 @@ namespace Ryujinx.Graphics.Vulkan
                 _physicalDevice.IsDeviceExtensionPresent("VK_EXT_shader_stencil_export"),
                 features2.Features.ShaderStorageImageMultisample,
                 _physicalDevice.IsDeviceExtensionPresent(ExtConditionalRendering.ExtensionName),
-                _physicalDevice.IsDeviceExtensionPresent(ExtExtendedDynamicState.ExtensionName),
+                isDynamicStatesupported,
                 features2.Features.MultiViewport && !(IsMoltenVk && Vendor == Vendor.Amd), // Workaround for AMD on MoltenVK issue
                 featuresRobustness2.NullDescriptor || !IsMoltenVk,
                 _physicalDevice.IsDeviceExtensionPresent(KhrPushDescriptor.ExtensionName),
