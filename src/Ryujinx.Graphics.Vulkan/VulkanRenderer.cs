@@ -320,7 +320,7 @@ namespace Ryujinx.Graphics.Vulkan
                 _physicalDevice.IsDeviceExtensionPresent("VK_EXT_shader_stencil_export"),
                 features2.Features.ShaderStorageImageMultisample,
                 _physicalDevice.IsDeviceExtensionPresent(ExtConditionalRendering.ExtensionName),
-                isDynamicStatesupported,
+                isDynamicStateSupported,
                 features2.Features.MultiViewport && !(IsMoltenVk && Vendor == Vendor.Amd), // Workaround for AMD on MoltenVK issue
                 featuresRobustness2.NullDescriptor || !IsMoltenVk,
                 _physicalDevice.IsDeviceExtensionPresent(KhrPushDescriptor.ExtensionName),
