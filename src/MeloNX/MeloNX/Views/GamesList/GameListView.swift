@@ -9,35 +9,6 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 
-struct MainTabView: View {
-    @Binding var startemu: URL?
-    @Binding var config: Ryujinx.Configuration
-    @Binding var MVKconfig: [MoltenVKSettings]
-    @Binding var controllersList: [Controller]
-    @Binding var currentControllers: [Controller]
-    
-    @Binding var onscreencontroller: Controller
-    
-    var body: some View {
-        TabView {
-            GameLibraryView(startemu: $startemu)
-                .tabItem {
-                    Label("Games", systemImage: "gamecontroller.fill")
-                }
-            
-            SelectControllerView(controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
-                .tabItem {
-                    Label("Controllers", systemImage: "gamecontroller.fill")
-                }
-            
-            SettingsView(config: $config, MoltenVKSettings: $MVKconfig)
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-        }
-    }
-}
-
 struct GameLibraryView: View {
     @Binding var startemu: URL?
     @State private var games: [Game] = []

@@ -10,6 +10,12 @@ import SwiftUI
 struct SettingsView: View {
     @Binding var config: Ryujinx.Configuration
     @Binding var MoltenVKSettings: [MoltenVKSettings]
+    
+    @Binding var controllersList: [Controller]
+    @Binding var currentControllers: [Controller]
+    
+    @Binding var onscreencontroller: Controller
+    
     @AppStorage("ignoreJIT") var ignoreJIT: Bool = false
     
     var memoryManagerModes = [
@@ -30,7 +36,7 @@ struct SettingsView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        iOSNav {
             List {
                 // Graphics & Performance
                 Section {
@@ -114,9 +120,41 @@ struct SettingsView: View {
                 } footer: {
                     Text("Fine-tune graphics and performance to suit your device and preferences.")
                 }
+                
+                // Input Selector
+                Section {
+                    ForEach(controllersList) { controller in
+                        var customBinding: Binding<Bool> {
+                            Binding(
+                                get: { currentControllers.contains(controller) },
+                                set: { bool in
+                                    if !bool {
+                                        currentControllers.removeAll(where: { $0.id == controller.id })
+                                    } else {
+                                        currentControllers.append(controller)
+                                    }
+                                    // toggleController(controller)
+                                }
+                            )
+                        }
+                        
+                        Toggle(isOn: customBinding) {
+                            labelWithIcon(controller.name, iconName: "")
+                        }
+                        .tint(.blue)
+                    }
+                } header: {
+                    Text("Input Selector")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Select input devices and on-screen controls to play with.")
+                }
 
                 // Input Settings
                 Section {
+                    
                     Toggle(isOn: $config.listinputids) {
                         labelWithIcon("List Input IDs", iconName: "list.bullet")
                     }
@@ -126,6 +164,7 @@ struct SettingsView: View {
                         labelWithIcon("On-Screen Controller (Demo)", iconName: "hand.draw")
                     }
                     .tint(.blue)
+                    .disabled(true)
                 } header: {
                     Text("Input Settings")
                         .font(.title3.weight(.semibold))
@@ -230,6 +269,14 @@ struct SettingsView: View {
         .navigationViewStyle(.stack)
     }
     
+    private func toggleController(_ controller: Controller) {
+        if currentControllers.contains(where: { $0.id == controller.id }) {
+            currentControllers.removeAll(where: { $0.id == controller.id })
+        } else {
+            currentControllers.append(controller)
+        }
+    }
+    
     func saveSettings() {
         do {
             let encoder = JSONEncoder()
@@ -261,9 +308,11 @@ struct SettingsView: View {
     @ViewBuilder
     private func labelWithIcon(_ text: String, iconName: String) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: iconName)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.blue)
+            if !iconName.isEmpty {
+                Image(systemName: iconName)
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.blue)
+            }
             Text(text)
         }
         .font(.body)
