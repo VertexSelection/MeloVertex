@@ -105,8 +105,8 @@ namespace Ryujinx.Graphics.Vulkan
             SupportsConditionalRendering = supportsConditionalRendering;
             SupportsExtendedDynamicState = (OperatingSystem.IsIOS() ? OperatingSystem.IsIOSVersionAtLeast(17) ? supportsExtendedDynamicState : false : supportsExtendedDynamicState);
             SupportsMultiView = supportsMultiView;
-            SupportsNullDescriptors = (OperatingSystem.IsIOS() ? false : supportsNullDescriptors);
-            SupportsPushDescriptors = (OperatingSystem.IsIOS() ? false : supportsNullDescriptors);
+            SupportsNullDescriptors = supportsNullDescriptors;
+            SupportsPushDescriptors = supportsPushDescriptors;
             SupportsPrimitiveTopologyListRestart = supportsPrimitiveTopologyListRestart;
             SupportsPrimitiveTopologyPatchListRestart = supportsPrimitiveTopologyPatchListRestart;
             SupportsTransformFeedback = supportsTransformFeedback;
