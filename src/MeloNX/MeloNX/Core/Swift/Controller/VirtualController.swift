@@ -123,7 +123,7 @@ class VirtualController {
     }
     
     func thumbstickMoved(_ stick: ThumbstickType, x: Double, y: Double) {
-        var scaleFactor = 32767.0 / 160
+        let scaleFactor = 32767.0 / 160
 
         let scaledX = Int16(min(32767.0, max(-32768.0, x * scaleFactor)))
         let scaledY = Int16(min(32767.0, max(-32768.0, y * scaleFactor)))

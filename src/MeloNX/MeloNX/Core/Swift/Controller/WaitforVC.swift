@@ -33,22 +33,21 @@ func waitforcontroller() {
         }
         
         let controllerView = ControllerView()
-        let hostingController = UIHostingController(rootView: controllerView)
-
-        // Create the custom container
+        let controllerHostingController = UIHostingController(rootView: controllerView)
         let containerView = TransparentHostingContainerView(frame: window.bounds)
         containerView.backgroundColor = .clear
 
-        hostingController.view.frame = containerView.bounds
-        hostingController.view.backgroundColor = .clear
-        containerView.addSubview(hostingController.view)
+        controllerHostingController.view.frame = containerView.bounds
+        controllerHostingController.view.backgroundColor = .clear
+        containerView.addSubview(controllerHostingController.view)
 
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             if findGCControllerView(in: window) == nil {
-                window.addSubview(hostingController.view)
+                window.addSubview(containerView)
+                
             }
             
-            window.bringSubviewToFront(hostingController.view)
+            window.bringSubviewToFront(containerView)
         }
 
     }

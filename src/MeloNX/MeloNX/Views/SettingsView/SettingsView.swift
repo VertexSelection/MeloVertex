@@ -248,15 +248,13 @@ struct SettingsView: View {
                         .textCase(nil)
                         .headerProminence(.increased)
                 } footer: {
-                    Text("For advanced users. Adjust page size or add custom arguments for experimental features.")
+                    Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing)")
                 }
             }
-            // Searching memory modes
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .listStyle(.insetGrouped)
-            // Load and save settings to preserve original functionality
             .onAppear {
                 if let configs = loadSettings() {
                     self.config = configs

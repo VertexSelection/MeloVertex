@@ -15,8 +15,7 @@ import MetalKit
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String
-    var bool: Bool?
-    var value: String?
+    var value: String
 }
 
 struct ContentView: View {
@@ -39,12 +38,11 @@ struct ContentView: View {
         _config = State(initialValue: defaultConfig)
         
         let defaultSettings: [MoltenVKSettings] = [
-            // MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "128"),
-            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", value: "1"),
-            MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "1"),
+            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "192"),
+            MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2"),
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1"),
-            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_APIf", value: "1")
+            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1")
         ]
         
         _settings = State(initialValue: defaultSettings)
@@ -77,7 +75,6 @@ struct ContentView: View {
                 refreshControllersList()
             }
     }
-    
     
     // MARK: - Helper Methods
     var SdlInitFlags: uint = SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO | SDL_INIT_VIDEO;

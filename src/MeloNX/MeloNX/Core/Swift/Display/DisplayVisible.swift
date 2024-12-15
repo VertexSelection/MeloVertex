@@ -23,6 +23,20 @@ extension UIWindow {
         
         if UserDefaults.standard.bool(forKey: "isVirtualController") {
             if let window = theWindow {
+                
+                class LandscapeViewController: UIViewController {
+                    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+                        return .landscape
+                    }
+
+                    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+                        return .landscapeLeft
+                    }
+                }
+
+                let landscapeVC = LandscapeViewController()
+                landscapeVC.modalPresentationStyle = .fullScreen
+                theWindow?.rootViewController?.present(landscapeVC, animated: false, completion: nil)
                 waitforcontroller()
             }
         }
@@ -37,3 +51,4 @@ func patchMakeKeyAndVisible() {
         method_exchangeImplementations(m1, m2)
     }
 }
+
