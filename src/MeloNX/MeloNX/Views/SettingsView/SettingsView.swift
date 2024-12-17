@@ -124,6 +124,7 @@ struct SettingsView: View {
                 // Input Selector
                 Section {
                     ForEach(controllersList) { controller in
+                        
                         var customBinding: Binding<Bool> {
                             Binding(
                                 get: { currentControllers.contains(controller) },
@@ -138,10 +139,31 @@ struct SettingsView: View {
                             )
                         }
                         
-                        Toggle(isOn: customBinding) {
-                            labelWithIcon(controller.name, iconName: "")
+                        
+                        if customBinding.wrappedValue {
+                            DisclosureGroup {
+                                Toggle(isOn: customBinding) {
+                                    Text(controller.name)
+                                        .font(.body)
+                                }
+                                .tint(.blue)
+                            } label: {
+                                let controller = String((controllersList.firstIndex(where: { $0.id == controller.id }) ?? 0) + 1)
+                                
+                                
+                                Text("Player \(controller)")
+                            }
+                            
+                        } else {
+                            Toggle(isOn: customBinding) {
+                                
+                                HStack {
+                                    Text(controller.name)
+                                        .font(.body)
+                                }
+                            }
+                            .tint(.blue)
                         }
-                        .tint(.blue)
                     }
                 } header: {
                     Text("Input Selector")
@@ -149,7 +171,7 @@ struct SettingsView: View {
                         .textCase(nil)
                         .headerProminence(.increased)
                 } footer: {
-                    Text("Select input devices and on-screen controls to play with.")
+                    Text("Select input devices and on-screen controls to play with. ")
                 }
 
                 // Input Settings
@@ -276,6 +298,10 @@ struct SettingsView: View {
     }
     
     func saveSettings() {
+#if targetEnvironment(simulator)
+        
+        print("Saving Settings")
+#else
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
@@ -285,10 +311,17 @@ struct SettingsView: View {
         } catch {
             print("Failed to save settings: \(error)")
         }
+#endif
     }
     
     // Original loadSettings function assumed to exist
     func loadSettings() -> Ryujinx.Configuration? {
+        
+#if targetEnvironment(simulator)
+        print("Running on Simulator")
+        
+        return Ryujinx.Configuration(gamepath: "")
+#else
         guard let jsonString = UserDefaults.standard.string(forKey: "config"),
               let data = jsonString.data(using: .utf8) else {
             return nil
@@ -301,6 +334,7 @@ struct SettingsView: View {
             print("Failed to load settings: \(error)")
             return nil
         }
+#endif
     }
     
     @ViewBuilder
@@ -316,3 +350,4 @@ struct SettingsView: View {
         .font(.body)
     }
 }
+
