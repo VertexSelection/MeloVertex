@@ -123,6 +123,33 @@ struct SettingsView: View {
                 
                 // Input Selector
                 Section {
+                    if !controllersList.filter({ !currentControllers.contains($0) }).isEmpty {
+                        DisclosureGroup("Unselected Controllers") {
+                            ForEach(controllersList.filter { !currentControllers.contains($0) }) { controller in
+                                var customBinding: Binding<Bool> {
+                                    Binding(
+                                        get: { currentControllers.contains(controller) },
+                                        set: { bool in
+                                            if !bool {
+                                                currentControllers.removeAll(where: { $0.id == controller.id })
+                                            } else {
+                                                currentControllers.append(controller)
+                                            }
+                                        }
+                                    )
+                                }
+                                
+                                Toggle(isOn: customBinding) {
+                                    Text(controller.name)
+                                        .font(.body)
+                                }
+                                .tint(.blue)
+                            }
+                        }
+                    }
+                    
+                    
+                    
                     ForEach(controllersList) { controller in
                         
                         var customBinding: Binding<Bool> {
@@ -154,15 +181,6 @@ struct SettingsView: View {
                                 Text("Player \(controller)")
                             }
                             
-                        } else {
-                            Toggle(isOn: customBinding) {
-                                
-                                HStack {
-                                    Text(controller.name)
-                                        .font(.body)
-                                }
-                            }
-                            .tint(.blue)
                         }
                     }
                 } header: {
