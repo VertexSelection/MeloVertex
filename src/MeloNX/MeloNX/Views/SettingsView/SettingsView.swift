@@ -279,16 +279,19 @@ struct SettingsView: View {
                         ))
                         .textInputAutocapitalization(.none)
                         .disableAutocorrection(true)
+                        
+                        
+                        Button {
+                            Ryujinx.shared.removeFirmware()
+                            
+                        } label: {
+                            Text("Remove Firmware")
+                                .font(.body)
+                        }
                     } label: {
                         Text("Advanced Options")
                     }
                     
-                    Button {
-                        Ryujinx.shared.removeFirmware()
-                        
-                    } label: {
-                        Text("Remove Firmware")
-                    }
                 } header: {
                     Text("Advanced")
                         .font(.title3.weight(.semibold))
