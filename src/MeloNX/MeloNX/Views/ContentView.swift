@@ -12,6 +12,7 @@ import Darwin
 import UIKit
 import MetalKit
 // import SDL
+import SoftwareKeyboard
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String

@@ -19,7 +19,7 @@ namespace Ryujinx.HLE.HOS.Applets
 {
     internal class SoftwareKeyboardApplet : IApplet
     {
-        private const string DefaultInputText = "Ryujinx";
+        private const string DefaultInputText = "MeloNX";
 
         private const int StandardBufferSize = 0x7D8;
         private const int InteractiveBufferSize = 0x7D4;
@@ -180,6 +180,10 @@ namespace Ryujinx.HLE.HOS.Applets
             return _keyboardRenderer?.DrawTo(destination, position) ?? false;
         }
 
+    [DllImport("SoftwareKeyboard.framework/SoftwareKeyboard", EntryPoint = "displayInputDialog", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void DisplayInputDialog(ref SoftwareKeyboardUiArgs args, out IntPtr userInput);
+
+
         private void ExecuteForegroundKeyboard()
         {
             string initialText = null;
@@ -188,23 +192,57 @@ namespace Ryujinx.HLE.HOS.Applets
             // InitialStringOffset points to the memory offset and InitialStringLength is the number of UTF-16 characters
             if (_transferMemory != null && _keyboardForegroundConfig.InitialStringLength > 0)
             {
-                initialText = Encoding.Unicode.GetString(_transferMemory, _keyboardForegroundConfig.InitialStringOffset,
+                initialText = Encoding.Unicode.GetString(
+                    _transferMemory, 
+                    _keyboardForegroundConfig.InitialStringOffset,
                     2 * _keyboardForegroundConfig.InitialStringLength);
             }
 
-            // If the max string length is 0, we set it to a large default
-            // length.
+            // If the max string length is 0, we set it to a large default length.
             if (_keyboardForegroundConfig.StringLengthMax == 0)
             {
                 _keyboardForegroundConfig.StringLengthMax = 100;
             }
 
+            // If no GUI handler is set, fallback to default behavior.
             if (_device.UiHandler == null)
             {
                 Logger.Warning?.Print(LogClass.Application, "GUI Handler is not set. Falling back to default");
 
-                _textValue = DefaultInputText;
-                _lastResult = KeyboardResult.Accept;
+                // Prepare the SoftwareKeyboardUiArgs struct
+                var args = new SoftwareKeyboardUiArgs
+                {
+                    KeyboardMode = _keyboardForegroundConfig.Mode,
+                    HeaderText = StripUnicodeControlCodes(_keyboardForegroundConfig.HeaderText),
+                    SubtitleText = StripUnicodeControlCodes(_keyboardForegroundConfig.SubtitleText),
+                    SubmitText = !string.IsNullOrWhiteSpace(_keyboardForegroundConfig.SubmitText)
+                        ? _keyboardForegroundConfig.SubmitText
+                        : "OK",
+                    StringLengthMin = _keyboardForegroundConfig.StringLengthMin,
+                    StringLengthMax = _keyboardForegroundConfig.StringLengthMax,
+                    InitialText = initialText,
+                };
+
+                IntPtr userInputPtr;
+
+                DisplayInputDialog(ref args, out userInputPtr);
+                if (userInputPtr != IntPtr.Zero)
+                {
+                    // Convert the IntPtr to a string
+                    string userInput = Marshal.PtrToStringAnsi(userInputPtr);
+
+                    _textValue = userInput ?? DefaultInputText;
+                    _lastResult = KeyboardResult.Accept;
+
+                    Console.WriteLine($"User input: {userInput}");
+                }
+                else
+                {
+                    Console.WriteLine("No input was received or input was canceled.");
+
+                    _textValue = DefaultInputText;
+                    _lastResult = KeyboardResult.Cancel;
+                }
             }
             else
             {
@@ -226,45 +264,35 @@ namespace Ryujinx.HLE.HOS.Applets
                 _textValue ??= initialText ?? DefaultInputText;
             }
 
-            // If the game requests a string with a minimum length less
-            // than our default text, repeat our default text until we meet
-            // the minimum length requirement.
-            // This should always be done before the text truncation step.
+            // Ensure the text meets the minimum length requirement
             while (_textValue.Length < _keyboardForegroundConfig.StringLengthMin)
             {
-                _textValue = String.Join(" ", _textValue, _textValue);
+                _textValue = string.Join(" ", _textValue, _textValue);
             }
 
-            // If our default text is longer than the allowed length,
-            // we truncate it.
+            // Truncate the text if it exceeds the maximum length
             if (_textValue.Length > _keyboardForegroundConfig.StringLengthMax)
             {
                 _textValue = _textValue[.._keyboardForegroundConfig.StringLengthMax];
             }
 
-            // Does the application want to validate the text itself?
+            // Handle text validation if required
             if (_keyboardForegroundConfig.CheckText)
             {
-                // The application needs to validate the response, so we
-                // submit it to the interactive output buffer, and poll it
-                // for validation. Once validated, the application will submit
-                // back a validation status, which is handled in OnInteractiveDataPushIn.
+                // Submit text for validation
                 _foregroundState = SoftwareKeyboardState.ValidationPending;
-
                 PushForegroundResponse(true);
             }
             else
             {
-                // If the application doesn't need to validate the response,
-                // we push the data to the non-interactive output buffer
-                // and poll it for completion.
+                // Submit text as complete
                 _foregroundState = SoftwareKeyboardState.Complete;
-
                 PushForegroundResponse(false);
 
                 AppletStateChanged?.Invoke(this, null);
             }
         }
+
 
         private void OnInteractiveData(object sender, EventArgs e)
         {

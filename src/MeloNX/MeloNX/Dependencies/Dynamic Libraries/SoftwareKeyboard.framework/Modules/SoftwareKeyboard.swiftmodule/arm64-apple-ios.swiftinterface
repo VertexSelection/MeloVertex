@@ -1,0 +1,38 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.0.3 effective-5.10 (swiftlang-6.0.3.1.4 clang-1600.0.30)
+// swift-module-flags: -target arm64-apple-ios14.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -Onone -enable-experimental-feature OpaqueTypeErasure -enable-bare-slash-regex -module-name SoftwareKeyboard
+@_exported import SoftwareKeyboard
+import Swift
+import UIKit
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+@objc public enum KeyboardMode : Swift.UInt32 {
+  case `default` = 0
+  case numeric = 1
+  case ascii = 2
+  case fullLatin = 3
+  case alphabet = 4
+  case simplifiedChinese = 5
+  case traditionalChinese = 6
+  case korean = 7
+  case languageSet2 = 8
+  case languageSet2Latin = 9
+  public init?(rawValue: Swift.UInt32)
+  public typealias RawValue = Swift.UInt32
+  public var rawValue: Swift.UInt32 {
+    get
+  }
+}
+public struct SoftwareKeyboardUiArgs {
+  public var keyboardMode: SoftwareKeyboard.KeyboardMode
+  public var headerText: Swift.String
+  public var subtitleText: Swift.String
+  public var submitText: Swift.String
+  public var stringLengthMin: Swift.Int32
+  public var stringLengthMax: Swift.Int32
+  public var initialText: Swift.String?
+}
+extension SoftwareKeyboard.KeyboardMode : Swift.Equatable {}
+extension SoftwareKeyboard.KeyboardMode : Swift.Hashable {}
+extension SoftwareKeyboard.KeyboardMode : Swift.RawRepresentable {}

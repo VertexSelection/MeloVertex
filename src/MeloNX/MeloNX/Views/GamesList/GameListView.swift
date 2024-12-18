@@ -134,6 +134,13 @@ struct GameLibraryView: View {
                             } label: {
                                 Text("Remove Firmware")
                             }
+                            
+                            
+                            Button {
+                                self.startemu = URL(string: "MiiMaker")
+                            } label: {
+                                Text("Mii Maker")
+                            }
                         }
                         
                         Button {
@@ -147,7 +154,7 @@ struct GameLibraryView: View {
                             Text("Show MeloNX Folder")
                         }
                     } label: {
-                        Image(systemName: "plus")
+                        Image(systemName: "ellipsis")
                             .foregroundColor(.blue)
                     }
                 }

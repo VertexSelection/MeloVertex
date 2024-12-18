@@ -1,0 +1,1454 @@
+{
+  "ABIRoot": {
+    "kind": "Root",
+    "name": "SoftwareKeyboard",
+    "printedName": "SoftwareKeyboard",
+    "children": [
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "SoftwareKeyboard",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "KeyboardMode",
+        "printedName": "KeyboardMode",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "default",
+            "printedName": "default",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeDefault",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO7defaultyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "ObjC"
+            ],
+            "fixedbinaryorder": 0
+          },
+          {
+            "kind": "Var",
+            "name": "numeric",
+            "printedName": "numeric",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeNumeric",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO7numericyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 1
+          },
+          {
+            "kind": "Var",
+            "name": "ascii",
+            "printedName": "ascii",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeAscii",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO5asciiyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 2
+          },
+          {
+            "kind": "Var",
+            "name": "fullLatin",
+            "printedName": "fullLatin",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeFullLatin",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO9fullLatinyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 3
+          },
+          {
+            "kind": "Var",
+            "name": "alphabet",
+            "printedName": "alphabet",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeAlphabet",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO8alphabetyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 4
+          },
+          {
+            "kind": "Var",
+            "name": "simplifiedChinese",
+            "printedName": "simplifiedChinese",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeSimplifiedChinese",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO17simplifiedChineseyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 5
+          },
+          {
+            "kind": "Var",
+            "name": "traditionalChinese",
+            "printedName": "traditionalChinese",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeTraditionalChinese",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO18traditionalChineseyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 6
+          },
+          {
+            "kind": "Var",
+            "name": "korean",
+            "printedName": "korean",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeKorean",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO6koreanyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 7
+          },
+          {
+            "kind": "Var",
+            "name": "languageSet2",
+            "printedName": "languageSet2",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeLanguageSet2",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO12languageSet2yA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 8
+          },
+          {
+            "kind": "Var",
+            "name": "languageSet2Latin",
+            "printedName": "languageSet2Latin",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(SoftwareKeyboard.KeyboardMode.Type) -> SoftwareKeyboard.KeyboardMode",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "SoftwareKeyboard.KeyboardMode.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "KeyboardMode",
+                        "printedName": "SoftwareKeyboard.KeyboardMode",
+                        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode@KeyboardModeLanguageSet2Latin",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO17languageSet2LatinyA2CmF",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 9
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(rawValue:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "SoftwareKeyboard.KeyboardMode?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UInt32",
+                "printedName": "Swift.UInt32",
+                "usr": "s:s6UInt32V"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:16SoftwareKeyboard0B4ModeO8rawValueACSgs6UInt32V_tcfc",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO8rawValueACSgs6UInt32V_tcfc",
+            "moduleName": "SoftwareKeyboard",
+            "implicit": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "rawValue",
+            "printedName": "rawValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt32",
+                "printedName": "Swift.UInt32",
+                "usr": "s:s6UInt32V"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:16SoftwareKeyboard0B4ModeO8rawValues6UInt32Vvp",
+            "mangledName": "$s16SoftwareKeyboard0B4ModeO8rawValues6UInt32Vvp",
+            "moduleName": "SoftwareKeyboard",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt32",
+                    "printedName": "Swift.UInt32",
+                    "usr": "s:s6UInt32V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0B4ModeO8rawValues6UInt32Vvg",
+                "mangledName": "$s16SoftwareKeyboard0B4ModeO8rawValues6UInt32Vvg",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode",
+        "mangledName": "$s16SoftwareKeyboard0B4ModeO",
+        "moduleName": "SoftwareKeyboard",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ],
+        "enumRawTypeName": "UInt32",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "RawRepresentable",
+            "printedName": "RawRepresentable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "RawValue",
+                "printedName": "RawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt32",
+                    "printedName": "Swift.UInt32",
+                    "usr": "s:s6UInt32V"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:SY",
+            "mangledName": "$sSY"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "SoftwareKeyboardUiArgs",
+        "printedName": "SoftwareKeyboardUiArgs",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "keyboardMode",
+            "printedName": "keyboardMode",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "KeyboardMode",
+                "printedName": "SoftwareKeyboard.KeyboardMode",
+                "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:16SoftwareKeyboard0aB6UiArgsV12keyboardModeAA0bF0Ovp",
+            "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12keyboardModeAA0bF0Ovp",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV12keyboardModeAA0bF0Ovg",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12keyboardModeAA0bF0Ovg",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "KeyboardMode",
+                    "printedName": "SoftwareKeyboard.KeyboardMode",
+                    "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV12keyboardModeAA0bF0Ovs",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12keyboardModeAA0bF0Ovs",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV12keyboardModeAA0bF0OvM",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12keyboardModeAA0bF0OvM",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "headerText",
+            "printedName": "headerText",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:16SoftwareKeyboard0aB6UiArgsV10headerTextSSvp",
+            "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV10headerTextSSvp",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV10headerTextSSvg",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV10headerTextSSvg",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV10headerTextSSvs",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV10headerTextSSvs",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV10headerTextSSvM",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV10headerTextSSvM",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "subtitleText",
+            "printedName": "subtitleText",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:16SoftwareKeyboard0aB6UiArgsV12subtitleTextSSvp",
+            "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12subtitleTextSSvp",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV12subtitleTextSSvg",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12subtitleTextSSvg",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV12subtitleTextSSvs",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12subtitleTextSSvs",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV12subtitleTextSSvM",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12subtitleTextSSvM",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "submitText",
+            "printedName": "submitText",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:16SoftwareKeyboard0aB6UiArgsV10submitTextSSvp",
+            "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV10submitTextSSvp",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV10submitTextSSvg",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV10submitTextSSvg",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV10submitTextSSvs",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV10submitTextSSvs",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV10submitTextSSvM",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV10submitTextSSvM",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "stringLengthMin",
+            "printedName": "stringLengthMin",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int32",
+                "printedName": "Swift.Int32",
+                "usr": "s:s5Int32V"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:16SoftwareKeyboard0aB6UiArgsV15stringLengthMins5Int32Vvp",
+            "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV15stringLengthMins5Int32Vvp",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int32",
+                    "printedName": "Swift.Int32",
+                    "usr": "s:s5Int32V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV15stringLengthMins5Int32Vvg",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV15stringLengthMins5Int32Vvg",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int32",
+                    "printedName": "Swift.Int32",
+                    "usr": "s:s5Int32V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV15stringLengthMins5Int32Vvs",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV15stringLengthMins5Int32Vvs",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV15stringLengthMins5Int32VvM",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV15stringLengthMins5Int32VvM",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "stringLengthMax",
+            "printedName": "stringLengthMax",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int32",
+                "printedName": "Swift.Int32",
+                "usr": "s:s5Int32V"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:16SoftwareKeyboard0aB6UiArgsV15stringLengthMaxs5Int32Vvp",
+            "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV15stringLengthMaxs5Int32Vvp",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int32",
+                    "printedName": "Swift.Int32",
+                    "usr": "s:s5Int32V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV15stringLengthMaxs5Int32Vvg",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV15stringLengthMaxs5Int32Vvg",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int32",
+                    "printedName": "Swift.Int32",
+                    "usr": "s:s5Int32V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV15stringLengthMaxs5Int32Vvs",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV15stringLengthMaxs5Int32Vvs",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV15stringLengthMaxs5Int32VvM",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV15stringLengthMaxs5Int32VvM",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "initialText",
+            "printedName": "initialText",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:16SoftwareKeyboard0aB6UiArgsV11initialTextSSSgvp",
+            "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV11initialTextSSSgvp",
+            "moduleName": "SoftwareKeyboard",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage",
+              "AccessControl"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV11initialTextSSSgvg",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV11initialTextSSSgvg",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV11initialTextSSSgvs",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV11initialTextSSSgvs",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV11initialTextSSSgvM",
+                "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV11initialTextSSSgvM",
+                "moduleName": "SoftwareKeyboard",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(keyboardMode:headerText:subtitleText:submitText:stringLengthMin:stringLengthMax:initialText:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SoftwareKeyboardUiArgs",
+                "printedName": "SoftwareKeyboard.SoftwareKeyboardUiArgs",
+                "usr": "s:16SoftwareKeyboard0aB6UiArgsV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "KeyboardMode",
+                "printedName": "SoftwareKeyboard.KeyboardMode",
+                "usr": "c:@M@SoftwareKeyboard@E@KeyboardMode"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int32",
+                "printedName": "Swift.Int32",
+                "usr": "s:s5Int32V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int32",
+                "printedName": "Swift.Int32",
+                "usr": "s:s5Int32V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:16SoftwareKeyboard0aB6UiArgsV12keyboardMode10headerText08subtitleH006submitH015stringLengthMin0kL3Max07initialH0AcA0bF0O_S3Ss5Int32VANSSSgtcfc",
+            "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV12keyboardMode10headerText08subtitleH006submitH015stringLengthMin0kL3Max07initialH0AcA0bF0O_S3Ss5Int32VANSSSgtcfc",
+            "moduleName": "SoftwareKeyboard",
+            "implicit": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:16SoftwareKeyboard0aB6UiArgsV",
+        "mangledName": "$s16SoftwareKeyboard0aB6UiArgsV",
+        "moduleName": "SoftwareKeyboard",
+        "declAttributes": [
+          "AccessControl",
+          "RawDocComment"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
+        "kind": "Function",
+        "name": "displayInputDialog",
+        "printedName": "displayInputDialog(argsPointer:callback:)",
+        "children": [
+          {
+            "kind": "TypeNominal",
+            "name": "Void",
+            "printedName": "()"
+          },
+          {
+            "kind": "TypeNominal",
+            "name": "Optional",
+            "printedName": "Swift.UnsafeRawPointer?",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UnsafeRawPointer",
+                "printedName": "Swift.UnsafeRawPointer",
+                "usr": "s:SV"
+              }
+            ],
+            "usr": "s:Sq"
+          },
+          {
+            "kind": "TypeFunc",
+            "name": "Function",
+            "printedName": "(Swift.UnsafePointer<Swift.Int8>?, Swift.Bool) -> ()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Tuple",
+                "printedName": "(Swift.UnsafePointer<Swift.Int8>?, Swift.Bool)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.UnsafePointer<Swift.Int8>?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UnsafePointer",
+                        "printedName": "Swift.UnsafePointer<Swift.Int8>",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Int8",
+                            "printedName": "Swift.Int8",
+                            "usr": "s:s4Int8V"
+                          }
+                        ],
+                        "usr": "s:SP"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "declKind": "Func",
+        "usr": "c:(cm)displayInputDialogWithArgsPointer:callback:",
+        "mangledName": "$s16SoftwareKeyboard18displayInputDialog11argsPointer8callbackySVSg_ySPys4Int8VGSg_SbtXCtF",
+        "moduleName": "SoftwareKeyboard",
+        "declAttributes": [
+          "CDecl"
+        ],
+        "funcSelfKind": "NonMutating"
+      }
+    ],
+    "json_format_version": 8
+  },
+  "ConstValues": [
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 201,
+      "length": 1,
+      "value": "0"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 264,
+      "length": 1,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 321,
+      "length": 1,
+      "value": "2"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 390,
+      "length": 1,
+      "value": "3"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 448,
+      "length": 1,
+      "value": "4"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 533,
+      "length": 1,
+      "value": "5"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 588,
+      "length": 1,
+      "value": "6"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 631,
+      "length": 1,
+      "value": "7"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 679,
+      "length": 1,
+      "value": "8"
+    },
+    {
+      "filePath": "\/Users\/stossy11\/Developer\/Xcode\/SoftwareKeyboard\/SoftwareKeyboard\/KeyboardMode.swift",
+      "kind": "IntegerLiteral",
+      "offset": 734,
+      "length": 1,
+      "value": "9"
+    }
+  ]
+}

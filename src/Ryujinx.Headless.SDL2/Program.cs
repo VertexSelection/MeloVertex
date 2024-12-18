@@ -1100,6 +1100,12 @@ namespace Ryujinx.Headless.SDL2
                 return;
             }
 
+            if (option.InputPath == "MiiMaker") {
+                string contentPath = _contentManager.GetInstalledContentPath(0x0100000000001009, StorageId.BuiltInSystem, NcaContentType.Program);
+
+                option.InputPath = contentPath;
+            }
+
             _inputConfiguration = new List<InputConfig>();
             _enableKeyboard = option.EnableKeyboard;
             _enableMouse = option.EnableMouse;
@@ -1324,6 +1330,17 @@ namespace Ryujinx.Headless.SDL2
 
             Logger.Notice.Print(LogClass.Application, $"Using Firmware Version: {firmwareVersion?.VersionString}");
 
+            bool isFirmwareTitle = false;
+
+            if (path.StartsWith("@SystemContent"))
+            {
+                path = VirtualFileSystem.SwitchPathToSystemPath(path);
+
+                isFirmwareTitle = true;
+            }
+
+
+
             if (Directory.Exists(path))
             {
                 string[] romFsFiles = Directory.GetFiles(path, "*.istorage");
@@ -1392,23 +1409,35 @@ namespace Ryujinx.Headless.SDL2
                         }
                         break;
                     default:
-                        Logger.Info?.Print(LogClass.Application, "Loading as Homebrew.");
-                        try
-                        {
-                            if (!_emulationContext.LoadProgram(path))
+                        if (isFirmwareTitle) {
+                            Logger.Info?.Print(LogClass.Application, "Loading as Firmware Title (NCA).");
+
+                            if (!_emulationContext.LoadNca(path))
                             {
                                 _emulationContext.Dispose();
 
                                 return false;
                             }
                         }
-                        catch (ArgumentOutOfRangeException)
-                        {
-                            Logger.Error?.Print(LogClass.Application, "The specified file is not supported by Ryujinx.");
+                        else {
+                            Logger.Info?.Print(LogClass.Application, "Loading as Homebrew.");
+                            try
+                            {
+                                if (!_emulationContext.LoadProgram(path))
+                                {
+                                    _emulationContext.Dispose();
 
-                            _emulationContext.Dispose();
+                                    return false;
+                                }
+                            }
+                            catch (ArgumentOutOfRangeException)
+                            {
+                                Logger.Error?.Print(LogClass.Application, "The specified file is not supported by Ryujinx.");
 
-                            return false;
+                                _emulationContext.Dispose();
+
+                                return false;
+                            }
                         }
                         break;
                 }
