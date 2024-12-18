@@ -26,7 +26,11 @@ struct GameInfo {
 };
 
 extern struct GameInfo get_game_info(int, char*);
-// Declare the main_ryujinx_sdl function, matching the signature
+
+void install_firmware(const char* inputPtr);
+
+char* installed_firmware_version();
+
 int main_ryujinx_sdl(int argc, char **argv);
 
 void initialize();

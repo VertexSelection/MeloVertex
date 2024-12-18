@@ -17,6 +17,8 @@ struct GameLibraryView: View {
     @AppStorage("recentGames") private var recentGamesData: Data = Data()
     @State private var recentGames: [Game] = []
     @Environment(\.colorScheme) var colorScheme
+    @State var firmwareInstaller = false
+    @State var firmwareversion = "0"
     
     var filteredGames: [Game] {
         if searchText.isEmpty {
@@ -104,6 +106,42 @@ struct GameLibraryView: View {
                 .onAppear {
                     loadGames()
                     loadRecentGames()
+                    
+                    
+                    let firmware = Ryujinx.shared.fetchFirmwareVersion()
+                    firmwareversion = (firmware == "" ? "0" : firmware)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        
+                        Button {
+                        } label: {
+                            Text("Firmware Version: \(firmwareversion)")
+                                .tint(.white)
+                        }
+                        
+                        if firmwareversion == "0" {
+                            Button {
+                                firmwareInstaller.toggle()
+                            } label: {
+                                Text("Install Firmware")
+                            }
+                            
+                        } else {
+                            Button {
+                                Ryujinx.shared.removeFirmware()
+                                let firmware = Ryujinx.shared.fetchFirmwareVersion()
+                                firmwareversion = (firmware == "" ? "0" : firmware)
+                            } label: {
+                                Text("Remove Firmware")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                            .foregroundColor(.blue)
+                    }
                 }
             }
         }
@@ -112,7 +150,30 @@ struct GameLibraryView: View {
         .onChange(of: searchText) { _ in
             isSearching = !searchText.isEmpty
         }
+        .fileImporter(isPresented: $firmwareInstaller, allowedContentTypes: [.item]) { result in
+            switch result {
+                
+            case .success(let url):
+                
+                do {
+                    
+                    let fun = url.startAccessingSecurityScopedResource()
+                    let path = url.path
+                    
+                    Ryujinx.shared.installFirmware(firmwarePath: path)
+                    
+                    firmwareversion = (Ryujinx.shared.fetchFirmwareVersion() == "" ? "0" : Ryujinx.shared.fetchFirmwareVersion())
+                    if fun  {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
+                
+            case .failure(let error):
+                print(error)
+            }
+        }
     }
+    
     
     private func addToRecentGames(_ game: Game) {
         recentGames.removeAll { $0.id == game.id }

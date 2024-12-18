@@ -226,6 +226,68 @@ namespace Ryujinx.Headless.SDL2
 
         }
 
+        [UnmanagedCallersOnly(EntryPoint = "install_firmware")]
+        public static void InstallFirmwareNative(IntPtr inputPtr)
+        {
+            try
+            {
+                if (inputPtr == IntPtr.Zero)
+                {
+                    Console.Error.WriteLine("Error: inputPtr is null.");
+                    return;
+                }
+
+                string inputString = Marshal.PtrToStringAnsi(inputPtr);
+
+                if (string.IsNullOrEmpty(inputString))
+                {
+                    Console.Error.WriteLine("Error: inputString is null or empty.");
+                    return;
+                }
+
+                InstallFirmware(inputString);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error in InstallFirmwareNative: {ex.Message}");
+            }
+        }
+
+        public static void InstallFirmware(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+            }
+
+            if (_contentManager == null)
+            {
+                throw new InvalidOperationException("_contentManager is not initialized.");
+            }
+
+            _contentManager.InstallFirmware(filePath);
+        }
+
+
+        [UnmanagedCallersOnly(EntryPoint = "installed_firmware_version")]
+        public static IntPtr GetInstalledFirmwareVersionNative()
+        {
+            var result = GetInstalledFirmwareVersion();
+            return Marshal.StringToHGlobalAnsi(result);
+        }
+
+        public static string GetInstalledFirmwareVersion()
+        {
+            var version = _contentManager.GetCurrentFirmwareVersion();
+
+            if (version != null)
+            {
+                return version.VersionString;
+            }
+
+            return String.Empty;
+        }
+
 
         [UnmanagedCallersOnly(EntryPoint = "get_game_controllers")]
         public static unsafe IntPtr GetGamepadList()

@@ -282,6 +282,13 @@ struct SettingsView: View {
                     } label: {
                         Text("Advanced Options")
                     }
+                    
+                    Button {
+                        Ryujinx.shared.removeFirmware()
+                        
+                    } label: {
+                        Text("Remove Firmware")
+                    }
                 } header: {
                     Text("Advanced")
                         .font(.title3.weight(.semibold))

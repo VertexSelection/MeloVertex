@@ -34,6 +34,7 @@ class Ryujinx {
     let virtualController = VirtualController()
     
     @Published var controllerMap: [Controller] = []
+    @State var firmwareversion = "0"
     
     static let shared = Ryujinx()
     
@@ -197,6 +198,38 @@ class Ryujinx {
         return args
     }
     
+    func fetchFirmwareVersion() -> String {
+        do {
+            let firmwareVersionPointer = installed_firmware_version()
+            if let pointer = firmwareVersionPointer {
+                let firmwareVersion = String(cString: pointer)
+                DispatchQueue.main.async {
+                    self.firmwareversion = firmwareVersion
+                }
+                return firmwareVersion
+            }
+            
+        } catch {
+            print(error)
+        }
+
+        return "0"
+    }
+    
+    func installFirmware(firmwarePath: String) {
+        guard let cString = firmwarePath.cString(using: .utf8) else {
+            print("Invalid firmware path")
+            return
+        }
+
+        install_firmware(cString)
+        
+        let version = fetchFirmwareVersion()
+        if !version.isEmpty {
+            self.firmwareversion = version
+        }
+    }
+    
     func getConnectedControllers() -> [Controller] {
         
 
@@ -226,6 +259,38 @@ class Ryujinx {
         
         return controllers
         
+    }
+    
+    func removeFirmware() {
+        let fileManager = FileManager.default
+        
+        let documentsfolder = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        
+        
+        let bisFolder = documentsfolder.appendingPathComponent("bis")
+        let systemFolder = bisFolder.appendingPathComponent("system")
+        let contentsFolder = systemFolder.appendingPathComponent("Contents")
+        let registeredFolder = contentsFolder.appendingPathComponent("registered").path
+        
+    
+        do {
+            if fileManager.fileExists(atPath: registeredFolder) {
+                try fileManager.removeItem(atPath: registeredFolder)
+                print("Folder removed successfully.")
+                let version = fetchFirmwareVersion()
+                
+                if version.isEmpty {
+                    self.firmwareversion = "0"
+                } else {
+                    print("Firmware eeeeee \(version)")
+                }
+                
+            } else {
+                print("Folder does not exist.")
+            }
+        } catch {
+            print("Error removing folder: \(error)")
+        }
     }
 
 
