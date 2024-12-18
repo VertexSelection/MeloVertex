@@ -116,11 +116,8 @@ struct GameLibraryView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         
-                        Button {
-                        } label: {
-                            Text("Firmware Version: \(firmwareversion)")
-                                .tint(.white)
-                        }
+                        Text("Firmware Version: \(firmwareversion)")
+                            .tint(.white)
                         
                         if firmwareversion == "0" {
                             Button {
@@ -137,6 +134,17 @@ struct GameLibraryView: View {
                             } label: {
                                 Text("Remove Firmware")
                             }
+                        }
+                        
+                        Button {
+                            let documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+                            let sharedurl = documentsUrl.absoluteString.replacingOccurrences(of: "file://", with: "shareddocuments://")
+                            let furl = URL(string: sharedurl)!
+                            if UIApplication.shared.canOpenURL(furl) {
+                                UIApplication.shared.open(furl, options: [:])
+                            }
+                        } label: {
+                            Text("Show MeloNX Folder")
                         }
                     } label: {
                         Image(systemName: "plus")
