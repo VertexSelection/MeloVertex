@@ -33,6 +33,10 @@ struct ContentView: View {
     @State var onscreencontroller: Controller = Controller(id: "", name: "")
     @AppStorage("JIT") var isJITEnabled: Bool = false
     
+    @AppStorage("quit") var quit: Bool = false
+    
+    @State var quits: Bool = false
+    
     // MARK: - Initialization
     init() {
         let defaultConfig = loadSettings() ?? Ryujinx.Configuration(gamepath: "")
@@ -52,10 +56,25 @@ struct ContentView: View {
     
     // MARK: - Body
     var body: some View {
-        if let game {
+        if let game, quits == false {
             emulationView
+                .onAppear() {
+                    Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                        print(quit)
+                        
+                        quits = quit
+                        
+                        if quits {
+                            quit = false
+                            timer.invalidate()
+                        }
+                    }
+                }
         } else {
             mainMenuView
+                .onAppear() {
+                    quits = false
+                }
         }
     }
     

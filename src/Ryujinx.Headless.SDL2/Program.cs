@@ -93,6 +93,7 @@ using Silk.NET.Vulkan;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using SDL2;
 
 public class GamepadInfo
 {
@@ -287,6 +288,21 @@ namespace Ryujinx.Headless.SDL2
 
             return String.Empty;
         }
+
+        [UnmanagedCallersOnly(EntryPoint = "stop_emulation")]
+        public static void StopEmulation()
+        {
+
+            if (_window != null)
+            {
+
+                _window.Exit();
+                _emulationContext.Dispose();
+                _emulationContext = null;
+            }
+        }
+        
+
 
 
         [UnmanagedCallersOnly(EntryPoint = "get_game_controllers")]

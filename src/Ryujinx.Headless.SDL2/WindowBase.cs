@@ -45,14 +45,14 @@ namespace Ryujinx.Headless.SDL2
             _mainThreadActions.Enqueue(action);
         }
 
-        public NpadManager NpadManager { get; }
-        public TouchScreenManager TouchScreenManager { get; }
-        public Switch Device { get; private set; }
-        public IRenderer Renderer { get; private set; }
+        public NpadManager NpadManager;
+        public TouchScreenManager TouchScreenManager;
+        public Switch Device;
+        public IRenderer Renderer;
 
         public event EventHandler<StatusUpdatedEventArgs> StatusUpdatedEvent;
 
-        protected IntPtr WindowHandle { get; set; }
+        public IntPtr WindowHandle;
 
         public IHostUiTheme HostUiTheme { get; }
         public int Width { get; private set; }
@@ -66,18 +66,18 @@ namespace Ryujinx.Headless.SDL2
         public ScalingFilter ScalingFilter { get; set; }
         public int ScalingFilterLevel { get; set; }
 
-        protected SDL2MouseDriver MouseDriver;
+        public SDL2MouseDriver MouseDriver;
         private readonly InputManager _inputManager;
         private readonly IKeyboard _keyboardInterface;
         private readonly GraphicsDebugLevel _glLogLevel;
         private readonly Stopwatch _chrono;
         private readonly long _ticksPerFrame;
         private readonly CancellationTokenSource _gpuCancellationTokenSource;
-        private readonly ManualResetEvent _exitEvent;
-        private readonly ManualResetEvent _gpuDoneEvent;
+        public ManualResetEvent _exitEvent;
+        public ManualResetEvent _gpuDoneEvent;
 
         private long _ticks;
-        private bool _isActive;
+        public bool _isActive;
         private bool _isStopped;
         private uint _windowId;
 

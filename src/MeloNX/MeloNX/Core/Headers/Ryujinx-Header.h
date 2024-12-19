@@ -31,6 +31,8 @@ void install_firmware(const char* inputPtr);
 
 char* installed_firmware_version();
 
+void stop_emulation();
+
 int main_ryujinx_sdl(int argc, char **argv);
 
 void initialize();
