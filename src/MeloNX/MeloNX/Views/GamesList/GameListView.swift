@@ -157,6 +157,7 @@ struct GameLibraryView: View {
                         Image(systemName: "ellipsis")
                             .foregroundColor(.blue)
                     }
+                    
                 }
             }
         }

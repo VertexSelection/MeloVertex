@@ -1,6 +1,6 @@
 //
 //  AskForJIT.swift
-//  Pomelo
+//  MeloNX
 //
 //  Created by Stossy11 on 9/10/2024.
 //  Copyright © 2024 Stossy11. All rights reserved.

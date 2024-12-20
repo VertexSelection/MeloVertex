@@ -60,11 +60,7 @@ struct SettingsView: View {
                         labelWithIcon("Disable Docked Mode", iconName: "dock.rectangle")
                     }
                     .tint(.blue)
-                                    Toggle(isOn: $useTrollStore) {
-                                        labelWithIcon("Trollstore", iconName: "stroller")
-                                    }
-                                    .tint(.blue)
-                    
+                                                        
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             labelWithIcon("Resolution Scale", iconName: "magnifyingglass")
@@ -265,11 +261,17 @@ struct SettingsView: View {
                 // Advanced
                 Section {
                     DisclosureGroup {
+                        Toggle(isOn: $useTrollStore) {
+                            labelWithpng("TrollStore", iconName: "trollstore")
+                        }
+                        .tint(.blue)
+
                         HStack {
                             labelWithIcon("Page Size", iconName: "textformat.size")
                             Spacer()
                             Text("\(String(Int(getpagesize())))")
                                 .foregroundColor(.secondary)
+                            
                         }
 
                         TextField("Additional Arguments", text: Binding(
@@ -381,6 +383,15 @@ struct SettingsView: View {
             Text(text)
         }
         .font(.body)
+    }
+    func labelWithpng(_ text: String, iconName: String) -> some View {
+        HStack {
+            Image(iconName) // Loads the PNG from the Assets folder
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20, height: 20) // Adjust size as needed
+            Text(text)
+        }
     }
 }
 
