@@ -15,6 +15,7 @@ struct SettingsView: View {
     @Binding var currentControllers: [Controller]
     
     @Binding var onscreencontroller: Controller
+    @AppStorage("useTrollStore") var useTrollStore: Bool = false
     
     @AppStorage("ignoreJIT") var ignoreJIT: Bool = false
     
@@ -59,7 +60,11 @@ struct SettingsView: View {
                         labelWithIcon("Disable Docked Mode", iconName: "dock.rectangle")
                     }
                     .tint(.blue)
-
+                                    Toggle(isOn: $useTrollStore) {
+                                        labelWithIcon("Trollstore", iconName: "stroller")
+                                    }
+                                    .tint(.blue)
+                    
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             labelWithIcon("Resolution Scale", iconName: "magnifyingglass")

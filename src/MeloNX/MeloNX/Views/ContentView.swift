@@ -28,6 +28,7 @@ struct ContentView: View {
     @State private var currentControllers: [Controller] = []
     @State private var config: Ryujinx.Configuration
     @State private var settings: [MoltenVKSettings]
+    @AppStorage("useTrollStore") var useTrollStore: Bool = false
     @State private var isVirtualControllerActive: Bool = false
     @AppStorage("isVirtualController") var isVCA: Bool = true
     @State var onscreencontroller: Controller = Controller(id: "", name: "")
@@ -77,12 +78,16 @@ struct ContentView: View {
                     quits = false
                 }
         }
+        
     }
-    
+        
     // MARK: - View Components
     private var emulationView: some View {
-        ZStack {}
+        ZStack {
+            
+        }
             .onAppear {
+                
                 setupEmulation()
             }
     }
@@ -91,6 +96,14 @@ struct ContentView: View {
         MainTabView(startemu: $game, config: $config, MVKconfig: $settings, controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
             .onAppear() {
                 refreshControllersList()
+                    
+                        
+                        let isJIT = UserDefaults.standard.bool(forKey: "JIT-ENABLED")
+                        
+                        if !isJIT, useTrollStore {
+                            askForJIT()
+                        }
+                    
             }
     }
     

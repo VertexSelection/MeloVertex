@@ -26,7 +26,7 @@ BOOL getEntitlementValue(NSString *key)
     return value != nil && [(__bridge id)value boolValue];
 }
 
-BOOL isJITEnabled(void) 
+BOOL isJITEnabled(void)
 {
     if (getEntitlementValue(@"dynamic-codesigning")) 
     {
