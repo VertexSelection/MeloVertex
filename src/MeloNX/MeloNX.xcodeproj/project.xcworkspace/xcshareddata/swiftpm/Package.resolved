@@ -1,6 +1,15 @@
 {
-  "originHash" : "0c2b07bd02731650383ed39e41433281bed19b2ed6cc7103e7daec7fb1d05e44",
+  "originHash" : "1b46f7a56d6f994a826e31441c25b929398800cf38b3e9be23ae6e0ef8fc32c7",
   "pins" : [
+    {
+      "identity" : "swiftsvg",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mchoe/SwiftSVG",
+      "state" : {
+        "branch" : "master",
+        "revision" : "88b9ee086b29019e35f6f49c8e30e5552eb8fa9d"
+      }
+    },
     {
       "identity" : "swiftuijoystick",
       "kind" : "remoteSourceControl",

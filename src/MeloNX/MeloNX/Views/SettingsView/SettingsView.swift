@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftSVG
 
 struct SettingsView: View {
     @Binding var config: Ryujinx.Configuration
@@ -262,7 +263,7 @@ struct SettingsView: View {
                 Section {
                     DisclosureGroup {
                         Toggle(isOn: $useTrollStore) {
-                            labelWithpng("TrollStore", iconName: "trollstore")
+                            labelWithIcon("TrollStore", iconName: "troll.svg")
                         }
                         .tint(.blue)
 
@@ -373,9 +374,20 @@ struct SettingsView: View {
     }
     
     @ViewBuilder
-    private func labelWithIcon(_ text: String, iconName: String) -> some View {
+    private func labelWithIcon(_ text: String, iconName: String, flipimage: Bool? = nil) -> some View {
         HStack(spacing: 8) {
-            if !iconName.isEmpty {
+            if iconName.hasSuffix(".svg"){
+                if let flipimage, flipimage {
+                    SVGView(svgName: iconName, color: .blue)
+                        .symbolRenderingMode(.hierarchical)
+                        .frame(width: 20, height: 20)
+                        .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                } else {
+                    SVGView(svgName: iconName, color: .blue)
+                        .symbolRenderingMode(.hierarchical)
+                        .frame(width: 20, height: 20)
+                }
+            } else if !iconName.isEmpty {
                 Image(systemName: iconName)
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.blue)
@@ -384,14 +396,36 @@ struct SettingsView: View {
         }
         .font(.body)
     }
-    func labelWithpng(_ text: String, iconName: String) -> some View {
-        HStack {
-            Image(iconName) // Loads the PNG from the Assets folder
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20) // Adjust size as needed
-            Text(text)
+}
+
+
+struct SVGView: UIViewRepresentable {
+    var svgName: String
+    var color: Color = Color.black
+    
+    func makeUIView(context: Context) -> UIView {
+        var svgName = svgName
+        var hammock = UIView()
+        
+        if svgName.hasSuffix(".svg") {
+            svgName.removeLast(4)
+        }
+        
+        
+        
+        let svgLayer = UIView(SVGNamed: svgName) { svgLayer in
+            svgLayer.fillColor = UIColor(color).cgColor // Apply the provided color
+            svgLayer.resizeToFit(hammock.frame)
+            hammock.layer.addSublayer(svgLayer)
+        }
+        
+        return hammock
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        // Update the SVG view's fill color when the color changes
+        if let svgLayer = uiView.layer.sublayers?.first as? CAShapeLayer {
+            svgLayer.fillColor = UIColor(color).cgColor
         }
     }
 }
-
