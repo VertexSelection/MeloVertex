@@ -7,7 +7,6 @@ namespace Ryujinx.Memory
     [SupportedOSPlatform("ios")]
     static unsafe partial class MachJitWorkaround
     {
-        // Previous imports remain the same
         [LibraryImport("libc")]
         public static partial int mach_task_self();
 
@@ -47,14 +46,24 @@ namespace Ryujinx.Memory
 
         private const IntPtr TASK_NULL = 0;
         private static readonly IntPtr _selfTask;
-        
-        // Updated to iOS 16KB page size
-        private const int PAGE_SIZE = 16 * 1024;
-        private const ulong PAGE_MASK = ~((ulong)PAGE_SIZE - 1);
+        private static readonly int DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024; 
 
         static MachJitWorkaround()
         {
             _selfTask = mach_task_self();
+        }
+
+        private static int CalculateOptimalChunkSize(int totalSize)
+        {
+            // Dynamically calculate chunk size based on total allocation size
+            // For smaller allocations, use smaller chunks to avoid waste
+            if (totalSize <= DEFAULT_CHUNK_SIZE)
+            {
+                return totalSize;
+            }
+            
+            int chunkCount = Math.Max(4, totalSize / DEFAULT_CHUNK_SIZE);
+            return (totalSize + chunkCount - 1) / chunkCount;
         }
 
         private static void HandleMachError(int error, string operation)
@@ -67,30 +76,29 @@ namespace Ryujinx.Memory
 
         private static IntPtr ReallocateBlock(IntPtr address, int size)
         {
-            // Ensure size is page-aligned
-            int alignedSize = (int)((((ulong)size + PAGE_SIZE - 1) & PAGE_MASK));
-            
-            // Deallocate existing mapping
-            vm_deallocate(_selfTask, address, (IntPtr)alignedSize);
-
-            IntPtr memorySize = (IntPtr)alignedSize;
+            IntPtr memorySize = (IntPtr)size;
             IntPtr memoryObjectPort = IntPtr.Zero;
 
             try
             {
-                // Create minimal permission memory entry initially
+                // Create memory entry
                 HandleMachError(
                     mach_make_memory_entry_64(
                         _selfTask,
                         &memorySize,
                         IntPtr.Zero,
                         Flags.MAP_MEM_NAMED_CREATE | Flags.MAP_MEM_LEDGER_TAGGED | 
-                        Flags.VM_PROT_READ | Flags.VM_PROT_WRITE,  // Don't request execute initially
+                        Flags.VM_PROT_READ | Flags.VM_PROT_WRITE | Flags.VM_PROT_EXECUTE,
                         &memoryObjectPort,
                         IntPtr.Zero),
                     "make_memory_entry_64");
 
-                // Set no-footprint flag to minimize memory usage
+                if (memorySize != (IntPtr)size)
+                {
+                    throw new InvalidOperationException($"Memory allocation size mismatch. Requested: {size}, Allocated: {(long)memorySize}");
+                }
+
+                // Set ownership
                 HandleMachError(
                     mach_memory_entry_ownership(
                         memoryObjectPort,
@@ -101,21 +109,21 @@ namespace Ryujinx.Memory
 
                 IntPtr mapAddress = address;
 
-                // Map with minimal initial permissions
-                int result = vm_map(
-                    _selfTask,
-                    &mapAddress,
-                    memorySize,
-                    IntPtr.Zero,
-                    Flags.VM_FLAGS_OVERWRITE,
-                    memoryObjectPort,
-                    IntPtr.Zero,
-                    0,
-                    Flags.VM_PROT_READ | Flags.VM_PROT_WRITE,
-                    Flags.VM_PROT_READ | Flags.VM_PROT_WRITE | Flags.VM_PROT_EXECUTE,  // Allow execute as max protection
-                    Flags.VM_INHERIT_COPY);
-
-                HandleMachError(result, "vm_map");
+                // Map memory
+                HandleMachError(
+                    vm_map(
+                        _selfTask,
+                        &mapAddress,
+                        memorySize,
+                        IntPtr.Zero,
+                        Flags.VM_FLAGS_OVERWRITE,
+                        memoryObjectPort,
+                        IntPtr.Zero,
+                        0,
+                        Flags.VM_PROT_READ | Flags.VM_PROT_WRITE,
+                        Flags.VM_PROT_READ | Flags.VM_PROT_WRITE | Flags.VM_PROT_EXECUTE,
+                        Flags.VM_INHERIT_COPY),
+                    "vm_map");
 
                 if (address != mapAddress)
                 {
@@ -126,9 +134,9 @@ namespace Ryujinx.Memory
             }
             finally
             {
+                // Proper cleanup of memory object port
                 if (memoryObjectPort != IntPtr.Zero)
                 {
-                    // Implement proper cleanup if needed
                     // mach_port_deallocate(_selfTask, memoryObjectPort);
                 }
             }
@@ -136,44 +144,24 @@ namespace Ryujinx.Memory
 
         public static void ReallocateAreaWithOwnership(IntPtr address, int size)
         {
-            if (size <= 0)
-            {
-                throw new ArgumentException("Size must be positive", nameof(size));
-            }
+            int chunkSize = CalculateOptimalChunkSize(size);
+            IntPtr currentAddress = address;
+            IntPtr endAddress = address + size;
 
-            // Align size to 16KB page boundary
-            int alignedSize = (int)((((ulong)size + PAGE_SIZE - 1) & PAGE_MASK));
-            
-            try
+            while (currentAddress < endAddress)
             {
-                ReallocateBlock(address, alignedSize);
-            }
-            catch (InvalidOperationException)
-            {
-                // If first attempt fails, try with explicit deallocation and retry
-                vm_deallocate(_selfTask, address, (IntPtr)alignedSize);
-                ReallocateBlock(address, alignedSize);
+                int blockSize = Math.Min(chunkSize, (int)(endAddress - currentAddress));
+                ReallocateBlock(currentAddress, blockSize);
+                currentAddress += blockSize;
             }
         }
 
         public static IntPtr AllocateSharedMemory(ulong size, bool reserve)
         {
-            if (size == 0)
-            {
-                throw new ArgumentException("Size must be positive", nameof(size));
-            }
-
-            ulong alignedSize = (size + (ulong)PAGE_SIZE - 1) & PAGE_MASK;
-            
             IntPtr address = IntPtr.Zero;
             HandleMachError(
-                vm_allocate(
-                    _selfTask,
-                    &address,
-                    (IntPtr)alignedSize,
-                    Flags.VM_FLAGS_ANYWHERE),
+                vm_allocate(_selfTask, &address, (IntPtr)size, Flags.VM_FLAGS_ANYWHERE),
                 "vm_allocate");
-            
             return address;
         }
 
@@ -181,8 +169,7 @@ namespace Ryujinx.Memory
         {
             if (handle != IntPtr.Zero && size > 0)
             {
-                ulong alignedSize = (size + (ulong)PAGE_SIZE - 1) & PAGE_MASK;
-                vm_deallocate(_selfTask, handle, (IntPtr)alignedSize);
+                vm_deallocate(_selfTask, handle, (IntPtr)size);
             }
         }
 
@@ -193,24 +180,18 @@ namespace Ryujinx.Memory
                 throw new ArgumentException("Invalid mapping parameters");
             }
 
-            ulong alignedOffset = srcOffset & PAGE_MASK;
-            ulong alignedSize = (size + (ulong)PAGE_SIZE - 1) & PAGE_MASK;
-
-            IntPtr srcAddress = (IntPtr)((ulong)sharedMemory + alignedOffset);
+            IntPtr srcAddress = (IntPtr)((ulong)sharedMemory + srcOffset);
             IntPtr dstAddress = location;
             int curProtection = 0;
             int maxProtection = 0;
-
-            // Deallocate existing mapping
-            vm_deallocate(_selfTask, location, (IntPtr)alignedSize);
 
             HandleMachError(
                 vm_remap(
                     _selfTask,
                     &dstAddress,
-                    (IntPtr)alignedSize,
+                    (IntPtr)size,
                     IntPtr.Zero,
-                    Flags.VM_FLAGS_FIXED,
+                    Flags.VM_FLAGS_OVERWRITE,
                     _selfTask,
                     srcAddress,
                     0,
@@ -226,8 +207,7 @@ namespace Ryujinx.Memory
         {
             if (location != IntPtr.Zero && size > 0)
             {
-                ulong alignedSize = (size + (ulong)PAGE_SIZE - 1) & PAGE_MASK;
-                vm_deallocate(_selfTask, location, (IntPtr)alignedSize);
+                vm_deallocate(_selfTask, location, (IntPtr)size);
             }
         }
     }
