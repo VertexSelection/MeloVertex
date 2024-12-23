@@ -62,8 +62,7 @@ struct ContentView: View {
             emulationView
                 .onAppear() {
                     Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-                        print(quit)
-                        
+                        timer.invalidate()
                         quits = quit
                         
                         if quits {

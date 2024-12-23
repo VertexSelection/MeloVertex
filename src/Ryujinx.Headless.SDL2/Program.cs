@@ -147,6 +147,21 @@ namespace Ryujinx.Headless.SDL2
             return 0;
         }
 
+
+        [UnmanagedCallersOnly(EntryPoint = "get_current_fps")]
+        public static unsafe int GetFPS() 
+        {
+            if (_window != null) {
+                Switch Device = _window.Device;
+
+                int intValue = (int)Device.Statistics.GetGameFrameRate(); 
+
+                return intValue;
+            } 
+            return 0;
+            
+        }
+
         [UnmanagedCallersOnly(EntryPoint = "initialize")]
         public static unsafe void Initialize() 
         {

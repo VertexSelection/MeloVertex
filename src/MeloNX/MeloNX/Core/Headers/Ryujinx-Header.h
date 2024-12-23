@@ -35,6 +35,8 @@ void stop_emulation();
 
 int main_ryujinx_sdl(int argc, char **argv);
 
+int get_current_fps();
+
 void initialize();
 
 const char* get_game_controllers();

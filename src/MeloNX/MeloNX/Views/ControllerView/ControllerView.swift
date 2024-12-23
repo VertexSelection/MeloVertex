@@ -11,23 +11,29 @@ import SwiftUIJoystick
 import CoreMotion
 
 struct ControllerView: View {
+    
+    @AppStorage("performacehud") var performacehud: Bool = false
     @AppStorage("quit") var quit: Bool = false
     var body: some View {
         GeometryReader { geometry in
             if geometry.size.height > geometry.size.width && UIDevice.current.userInterfaceIdiom != .pad {
                 VStack {
-                    /*
-                    HStack {
-                        Spacer()
-                        
-                        Button("Stop emulation") {
-                            DispatchQueue.main.async {
-                                stop_emulation()
-                                quit = true
-                            }
+                    if performacehud {
+                        HStack {
+                            
+                            PerformanceOverlayView()
+                            
+                            Spacer()
+                            
+                            // Button("Stop emulation") {
+                            // DispatchQueue.main.async {
+                            // stop_emulation()
+                            //  quit = true
+                            //  }
+                            // }
                         }
                     }
-                     */
+                     
                     
                     Spacer()
                     VStack {
@@ -62,18 +68,21 @@ struct ControllerView: View {
             } else {
                 // could be landscape
                 VStack {
-                    /*
-                    HStack {
-                        Spacer()
-                        
-                        Button("Stop emulation") {
-                            DispatchQueue.main.async {
-                                stop_emulation()
-                                quit = true
-                            }
+                    if performacehud {
+                        HStack {
+                            PerformanceOverlayView()
+                            
+                            Spacer()
+                            
+                            // Button("Stop emulation") {
+                            //    DispatchQueue.main.async {
+                            //        stop_emulation()
+                            //        quit = true
+                            //     }
+                            // }
                         }
                     }
-                     */
+                     
                     
                     Spacer()
                     VStack {

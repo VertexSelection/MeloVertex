@@ -44,7 +44,8 @@ func waitforcontroller() {
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             if findGCControllerView(in: window) == nil {
                 window.addSubview(containerView)
-                
+            } else {
+                timer.invalidate()
             }
             
             window.bringSubviewToFront(containerView)

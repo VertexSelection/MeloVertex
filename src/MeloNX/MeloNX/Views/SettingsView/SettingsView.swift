@@ -29,6 +29,8 @@ struct SettingsView: View {
     @AppStorage("RyuDemoControls") var ryuDemo: Bool = false
     @AppStorage("MTL_HUD_ENABLED") var metalHUDEnabled: Bool = false
     
+    @AppStorage("performacehud") var performacehud: Bool = false
+    
     @State private var showResolutionInfo = false
     @State private var searchText = ""
     
@@ -102,18 +104,10 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
 
-                    Toggle(isOn: $metalHUDEnabled) {
-                        labelWithIcon("Metal HUD", iconName: "speedometer")
+                    Toggle(isOn: $performacehud) {
+                        labelWithIcon("Performance Overlay", iconName: "speedometer")
                     }
                     .tint(.blue)
-                    .onChange(of: metalHUDEnabled) { newValue in
-                        // Preserves original functionality
-                        if newValue {
-                            MTLHud.shared.enable()
-                        } else {
-                            MTLHud.shared.disable()
-                        }
-                    }
                 } header: {
                     Text("Graphics & Performance")
                         .font(.title3.weight(.semibold))
@@ -215,27 +209,7 @@ struct SettingsView: View {
                 } footer: {
                     Text("Configure input devices and on-screen controls for easier navigation and play.")
                 }
-
-                // Logging
-                Section {
-                    Toggle(isOn: $config.debuglogs) {
-                        labelWithIcon("Debug Logs", iconName: "exclamationmark.bubble")
-                    }
-                    .tint(.blue)
-
-                    Toggle(isOn: $config.tracelogs) {
-                        labelWithIcon("Trace Logs", iconName: "waveform.path")
-                    }
-                    .tint(.blue)
-                } header: {
-                    Text("Logging")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Enable logs for troubleshooting or keep them off for a cleaner experience.")
-                }
-
+                
                 // CPU Mode
                 Section {
                     if filteredMemoryModes.isEmpty {
@@ -259,13 +233,36 @@ struct SettingsView: View {
                     Text("Select how memory is managed. 'Host (fast)' is best for most users.")
                 }
 
+
+                // Other Settings
+                Section {
+                    
+                    Toggle(isOn: $useTrollStore) {
+                        labelWithIcon("TrollStore", iconName: "troll.svg")
+                    }
+                    .tint(.blue)
+                    
+                    Toggle(isOn: $config.debuglogs) {
+                        labelWithIcon("Debug Logs", iconName: "exclamationmark.bubble")
+                    }
+                    .tint(.blue)
+
+                    Toggle(isOn: $config.tracelogs) {
+                        labelWithIcon("Trace Logs", iconName: "waveform.path")
+                    }
+                    .tint(.blue)
+                } header: {
+                    Text("Miscellaneous Options")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Enable logs for troubleshooting and Enable automatic TrollStore JIT.")
+                }
+
                 // Advanced
                 Section {
                     DisclosureGroup {
-                        Toggle(isOn: $useTrollStore) {
-                            labelWithIcon("TrollStore", iconName: "troll.svg")
-                        }
-                        .tint(.blue)
 
                         HStack {
                             labelWithIcon("Page Size", iconName: "textformat.size")
@@ -277,7 +274,7 @@ struct SettingsView: View {
 
                         TextField("Additional Arguments", text: Binding(
                             get: {
-                                config.additionalArgs.joined(separator: ", ")
+                                config.additionalArgs.joined(separator: " ")
                             },
                             set: { newValue in
                                 config.additionalArgs = newValue
