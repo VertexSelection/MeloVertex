@@ -6,6 +6,23 @@
 	objectVersion = 73;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		BD43C6212D1B248D003BBC42 /* com.Stossy11.MeloNX.RyujinxAg */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = BD43C6222D1B248D003BBC42 /* Build configuration list for PBXAggregateTarget "com.Stossy11.MeloNX.RyujinxAg" */;
+			buildPhases = (
+				BD43C62A2D1B252F003BBC42 /* ShellScript */,
+			);
+			dependencies = (
+				BD43C6262D1B249E003BBC42 /* PBXTargetDependency */,
+			);
+			name = com.Stossy11.MeloNX.RyujinxAg;
+			packageProductDependencies = (
+			);
+			productName = com.Stossy11.MeloNX.RyujinxAg;
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		4E0DED342D05695D00FEF007 /* SwiftUIJoystick in Frameworks */ = {isa = PBXBuildFile; productRef = 4E0DED332D05695D00FEF007 /* SwiftUIJoystick */; };
 		4E4854022D138D7600A446A6 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E80AA622CD7122800029585 /* GameController.framework */; };
@@ -27,6 +44,20 @@
 			remoteGlobalIDString = 4E80A98C2CD6F54500029585;
 			remoteInfo = MeloNX;
 		};
+		BD43C6252D1B249E003BBC42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4E80A9852CD6F54500029585 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD43C61D2D1B23AB003BBC42;
+			remoteInfo = Ryujinx;
+		};
+		BD43C62D2D1B25DE003BBC42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4E80A9852CD6F54500029585 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD43C6212D1B248D003BBC42;
+			remoteInfo = com.Stossy11.MeloNX.RyujinxAg;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -47,6 +78,7 @@
 		4E80A99D2CD6F54700029585 /* MeloNXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80A9A72CD6F54700029585 /* MeloNXUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80AA622CD7122800029585 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
+		BD43C6282D1B2514003BBC42 /* Ryujinx.Headless.SDL2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Ryujinx.Headless.SDL2.dylib; path = "MeloNX/Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -139,10 +171,17 @@
 				Dependencies/XCFrameworks/SDL2.xcframework,
 			);
 		};
+		BD43C6122D1B1769003BBC42 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 4E80A9892CD6F54500029585 /* Sources */;
+			membershipExceptions = (
+				"Core/Headers/Ryujinx-Header.h",
+			);
+		};
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		4E80A98F2CD6F54500029585 /* MeloNX */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4E80AA1D2CD7015100029585 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 4E9A82F32CF87822006D7086 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MeloNX; sourceTree = "<group>"; };
+		4E80A98F2CD6F54500029585 /* MeloNX */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4E80AA1D2CD7015100029585 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, BD43C6122D1B1769003BBC42 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, 4E9A82F32CF87822006D7086 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MeloNX; sourceTree = "<group>"; };
 		4E80A9A02CD6F54700029585 /* MeloNXTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MeloNXTests; sourceTree = "<group>"; };
 		4E80A9AA2CD6F54700029585 /* MeloNXUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MeloNXUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -178,6 +217,7 @@
 		4E80A9842CD6F54500029585 = {
 			isa = PBXGroup;
 			children = (
+				BD43C6282D1B2514003BBC42 /* Ryujinx.Headless.SDL2.dylib */,
 				4E80A98F2CD6F54500029585 /* MeloNX */,
 				4E80A9A02CD6F54700029585 /* MeloNXTests */,
 				4E80A9AA2CD6F54700029585 /* MeloNXUITests */,
@@ -206,6 +246,25 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXLegacyTarget section */
+		BD43C61D2D1B23AB003BBC42 /* Ryujinx */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "publish -c Release -r ios-arm64 -p:ExtraDefineConstants=DISABLE_UPDATER src/Ryujinx.Headless.SDL2 --self-contained true";
+			buildConfigurationList = BD43C61E2D1B23AB003BBC42 /* Build configuration list for PBXLegacyTarget "Ryujinx" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(HOME)/.dotnet/dotnet";
+			buildWorkingDirectory = "$(SRCROOT)/../..";
+			dependencies = (
+			);
+			name = Ryujinx;
+			packageProductDependencies = (
+			);
+			passBuildSettingsInEnvironment = 0;
+			productName = Ryujinx;
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
 		4E80A98C2CD6F54500029585 /* MeloNX */ = {
 			isa = PBXNativeTarget;
@@ -219,6 +278,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				BD43C62E2D1B25DE003BBC42 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				4E80A98F2CD6F54500029585 /* MeloNX */,
@@ -299,6 +359,12 @@
 						CreatedOnToolsVersion = 16.1;
 						TestTargetID = 4E80A98C2CD6F54500029585;
 					};
+					BD43C61D2D1B23AB003BBC42 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					BD43C6212D1B248D003BBC42 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 				};
 			};
 			buildConfigurationList = 4E80A9882CD6F54500029585 /* Build configuration list for PBXProject "MeloNX" */;
@@ -322,6 +388,8 @@
 				4E80A98C2CD6F54500029585 /* MeloNX */,
 				4E80A99C2CD6F54700029585 /* MeloNXTests */,
 				4E80A9A62CD6F54700029585 /* MeloNXUITests */,
+				BD43C61D2D1B23AB003BBC42 /* Ryujinx */,
+				BD43C6212D1B248D003BBC42 /* com.Stossy11.MeloNX.RyujinxAg */,
 			);
 		};
 /* End PBXProject section */
@@ -349,6 +417,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		BD43C62A2D1B252F003BBC42 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../../src/Ryujinx.Headless.SDL2/bin/Release/net8.0/ios-arm64/native/Ryujinx.Headless.SDL2.dylib",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/MeloNX/Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd ../..\nmv src/Ryujinx.Headless.SDL2/bin/Release/net8.0/ios-arm64/native/Ryujinx.Headless.SDL2.dylib src/MeloNX/MeloNX/Dependencies/Dynamic\\ Libraries/Ryujinx.Headless.SDL2.dylib\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4E80A9892CD6F54500029585 /* Sources */ = {
@@ -385,6 +475,16 @@
 			target = 4E80A98C2CD6F54500029585 /* MeloNX */;
 			targetProxy = 4E80A9A82CD6F54700029585 /* PBXContainerItemProxy */;
 		};
+		BD43C6262D1B249E003BBC42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD43C61D2D1B23AB003BBC42 /* Ryujinx */;
+			targetProxy = BD43C6252D1B249E003BBC42 /* PBXContainerItemProxy */;
+		};
+		BD43C62E2D1B25DE003BBC42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD43C6212D1B248D003BBC42 /* com.Stossy11.MeloNX.RyujinxAg */;
+			targetProxy = BD43C62D2D1B25DE003BBC42 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -393,6 +493,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_OPTIMIZATION = time;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -423,17 +524,20 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				EAGER_LINKING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_FAST_MATH = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
+				GCC_UNROLL_LOOPS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -441,12 +545,14 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LLVM_LTO = YES_THIN;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_ENFORCE_EXCLUSIVE_ACCESS = "debug-only";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -456,6 +562,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_OPTIMIZATION = time;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -486,12 +593,15 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				EAGER_LINKING = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_FAST_MATH = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_UNROLL_LOOPS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -499,12 +609,15 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LLVM_LTO = YES_THIN;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_DISABLE_SAFETY_CHECKS = YES;
+				SWIFT_ENFORCE_EXCLUSIVE_ACCESS = "debug-only";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -529,7 +642,9 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
+				GCC_OPTIMIZATION_LEVEL = fast;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeloNX/Info.plist;
 				INFOPLIST_KEY_GCSupportsGameMode = YES;
@@ -645,6 +760,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/XCFrameworks",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
@@ -704,8 +823,9 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
-				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeloNX/Info.plist;
 				INFOPLIST_KEY_GCSupportsGameMode = YES;
@@ -821,6 +941,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/XCFrameworks",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
@@ -932,6 +1056,52 @@
 			};
 			name = Release;
 		};
+		BD43C61F2D1B23AB003BBC42 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 95J8WZ4TN8;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		BD43C6202D1B23AB003BBC42 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 95J8WZ4TN8;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		BD43C6232D1B248D003BBC42 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 95J8WZ4TN8;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		BD43C6242D1B248D003BBC42 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 95J8WZ4TN8;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -967,6 +1137,24 @@
 			buildConfigurations = (
 				4E80A9B82CD6F54700029585 /* Debug */,
 				4E80A9B92CD6F54700029585 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD43C61E2D1B23AB003BBC42 /* Build configuration list for PBXLegacyTarget "Ryujinx" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD43C61F2D1B23AB003BBC42 /* Debug */,
+				BD43C6202D1B23AB003BBC42 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD43C6222D1B248D003BBC42 /* Build configuration list for PBXAggregateTarget "com.Stossy11.MeloNX.RyujinxAg" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD43C6232D1B248D003BBC42 /* Debug */,
+				BD43C6242D1B248D003BBC42 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

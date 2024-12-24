@@ -11,8 +11,10 @@
     
     <PublishAot>true</PublishAot>
     <PublishAotUsingRuntimePack>true</PublishAotUsingRuntimePack>
+    <AotCompilerOptions>-flto -Ofast -funroll-loops</AotCompilerOptions>
     <UseNativeAOTRuntime>true</UseNativeAOTRuntime>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <OptimizationPreference>Speed</OptimizationPreference>
   </PropertyGroup>
 
   <!-- iOS linking stuff from godot -->
@@ -46,7 +48,8 @@
     <Message Importance="normal" Text="Found XCode at $(XcodeSelect)"  Condition=" '$(FindXCode)' == 'true' "/>
 
     <ItemGroup>
-      <LinkerArg Include="-Wl,-ld_classic" />
+<!--      <LinkerArg Include="-Wl,-ld_classic" /> -->
+      <LinkerArg Include="-flto -Ofast" />
       <LinkerArg Include="-isysroot %22$(XCodePath)Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk%22"
                  Condition=" $(RuntimeIdentifier.Contains('simulator')) "/>
       <LinkerArg Include="-isysroot %22$(XCodePath)Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk%22"
@@ -80,7 +83,7 @@
 
   <ItemGroup>
     <PackageReference Include="OpenTK.Core" />
-    <PackageReference Include="Ryujinx.Graphics.Nvdec.Dependencies" />
+    <!-- <PackageReference Include="Ryujinx.Graphics.Nvdec.Dependencies" /> -->
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="false">
