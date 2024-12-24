@@ -37,8 +37,8 @@ namespace Ryujinx.Tests.Cpu
         {
             int pageBits = (int)ulong.Log2(Size);
 
-            _ram = new MemoryBlock(Size * 2);
-            _memory = new MemoryManager(_ram, 1ul << (pageBits + 4));
+            _ram = new MemoryBlock(Size);
+            _memory = new MemoryManager(_ram, 1ul << (pageBits + 2));
             _memory.IncrementReferenceCount();
 
             // Some tests depends on hardcoded address that were computed for 4KiB.
