@@ -27,6 +27,7 @@
 		4E0DED342D05695D00FEF007 /* SwiftUIJoystick in Frameworks */ = {isa = PBXBuildFile; productRef = 4E0DED332D05695D00FEF007 /* SwiftUIJoystick */; };
 		4E4854022D138D7600A446A6 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E80AA622CD7122800029585 /* GameController.framework */; };
 		4EA5AE822D16807500AD0B9F /* SwiftSVG in Frameworks */ = {isa = PBXBuildFile; productRef = 4EA5AE812D16807500AD0B9F /* SwiftSVG */; };
+		BD43C6312D1B8212003BBC42 /* dotnet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +80,7 @@
 		4E80A9A72CD6F54700029585 /* MeloNXUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80AA622CD7122800029585 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		BD43C6282D1B2514003BBC42 /* Ryujinx.Headless.SDL2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Ryujinx.Headless.SDL2.dylib; path = "MeloNX/Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib"; sourceTree = "<group>"; };
+		BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = dotnet.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -217,6 +219,7 @@
 		4E80A9842CD6F54500029585 = {
 			isa = PBXGroup;
 			children = (
+				BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */,
 				BD43C6282D1B2514003BBC42 /* Ryujinx.Headless.SDL2.dylib */,
 				4E80A98F2CD6F54500029585 /* MeloNX */,
 				4E80A9A02CD6F54700029585 /* MeloNXTests */,
@@ -253,7 +256,7 @@
 			buildConfigurationList = BD43C61E2D1B23AB003BBC42 /* Build configuration list for PBXLegacyTarget "Ryujinx" */;
 			buildPhases = (
 			);
-			buildToolPath = "$(HOME)/.dotnet/dotnet";
+			buildToolPath = "$(DOTNET_PATH)";
 			buildWorkingDirectory = "$(SRCROOT)/../..";
 			dependencies = (
 			);
@@ -399,6 +402,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BD43C6312D1B8212003BBC42 /* dotnet.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1058,6 +1062,7 @@
 		};
 		BD43C61F2D1B23AB003BBC42 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEBUGGING_SYMBOLS = YES;
@@ -1074,6 +1079,7 @@
 		};
 		BD43C6202D1B23AB003BBC42 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";

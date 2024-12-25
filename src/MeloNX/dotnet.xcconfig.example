@@ -1,0 +1,11 @@
+//
+//  dotnet.xcconfig
+//  MeloNX
+//
+//  Created by June P on 12/25/24.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+DOTNET_PATH = $(HOME)/.dotnet/dotnet
