@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 73;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -27,7 +27,7 @@
 		4E0DED342D05695D00FEF007 /* SwiftUIJoystick in Frameworks */ = {isa = PBXBuildFile; productRef = 4E0DED332D05695D00FEF007 /* SwiftUIJoystick */; };
 		4E4854022D138D7600A446A6 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E80AA622CD7122800029585 /* GameController.framework */; };
 		4EA5AE822D16807500AD0B9F /* SwiftSVG in Frameworks */ = {isa = PBXBuildFile; productRef = 4EA5AE812D16807500AD0B9F /* SwiftSVG */; };
-		BD43C6312D1B8212003BBC42 /* dotnet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */; };
+		5650564B2D2A758600C8BB1E /* dotnet.xcconfig.example in Resources */ = {isa = PBXBuildFile; fileRef = 5650564A2D2A758600C8BB1E /* dotnet.xcconfig.example */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,12 +72,104 @@
 		4E80A99D2CD6F54700029585 /* MeloNXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80A9A72CD6F54700029585 /* MeloNXUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80AA622CD7122800029585 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
+		5650564A2D2A758600C8BB1E /* dotnet.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text; path = dotnet.xcconfig.example; sourceTree = "<group>"; };
 		BD43C6282D1B2514003BBC42 /* Ryujinx.Headless.SDL2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Ryujinx.Headless.SDL2.dylib; path = "MeloNX/Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib"; sourceTree = "<group>"; };
-		BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = dotnet.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		565056492D2A756A00C8BB1E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4E80A98C2CD6F54500029585 /* MeloNX */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		5650564D2D2A75B300C8BB1E /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			attributesByRelativePath = {
+				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (
+					CodeSignOnCopy,
+				);
+				"Dependencies/Dynamic Libraries/SoftwareKeyboard.framework" = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				"Dependencies/Dynamic Libraries/libMoltenVK.dylib" = (
+					CodeSignOnCopy,
+				);
+				"Dependencies/Dynamic Libraries/libavcodec.dylib" = (
+					CodeSignOnCopy,
+				);
+				"Dependencies/Dynamic Libraries/libavutil.dylib" = (
+					CodeSignOnCopy,
+				);
+				Dependencies/XCFrameworks/MoltenVK.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/SDL2.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libSPIRV.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libavcodec.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libavfilter.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libavformat.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libavutil.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libswresample.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libswscale.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+				Dependencies/XCFrameworks/libteakra.xcframework = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+			};
+			buildPhase = 4E80AA092CD6FAA800029585 /* Embed Libraries */;
+			membershipExceptions = (
+				"Dependencies/Dynamic Libraries/libavcodec.dylib",
+				"Dependencies/Dynamic Libraries/libavutil.dylib",
+				"Dependencies/Dynamic Libraries/libMoltenVK.dylib",
+				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib",
+				"Dependencies/Dynamic Libraries/SoftwareKeyboard.framework",
+				Dependencies/XCFrameworks/libavcodec.xcframework,
+				Dependencies/XCFrameworks/libavfilter.xcframework,
+				Dependencies/XCFrameworks/libavformat.xcframework,
+				Dependencies/XCFrameworks/libavutil.xcframework,
+				Dependencies/XCFrameworks/libSPIRV.xcframework,
+				Dependencies/XCFrameworks/libswresample.xcframework,
+				Dependencies/XCFrameworks/libswscale.xcframework,
+				Dependencies/XCFrameworks/libteakra.xcframework,
+				Dependencies/XCFrameworks/MoltenVK.xcframework,
+				Dependencies/XCFrameworks/SDL2.xcframework,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		4E80A98F2CD6F54500029585 /* MeloNX */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MeloNX; sourceTree = "<group>"; };
+		4E80A98F2CD6F54500029585 /* MeloNX */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (565056492D2A756A00C8BB1E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 5650564D2D2A75B300C8BB1E /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MeloNX; sourceTree = "<group>"; };
 		4E80A9A02CD6F54700029585 /* MeloNXTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MeloNXTests; sourceTree = "<group>"; };
 		4E80A9AA2CD6F54700029585 /* MeloNXUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MeloNXUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -113,7 +205,7 @@
 		4E80A9842CD6F54500029585 = {
 			isa = PBXGroup;
 			children = (
-				BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */,
+				5650564A2D2A758600C8BB1E /* dotnet.xcconfig.example */,
 				BD43C6282D1B2514003BBC42 /* Ryujinx.Headless.SDL2.dylib */,
 				4E80A98F2CD6F54500029585 /* MeloNX */,
 				4E80A9A02CD6F54700029585 /* MeloNXTests */,
@@ -264,7 +356,6 @@
 				};
 			};
 			buildConfigurationList = 4E80A9882CD6F54500029585 /* Build configuration list for PBXProject "MeloNX" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -277,6 +368,7 @@
 				4E0DED322D05695D00FEF007 /* XCRemoteSwiftPackageReference "SwiftUIJoystick" */,
 				4EA5AE802D16807500AD0B9F /* XCRemoteSwiftPackageReference "SwiftSVG" */,
 			);
+			preferredProjectObjectVersion = 56;
 			productRefGroup = 4E80A98E2CD6F54500029585 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -295,7 +387,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BD43C6312D1B8212003BBC42 /* dotnet.xcconfig in Resources */,
+				5650564B2D2A758600C8BB1E /* dotnet.xcconfig.example in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -538,6 +630,8 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -655,6 +749,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/XCFrameworks",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
@@ -733,6 +831,8 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -850,6 +950,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/XCFrameworks",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
@@ -978,7 +1082,6 @@
 		};
 		BD43C61F2D1B23AB003BBC42 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEBUGGING_SYMBOLS = YES;
@@ -995,7 +1098,6 @@
 		};
 		BD43C6202D1B23AB003BBC42 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BD43C6302D1B8211003BBC42 /* dotnet.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
