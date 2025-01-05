@@ -19,6 +19,9 @@ struct GameLibraryView: View {
     @Environment(\.colorScheme) var colorScheme
     @State var firmwareInstaller = false
     @State var firmwareversion = "0"
+    @State var isImporting: Bool = false
+    @State var startgame = false
+    
     
     var filteredGames: [Game] {
         if searchText.isEmpty {
@@ -141,6 +144,12 @@ struct GameLibraryView: View {
                             } label: {
                                 Text("Mii Maker")
                             }
+                            Button {
+                                
+                                isImporting.toggle()
+                            } label: {
+                                Text("Open game from system")
+                            }
                         }
                         
                         Button {
@@ -188,6 +197,24 @@ struct GameLibraryView: View {
                 print(error)
             }
         }
+        .fileImporter(isPresented: $isImporting, allowedContentTypes: [.zip, .data]) { result in
+            switch result {
+            case .success(let url):
+                guard url.startAccessingSecurityScopedResource() else {
+                    print("Failed to access security-scoped resource")
+                    return
+                }
+                defer { url.stopAccessingSecurityScopedResource() }
+                
+                
+                startemu = url
+
+            case .failure(let err):
+                print("File import failed: \(err.localizedDescription)")
+            }
+        }
+
+
     }
     
     

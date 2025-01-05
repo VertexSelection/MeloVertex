@@ -42,6 +42,8 @@ struct SettingsView: View {
     var body: some View {
         iOSNav {
             List {
+
+                    
                 // Graphics & Performance
                 Section {
                     Toggle(isOn: $config.fullscreen) {
@@ -296,7 +298,10 @@ struct SettingsView: View {
                     } label: {
                         Text("Advanced Options")
                     }
-                    
+                    NavigationLink(destination: InfoView()) {
+                        Text("About")
+                        
+                    }
                 } header: {
                     Text("Advanced")
                         .font(.title3.weight(.semibold))
@@ -305,6 +310,7 @@ struct SettingsView: View {
                 } footer: {
                     Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing)")
                 }
+                
             }
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
             .navigationTitle("Settings")

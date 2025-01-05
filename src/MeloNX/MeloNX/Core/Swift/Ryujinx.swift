@@ -97,10 +97,12 @@ class Ryujinx {
         
         isRunning = true
         
-        // Start The Emulation on the main thread
         RunLoop.current.perform {
+            let url = URL(string: config.gamepath)!
+            
             do {
                 let args = self.buildCommandLineArgs(from: config)
+                let accessing = url.startAccessingSecurityScopedResource()
                 
                 // Convert Arguments to ones that Ryujinx can Read
                 let cArgs = args.map { strdup($0) }
@@ -112,6 +114,10 @@ class Ryujinx {
                 
                 if result != 0 {
                     self.isRunning = false
+                    if accessing {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                    
                     throw RyujinxError.executionError(code: result)
                 }
             } catch {
