@@ -298,10 +298,6 @@ struct SettingsView: View {
                     } label: {
                         Text("Advanced Options")
                     }
-                    NavigationLink(destination: InfoView()) {
-                        Text("About")
-                        
-                    }
                 } header: {
                     Text("Advanced")
                         .font(.title3.weight(.semibold))

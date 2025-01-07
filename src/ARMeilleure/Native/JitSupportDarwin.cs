@@ -24,13 +24,13 @@ namespace ARMeilleure.Native
         public static unsafe void Copy(IntPtr dst, IntPtr src, ulong n) {
             // When NativeAOT is in use, we can toggle per-thread write protection without worrying about breaking .NET code.
 
-            //pthread_jit_write_protect_np(0);
+            // pthread_jit_write_protect_np(0);
             
             var srcSpan = new Span<byte>(src.ToPointer(), (int)n);
             var dstSpan = new Span<byte>(dst.ToPointer(), (int)n);
             srcSpan.CopyTo(dstSpan);
 
-            //pthread_jit_write_protect_np(1);
+            // pthread_jit_write_protect_np(1);
 
             // Ensure that the instruction cache for this range is invalidated.
             sys_icache_invalidate(dst, (IntPtr)n);

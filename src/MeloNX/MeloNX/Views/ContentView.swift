@@ -44,7 +44,6 @@ struct ContentView: View {
         _config = State(initialValue: defaultConfig)
         
         let defaultSettings: [MoltenVKSettings] = [
-            MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1")
         ]

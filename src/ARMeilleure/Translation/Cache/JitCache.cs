@@ -91,7 +91,15 @@ namespace ARMeilleure.Translation.Cache
 
                 if (OperatingSystem.IsIOS())
                 {
-                    Marshal.Copy(code, 0, funcPtr, code.Length);
+                    // Marshal.Copy(code, 0, funcPtr, code.Length);
+                    unsafe
+                    {
+                        fixed (byte* codePtr = code)
+                        {
+                            JitSupportDarwinAot.Copy(funcPtr, (IntPtr)codePtr, (ulong)code.Length);
+                        }
+                    }
+                    
                     if (deferProtect)
                     {
                         _deferredRxProtect.Enqueue((funcOffset, code.Length));
