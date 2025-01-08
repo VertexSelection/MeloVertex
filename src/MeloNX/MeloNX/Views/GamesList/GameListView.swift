@@ -10,7 +10,7 @@ import UniformTypeIdentifiers
 
 
 struct GameLibraryView: View {
-    @Binding var startemu: URL?
+    @Binding var startemu: Game?
     @State private var games: [Game] = []
     @State private var searchText = ""
     @State private var isSearching = false
@@ -72,7 +72,7 @@ struct GameLibraryView: View {
                                             RecentGameCard(game: game, startemu: $startemu)
                                                 .onTapGesture {
                                                     addToRecentGames(game)
-                                                    startemu = game.fileURL
+                                                    startemu = game
                                                 }
                                         }
                                     }
@@ -140,7 +140,9 @@ struct GameLibraryView: View {
                             
                             
                             Button {
-                                self.startemu = URL(string: "MiiMaker")
+                                var game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "MiiMaker")!, titleName: "Mii Maker", titleId: "0", developer: "Nintendo", version: firmwareversion)
+                                
+                                self.startemu = game
                             } label: {
                                 Text("Mii Maker")
                             }
@@ -206,8 +208,44 @@ struct GameLibraryView: View {
                 }
                 defer { url.stopAccessingSecurityScopedResource() }
                 
+                do {
+                    let handle = try FileHandle(forReadingFrom: url)
+                    let fileExtension = (url.pathExtension as NSString).utf8String
+                    let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
+                    
+                    var gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
+                    
+                    var game = Game(containerFolder: url.deletingLastPathComponent(), fileType: .item, fileURL: url, titleName: "", titleId: "", developer: "", version: "")
+                    
+                    game.titleName = withUnsafePointer(to: &gameInfo.TitleName) {
+                        $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                            String(cString: $0)
+                        }
+                    }
+                    
+                    game.developer = withUnsafePointer(to: &gameInfo.Developer) {
+                        $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                            String(cString: $0)
+                        }
+                    }
+                    
+                    game.titleId = String(gameInfo.TitleId)
+                    
+                    print(String(gameInfo.TitleId))
+                    
+                    
+                    game.version = String(gameInfo.Version)
+                    
+                    game.icon = game.createImage(from: gameInfo)
+            
+                    
+                    DispatchQueue.main.async {
+                        startemu = game
+                    }
+                } catch {
+                    print(error)
+                }
                 
-                startemu = url
 
             case .failure(let err):
                 print("File import failed: \(err.localizedDescription)")
@@ -342,12 +380,12 @@ extension Game: Codable {
 
 struct RecentGameCard: View {
     let game: Game
-    @Binding var startemu: URL?
+    @Binding var startemu: Game?
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         Button(action: {
-            startemu = game.fileURL
+            startemu = game
         }) {
             VStack(alignment: .leading, spacing: 8) {
                 if let icon = game.icon {
@@ -388,12 +426,12 @@ struct RecentGameCard: View {
 
 struct GameListRow: View {
     let game: Game
-    @Binding var startemu: URL?
+    @Binding var startemu: Game?
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         Button(action: {
-            startemu = game.fileURL
+            startemu = game
         }) {
             HStack(spacing: 16) {
                 // Game Icon
@@ -439,7 +477,7 @@ struct GameListRow: View {
             .background(Color(.systemBackground))
             .contextMenu {
                 Button {
-                    startemu = game.fileURL
+                    startemu = game
                 } label: {
                     Label("Play Now", systemImage: "play.fill")
                 }

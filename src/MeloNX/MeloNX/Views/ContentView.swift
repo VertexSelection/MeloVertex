@@ -23,17 +23,17 @@ struct ContentView: View {
     // MARK: - Properties
     @State private var theWindow: UIWindow?
     @State private var virtualController: GCVirtualController?
-    @State private var game: URL?
+    @State private var game: Game?
     @State private var controllersList: [Controller] = []
     @State private var currentControllers: [Controller] = []
     @State private var config: Ryujinx.Configuration
-    @State private var settings: [MoltenVKSettings]
+    @State var settings: [MoltenVKSettings]
     @AppStorage("useTrollStore") var useTrollStore: Bool = false
     @State private var isVirtualControllerActive: Bool = false
     @AppStorage("isVirtualController") var isVCA: Bool = true
     @State var onscreencontroller: Controller = Controller(id: "", name: "")
     @AppStorage("JIT") var isJITEnabled: Bool = false
-    
+    @State var isMK8: Bool = false
     @AppStorage("quit") var quit: Bool = false
     
     @State var quits: Bool = false
@@ -180,8 +180,18 @@ struct ContentView: View {
     private func start(displayid: UInt32) {
         guard let game else { return }
         
-        config.gamepath = game.path
+        config.gamepath = game.fileURL.path
         config.inputids = Array(Set(currentControllers.map(\.id)))
+        var setting: MoltenVKSettings
+        
+        if game.titleName.lowercased() != "super mario odyssey" {
+            setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"))
+        } else {
+            setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "2"))
+        }
+        setenv(setting.string, setting.value, 1)
+         
+        
         
         if config.inputids.isEmpty {
             config.inputids.append("0")

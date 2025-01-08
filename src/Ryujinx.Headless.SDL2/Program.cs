@@ -477,7 +477,8 @@ namespace Ryujinx.Headless.SDL2
 
                             ReadControlData(controlFs, controlHolder.ByteSpan);
 
-                            GetGameInformation(ref controlHolder.Value, out gameInfo.TitleName, out _, out gameInfo.Developer, out gameInfo.Version);
+
+                            GetGameInformation(ref controlHolder.Value, out gameInfo.TitleName, out gameInfo.TitleId, out gameInfo.Developer, out gameInfo.Version);
 
                             // Read the icon from the ControlFS and store it as a byte array
                             try
@@ -552,7 +553,7 @@ namespace Ryujinx.Headless.SDL2
                             // Read the NACP data
                             Read(assetOffset + (int)nacpOffset, (int)nacpSize).AsSpan().CopyTo(controlHolder.ByteSpan);
 
-                            GetGameInformation(ref controlHolder.Value, out gameInfo.TitleName, out _, out gameInfo.Developer, out gameInfo.Version);
+                            GetGameInformation(ref controlHolder.Value, out gameInfo.TitleName, out gameInfo.TitleId, out gameInfo.Developer, out gameInfo.Version);
                         }
                     }
                 }

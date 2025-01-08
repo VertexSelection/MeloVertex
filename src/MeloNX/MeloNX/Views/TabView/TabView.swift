@@ -10,7 +10,7 @@ import UniformTypeIdentifiers
 
 
 struct MainTabView: View {
-    @Binding var startemu: URL?
+    @Binding var startemu: Game?
     @Binding var config: Ryujinx.Configuration
     @Binding var MVKconfig: [MoltenVKSettings]
     @Binding var controllersList: [Controller]
