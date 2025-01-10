@@ -1306,7 +1306,7 @@ namespace Ryujinx.Headless.SDL2
                 options.IgnoreMissingServices,
                 options.AspectRatio,
                 options.AudioVolume,
-                options.UseHypervisor ?? true,
+                options.UseHypervisor ?? false,
                 options.MultiplayerLanInterfaceId,
                 Common.Configuration.Multiplayer.MultiplayerMode.LdnMitm);
 
@@ -1499,75 +1499,75 @@ namespace Ryujinx.Headless.SDL2
             return new FileStream(safeHandle, FileAccess.ReadWrite);
         }
 
-    public class GameInfo
-    {
-        public double FileSize;
-        public string? TitleName;
-        public string? TitleId;
-        public string? Developer;
-        public string? Version;
-        public byte[]? Icon;
-    }
-
-public unsafe struct GameInfoNative
-{
-    public ulong FileSize;
-    public fixed byte TitleName[512];
-    public ulong TitleId;
-    public fixed byte Developer[256];
-    public uint Version;
-    public byte* ImageData;  // Changed to pointer
-    public uint ImageSize;   // Actual size of image data
-
-    public GameInfoNative(ulong fileSize, string titleName, ulong titleId, string developer, uint version, byte[] imageData)
-    {
-        FileSize = fileSize;
-        TitleId = titleId;
-        Version = version;
-
-        fixed (byte* developerPtr = Developer)
-        fixed (byte* titleNamePtr = TitleName)
+        public class GameInfo
         {
-            CopyStringToFixedArray(titleName, titleNamePtr, 512);
-            CopyStringToFixedArray(developer, developerPtr, 256);
+            public double FileSize;
+            public string? TitleName;
+            public string? TitleId;
+            public string? Developer;
+            public string? Version;
+            public byte[]? Icon;
         }
 
-        if (imageData == null || imageData.Length > 4096 * 4096)
+        public unsafe struct GameInfoNative
         {
-            // throw new ArgumentException("Image data must not exceed 4 MB.");
-            ImageSize = (uint)0;
-            ImageData = null;
-        }
-        else 
-        {
-            ImageSize = (uint)imageData.Length;
-        
-            ImageData = (byte*)Marshal.AllocHGlobal(imageData.Length);
-        
-            Marshal.Copy(imageData, 0, (IntPtr)ImageData, imageData.Length);
-        }
-    }
+            public ulong FileSize;
+            public fixed byte TitleName[512];
+            public ulong TitleId;
+            public fixed byte Developer[256];
+            public uint Version;
+            public byte* ImageData;  
+            public uint ImageSize;   
 
-    // Don't forget to free the allocated memory
-    public void Dispose()
-    {
-        if (ImageData != null)
-        {
-            Marshal.FreeHGlobal((IntPtr)ImageData);
-            ImageData = null;
-        }
-    }
-        private static void CopyStringToFixedArray(string source, byte* destination, int length)
-        {
-            var span = new Span<byte>(destination, length);
-            Encoding.UTF8.GetBytes(source, span);
-        }
+            public GameInfoNative(ulong fileSize, string titleName, ulong titleId, string developer, uint version, byte[] imageData)
+            {
+                FileSize = fileSize;
+                TitleId = titleId;
+                Version = version;
 
-        private static void CopyArrayToFixedArray(byte[] source, byte* destination, int maxLength)
-        {
-            var span = new Span<byte>(destination, maxLength);
-            source.AsSpan().CopyTo(span);
+                fixed (byte* developerPtr = Developer)
+                fixed (byte* titleNamePtr = TitleName)
+                {
+                    CopyStringToFixedArray(titleName, titleNamePtr, 512);
+                    CopyStringToFixedArray(developer, developerPtr, 256);
+                }
+
+                if (imageData == null || imageData.Length > 4096 * 4096)
+                {
+                    // throw new ArgumentException("Image data must not exceed 4 MB.");
+                    ImageSize = (uint)0;
+                    ImageData = null;
+                }
+                else 
+                {
+                    ImageSize = (uint)imageData.Length;
+                
+                    ImageData = (byte*)Marshal.AllocHGlobal(imageData.Length);
+                
+                    Marshal.Copy(imageData, 0, (IntPtr)ImageData, imageData.Length);
+                }
+            }
+
+            // Don't forget to free the allocated memory
+            public void Dispose()
+            {
+                if (ImageData != null)
+                {
+                    Marshal.FreeHGlobal((IntPtr)ImageData);
+                    ImageData = null;
+                }
+            }
+            private static void CopyStringToFixedArray(string source, byte* destination, int length)
+            {
+                var span = new Span<byte>(destination, length);
+                Encoding.UTF8.GetBytes(source, span);
+            }
+
+            private static void CopyArrayToFixedArray(byte[] source, byte* destination, int maxLength)
+            {
+                var span = new Span<byte>(destination, maxLength);
+                source.AsSpan().CopyTo(span);
+            }
         }
-    }
     }
 }

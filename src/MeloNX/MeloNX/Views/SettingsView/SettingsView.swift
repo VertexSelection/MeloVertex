@@ -52,7 +52,7 @@ struct SettingsView: View {
                     .tint(.blue)
 
                     Toggle(isOn: $config.disableShaderCache) {
-                        labelWithIcon("Disable Shader Cache", iconName: "memorychip")
+                        labelWithIcon("Shader Cache", iconName: "memorychip")
                     }
                     .tint(.blue)
 
@@ -62,7 +62,7 @@ struct SettingsView: View {
                     .tint(.blue)
 
                     Toggle(isOn: $config.disableDockedMode) {
-                        labelWithIcon("Disable Docked Mode", iconName: "dock.rectangle")
+                        labelWithIcon("Docked Mode", iconName: "dock.rectangle")
                     }
                     .tint(.blue)
                                                         

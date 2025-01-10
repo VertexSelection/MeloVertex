@@ -152,9 +152,9 @@ class Ryujinx {
         
         args.append(contentsOf: ["--memory-manager-mode", config.memoryManagerMode])
         
-        // args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
-        // args.append(contentsOf: ["--exclusive-fullscreen-width", "\(Int(UIScreen.main.bounds.width))"])
-        // args.append(contentsOf: ["--exclusive-fullscreen-height", "\(Int(UIScreen.main.bounds.height))"])
+        args.append(contentsOf: ["--exclusive-fullscreen", String(true)])
+        args.append(contentsOf: ["--exclusive-fullscreen-width", "\(Int(UIScreen.main.bounds.width))"])
+        args.append(contentsOf: ["--exclusive-fullscreen-height", "\(Int(UIScreen.main.bounds.height))"])
         // We don't need this. Ryujinx should handle it fine :3
         
         if config.fullscreen {
@@ -174,10 +174,11 @@ class Ryujinx {
             args.append(contentsOf: ["--resolution-scale", String(config.resscale)])
         }
         
-        if config.disableShaderCache {
+        if !config.disableShaderCache { // same with disableShaderCache
             args.append("--disable-shader-cache")
         }
-        if config.disableDockedMode {
+        
+        if !config.disableDockedMode { // disableDockedMode is actually enableDockedMode, i just have flipped it around in the settings page to make it easier to understand :3
             args.append("--disable-docked-mode")
         }
         if config.enableTextureRecompression {

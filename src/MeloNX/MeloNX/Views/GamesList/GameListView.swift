@@ -140,7 +140,7 @@ struct GameLibraryView: View {
                             
                             
                             Button {
-                                var game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "MiiMaker")!, titleName: "Mii Maker", titleId: "0", developer: "Nintendo", version: firmwareversion)
+                                let game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "MiiMaker")!, titleName: "Mii Maker", titleId: "0", developer: "Nintendo", version: firmwareversion)
                                 
                                 self.startemu = game
                             } label: {
@@ -165,7 +165,7 @@ struct GameLibraryView: View {
                             Text("Show MeloNX Folder")
                         }
                     } label: {
-                        Image(systemName: "ellipsis")
+                        Image(systemName: "ellipsis.circle")
                             .foregroundColor(.blue)
                     }
                     
@@ -349,7 +349,6 @@ struct GameLibraryView: View {
     }
 }
 
-// Make sure your Game model conforms to Codable
 extension Game: Codable {
     enum CodingKeys: String, CodingKey {
         case titleName, titleId, developer, version, fileURL

@@ -22,7 +22,6 @@ struct MoltenVKSettings: Codable, Hashable {
 struct ContentView: View {
     // MARK: - Properties
     @State private var theWindow: UIWindow?
-    @State private var virtualController: GCVirtualController?
     @State private var game: Game?
     @State private var controllersList: [Controller] = []
     @State private var currentControllers: [Controller] = []
@@ -37,6 +36,11 @@ struct ContentView: View {
     @AppStorage("quit") var quit: Bool = false
     
     @State var quits: Bool = false
+    @State private var clumpOffset: CGFloat = -100
+    private let clumpWidth: CGFloat = 100
+    private let animationDuration: Double = 1.0
+    @State private var isAnimating = false
+    @State var isLoading = true
     
     // MARK: - Initialization
     init() {
@@ -58,18 +62,27 @@ struct ContentView: View {
     // MARK: - Body
     var body: some View {
         if let game, quits == false {
-            emulationView
-                .onAppear() {
-                    Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-                        timer.invalidate()
-                        quits = quit
-                        
-                        if quits {
-                            quit = false
+            if isLoading {
+                emulationView
+                    .onAppear() {
+                        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
                             timer.invalidate()
+                            quits = quit
+                            
+                            if quits {
+                                quit = false
+                                timer.invalidate()
+                            }
                         }
                     }
+            } else {
+                VStack {
+                    
                 }
+                .onAppear() {
+                    isAnimating = false
+                }
+            }
         } else {
             mainMenuView
                 .onAppear() {
@@ -81,15 +94,80 @@ struct ContentView: View {
         
     // MARK: - View Components
     private var emulationView: some View {
-        ZStack {
-            
-        }
-            .onAppear {
-                
-                setupEmulation()
+        GeometryReader { screenGeometry in
+            ZStack {
+                HStack(spacing: screenGeometry.size.width * 0.04) {
+                    if let icon = game?.icon {
+                        Image(uiImage: icon)
+                            .resizable()
+                            .frame(
+                                width: min(screenGeometry.size.width * 0.25, 250),
+                                height: min(screenGeometry.size.width * 0.25, 250)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(color: .black.opacity(0.5), radius: 10, x: 0, y: 5)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: screenGeometry.size.height * 0.015) {
+                        Text("Loading \(game?.titleName ?? "Game")")
+                            .font(.system(size: min(screenGeometry.size.width * 0.04, 32)))
+                            .foregroundColor(.white)
+                        
+                        GeometryReader { geometry in
+                            let containerWidth = min(screenGeometry.size.width * 0.35, 350)
+                            
+                            ZStack(alignment: .leading) {
+                                // Background track
+                                Rectangle()
+                                    .cornerRadius(10)
+                                    .frame(width: containerWidth, height: min(screenGeometry.size.height * 0.015, 12))
+                                    .foregroundColor(.gray.opacity(0.3))
+                                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                
+                                // Animated loading bar
+                                Rectangle()
+                                    .cornerRadius(10)
+                                    .frame(width: clumpWidth, height: min(screenGeometry.size.height * 0.015, 12))
+                                    .foregroundColor(.blue)
+                                    .shadow(color: .blue.opacity(0.5), radius: 4, x: 0, y: 2)
+                                    .offset(x: isAnimating ? containerWidth : -clumpWidth)
+                                    .animation(
+                                        Animation.linear(duration: 1.0)
+                                            .repeatForever(autoreverses: false),
+                                        value: isAnimating
+                                    )
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .onAppear {
+                                isAnimating = true
+                                
+                                setupEmulation()
+                                
+                                
+                                Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
+                                    if get_current_fps() != 0 {
+                                        isLoading = false
+                                        isAnimating = false
+                                        timer.invalidate()
+                                    }
+                                    print(get_current_fps())
+                                }
+                            }
+                        }
+                        .frame(height: min(screenGeometry.size.height * 0.015, 12))
+                        .frame(width: min(screenGeometry.size.width * 0.35, 350))
+                    }
+                }
+                .padding(.horizontal, screenGeometry.size.width * 0.06)
+                .padding(.vertical, screenGeometry.size.height * 0.05)
+                .position(
+                    x: screenGeometry.size.width / 2,
+                    y: screenGeometry.size.height * 0.5
+                )
             }
+        }
     }
-    
+
     private var mainMenuView: some View {
         MainTabView(startemu: $game, config: $config, MVKconfig: $settings, controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
             .onAppear() {
@@ -116,7 +194,6 @@ struct ContentView: View {
     }
     
     private func setupEmulation() {
-        virtualController?.disconnect()
         patchMakeKeyAndVisible()
         
         if (currentControllers.first(where: { $0 == onscreencontroller }) != nil) {
@@ -203,6 +280,8 @@ struct ContentView: View {
             print("Error: \(error.localizedDescription)")
         }
     }
+    
+    
 
     
     private func setMoltenVKSettings() {
