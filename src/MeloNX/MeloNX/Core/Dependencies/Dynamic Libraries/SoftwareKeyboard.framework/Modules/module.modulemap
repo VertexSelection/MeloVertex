@@ -1,0 +1,6 @@
+framework module SoftwareKeyboard {
+  umbrella header "SoftwareKeyboard.h"
+  export *
+
+  module * { export * }
+}

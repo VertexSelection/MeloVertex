@@ -1,0 +1,309 @@
+//
+//  ContentView.swift
+//  MeloNX
+//
+//  Created by Stossy11 on 3/11/2024.
+//
+
+import SwiftUI
+// import SDL2
+import GameController
+import Darwin
+import UIKit
+import MetalKit
+// import SDL
+import SoftwareKeyboard
+
+struct MoltenVKSettings: Codable, Hashable {
+    let string: String
+    var value: String
+}
+
+struct ContentView: View {
+    // MARK: - Properties
+    @State private var theWindow: UIWindow?
+    @State private var game: Game?
+    @State private var controllersList: [Controller] = []
+    @State private var currentControllers: [Controller] = []
+    @State private var config: Ryujinx.Configuration
+    @State var settings: [MoltenVKSettings]
+    @AppStorage("useTrollStore") var useTrollStore: Bool = false
+    @State private var isVirtualControllerActive: Bool = false
+    @AppStorage("isVirtualController") var isVCA: Bool = true
+    @State var onscreencontroller: Controller = Controller(id: "", name: "")
+    @AppStorage("JIT") var isJITEnabled: Bool = false
+    @State var isMK8: Bool = false
+    @AppStorage("quit") var quit: Bool = false
+    
+    @State var quits: Bool = false
+    @State private var clumpOffset: CGFloat = -100
+    private let clumpWidth: CGFloat = 100
+    private let animationDuration: Double = 1.0
+    @State private var isAnimating = false
+    @State var isLoading = true
+    
+    // MARK: - Initialization
+    init() {
+        let defaultConfig = loadSettings() ?? Ryujinx.Configuration(gamepath: "")
+        _config = State(initialValue: defaultConfig)
+        
+        let defaultSettings: [MoltenVKSettings] = [
+            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
+            MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1")
+        ]
+        
+        _settings = State(initialValue: defaultSettings)
+        
+        print("JIT Enabled: \(isJITEnabled)")
+        
+        initializeSDL()
+    }
+    
+    // MARK: - Body
+    var body: some View {
+        if let game, quits == false {
+            if isLoading {
+                emulationView
+                    .onAppear() {
+                        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                            timer.invalidate()
+                            quits = quit
+                            
+                            if quits {
+                                quit = false
+                                timer.invalidate()
+                            }
+                        }
+                    }
+            } else {
+                VStack {
+                    
+                }
+                .onAppear() {
+                    isAnimating = false
+                }
+            }
+        } else {
+            mainMenuView
+                .onAppear() {
+                    quits = false
+                }
+        }
+        
+    }
+        
+    // MARK: - View Components
+    private var emulationView: some View {
+        GeometryReader { screenGeometry in
+            ZStack {
+                HStack(spacing: screenGeometry.size.width * 0.04) {
+                    if let icon = game?.icon {
+                        Image(uiImage: icon)
+                            .resizable()
+                            .frame(
+                                width: min(screenGeometry.size.width * 0.25, 250),
+                                height: min(screenGeometry.size.width * 0.25, 250)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(color: .black.opacity(0.5), radius: 10, x: 0, y: 5)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: screenGeometry.size.height * 0.015) {
+                        Text("Loading \(game?.titleName ?? "Game")")
+                            .font(.system(size: min(screenGeometry.size.width * 0.04, 32)))
+                            .foregroundColor(.white)
+                        
+                        GeometryReader { geometry in
+                            let containerWidth = min(screenGeometry.size.width * 0.35, 350)
+                            
+                            ZStack(alignment: .leading) {
+                                // Background track
+                                Rectangle()
+                                    .cornerRadius(10)
+                                    .frame(width: containerWidth, height: min(screenGeometry.size.height * 0.015, 12))
+                                    .foregroundColor(.gray.opacity(0.3))
+                                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                
+                                // Animated loading bar
+                                Rectangle()
+                                    .cornerRadius(10)
+                                    .frame(width: clumpWidth, height: min(screenGeometry.size.height * 0.015, 12))
+                                    .foregroundColor(.blue)
+                                    .shadow(color: .blue.opacity(0.5), radius: 4, x: 0, y: 2)
+                                    .offset(x: isAnimating ? containerWidth : -clumpWidth)
+                                    .animation(
+                                        Animation.linear(duration: 1.0)
+                                            .repeatForever(autoreverses: false),
+                                        value: isAnimating
+                                    )
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .onAppear {
+                                isAnimating = true
+                                
+                                setupEmulation()
+                                
+                                
+                                Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
+                                    if get_current_fps() != 0 {
+                                        isLoading = false
+                                        isAnimating = false
+                                        timer.invalidate()
+                                    }
+                                    print(get_current_fps())
+                                }
+                            }
+                        }
+                        .frame(height: min(screenGeometry.size.height * 0.015, 12))
+                        .frame(width: min(screenGeometry.size.width * 0.35, 350))
+                    }
+                }
+                .padding(.horizontal, screenGeometry.size.width * 0.06)
+                .padding(.vertical, screenGeometry.size.height * 0.05)
+                .position(
+                    x: screenGeometry.size.width / 2,
+                    y: screenGeometry.size.height * 0.5
+                )
+            }
+        }
+    }
+
+    private var mainMenuView: some View {
+        MainTabView(startemu: $game, config: $config, MVKconfig: $settings, controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
+            .onAppear() {
+                refreshControllersList()
+                    
+                        
+                        let isJIT = UserDefaults.standard.bool(forKey: "JIT-ENABLED")
+                        
+                        if !isJIT, useTrollStore {
+                            askForJIT()
+                        }
+                    
+            }
+    }
+    
+    // MARK: - Helper Methods
+    var SdlInitFlags: uint = SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO | SDL_INIT_VIDEO;
+    private func initializeSDL() {
+        setMoltenVKSettings()
+        SDL_SetMainReady()
+        SDL_iPhoneSetEventPump(SDL_TRUE)
+        SDL_Init(SdlInitFlags)
+        initialize()
+    }
+    
+    private func setupEmulation() {
+        patchMakeKeyAndVisible()
+        
+        if (currentControllers.first(where: { $0 == onscreencontroller }) != nil) {
+            
+            isVCA = true
+            
+            DispatchQueue.main.async {
+                start(displayid: 1)
+            }
+            
+            
+        } else {
+            isVCA = false
+            
+            DispatchQueue.main.async {
+                start(displayid: 1)
+            }
+            
+            
+        }
+    }
+    
+    private func refreshControllersList() {
+        controllersList = Ryujinx.shared.getConnectedControllers()
+        
+        if let onscreen = controllersList.first(where: { $0.name == Ryujinx.shared.virtualController.controllername }) {
+            self.onscreencontroller = onscreen
+        }
+        
+        controllersList.removeAll(where: { $0.id == "0"})
+        
+        if controllersList.count > 2 {
+            let controller =  controllersList[2]
+            currentControllers.append(controller)
+        } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
+            currentControllers.append(controller)
+        }
+    }
+
+    func showAlert(title: String, message: String, showOk: Bool, completion: @escaping (Bool) -> Void) {
+        DispatchQueue.main.async {
+            if let mainWindow = UIApplication.shared.windows.last {
+                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+                
+                if showOk {
+                    let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+                        completion(true)
+                    }
+
+                    alert.addAction(okAction)
+                } else {
+                    completion(false)
+                }
+                
+                mainWindow.rootViewController?.present(alert, animated: true, completion: nil)
+            }
+        }
+    }
+
+    
+    private func start(displayid: UInt32) {
+        guard let game else { return }
+        
+        config.gamepath = game.fileURL.path
+        config.inputids = Array(Set(currentControllers.map(\.id)))
+        var setting: MoltenVKSettings
+        
+        if game.titleName.lowercased() != "super mario odyssey" {
+            setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"))
+        } else {
+            setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "2"))
+        }
+        setenv(setting.string, setting.value, 1)
+         
+        
+        
+        if config.inputids.isEmpty {
+            config.inputids.append("0")
+        }
+        
+        do {
+            try Ryujinx.shared.start(with: config)
+        } catch {
+            print("Error: \(error.localizedDescription)")
+        }
+    }
+    
+    
+
+    
+    private func setMoltenVKSettings() {
+        
+        settings.forEach { setting in
+            setenv(setting.string, setting.value, 1)
+        }
+    }
+}
+
+// MARK: - Helper Functions
+func loadSettings() -> Ryujinx.Configuration? {
+    guard let jsonString = UserDefaults.standard.string(forKey: "config"),
+          let data = jsonString.data(using: .utf8) else {
+        return nil
+    }
+    
+    do {
+        return try JSONDecoder().decode(Ryujinx.Configuration.self, from: data)
+    } catch {
+        print("Failed to load settings: \(error)")
+        return nil
+    }
+}
+
