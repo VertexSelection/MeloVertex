@@ -152,9 +152,14 @@ class Ryujinx {
         
         args.append(contentsOf: ["--memory-manager-mode", config.memoryManagerMode])
         
-        args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
-        args.append(contentsOf: ["--exclusive-fullscreen-width", "\(Int(UIScreen.main.bounds.width))"])
-        args.append(contentsOf: ["--exclusive-fullscreen-height", "\(Int(UIScreen.main.bounds.height))"])
+        // args.append(contentsOf: ["--exclusive-fullscreen", String(config.fullscreen)])
+        // args.append(contentsOf: ["--exclusive-fullscreen-width", "\(Int(UIScreen.main.bounds.width))"])
+        // args.append(contentsOf: ["--exclusive-fullscreen-height", "\(Int(UIScreen.main.bounds.height))"])
+        // We don't need this. Ryujinx should handle it fine :3
+        
+        if config.fullscreen {
+            args.append(contentsOf: ["--aspect-ratio", "Stretched"])
+        }
         
         
         if config.nintendoinput {
