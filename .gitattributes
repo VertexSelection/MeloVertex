@@ -2,5 +2,6 @@
 # Set default behavior to automatically normalize line endings.
 * text=auto eol=lf
 /src/MeloNX/MeloNX/Core/Dependencies/Dynamic[[:space:]]Libraries/Ryujinx.Headless.SDL2.dylib filter=lfs diff=lfs merge=lfs -text
+/src/MeloNX/MeloNX/Dependencies/Ryujinx.Headless.SDL2.dylib filter=lfs diff=lfs merge=lfs -text
 *.dylib filter=lfs diff=lfs merge=lfs -text
 *.xcuserstate filter=lfs diff=lfs merge=lfs -text

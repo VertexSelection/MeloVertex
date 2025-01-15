@@ -264,7 +264,7 @@ struct ContentView: View {
         if game.titleName.lowercased() != "super mario odyssey" {
             setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"))
         } else {
-            setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "2"))
+            setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "1"))
         }
         setenv(setting.string, setting.value, 1)
          

@@ -15,11 +15,11 @@ namespace ARMeilleure.Translation.Cache
     static partial class JitCache
     {
         private static readonly int _pageSize = (int)MemoryBlock.GetPageSize();
-        private static readonly int _pageMask = _pageSize - 1;
+        private static readonly int _pageMask = _pageSize - 2;
 
         private const int CodeAlignment = 4; // Bytes.
         private const int CacheSize = 2047 * 1024 * 1024;
-        private const int CacheSizeIOS = 128 * 1024 * 1024;
+        private const int CacheSizeIOS = 64 * 1024 * 1024;
 
         private static ReservedRegion _jitRegion;
         private static JitCacheInvalidation _jitCacheInvalidator;
@@ -91,15 +91,7 @@ namespace ARMeilleure.Translation.Cache
 
                 if (OperatingSystem.IsIOS())
                 {
-                    // Marshal.Copy(code, 0, funcPtr, code.Length);
-                    unsafe
-                    {
-                        fixed (byte* codePtr = code)
-                        {
-                            JitSupportDarwinAot.Copy(funcPtr, (IntPtr)codePtr, (ulong)code.Length);
-                        }
-                    }
-                    
+                    Marshal.Copy(code, 0, funcPtr, code.Length);
                     if (deferProtect)
                     {
                         _deferredRxProtect.Enqueue((funcOffset, code.Length));

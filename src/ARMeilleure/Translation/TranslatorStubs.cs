@@ -60,6 +60,8 @@ namespace ARMeilleure.Translation
         {
             get
             {
+                ObjectDisposedException.ThrowIf(_disposed, this);
+
                 return _dispatchLoop.Value;
             }
         }
