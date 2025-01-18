@@ -39,6 +39,7 @@ struct SettingsView: View {
         return memoryManagerModes.filter { $0.1.localizedCaseInsensitiveContains(searchText) }
     }
     
+
     var body: some View {
         iOSNav {
             List {
@@ -65,6 +66,8 @@ struct SettingsView: View {
                         labelWithIcon("Docked Mode", iconName: "dock.rectangle")
                     }
                     .tint(.blue)
+                    
+                    
                                                         
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {

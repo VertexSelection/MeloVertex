@@ -97,7 +97,7 @@ class Ryujinx {
         
         isRunning = true
         
-        RunLoop.current.perform {
+        DispatchQueue.main.async {
             let url = URL(string: config.gamepath)!
             
             do {
@@ -152,10 +152,11 @@ class Ryujinx {
         
         args.append(contentsOf: ["--memory-manager-mode", config.memoryManagerMode])
         
-        args.append(contentsOf: ["--exclusive-fullscreen", String(true)])
-        args.append(contentsOf: ["--exclusive-fullscreen-width", "\(Int(UIScreen.main.bounds.width))"])
-        args.append(contentsOf: ["--exclusive-fullscreen-height", "\(Int(UIScreen.main.bounds.height))"])
+        // args.append(contentsOf: ["--exclusive-fullscreen", String(true)])
+        // args.append(contentsOf: ["--exclusive-fullscreen-width", "\(Int(UIScreen.main.bounds.width))"])
+        // args.append(contentsOf: ["--exclusive-fullscreen-height", "\(Int(UIScreen.main.bounds.height))"])
         // We don't need this. Ryujinx should handle it fine :3
+        // this also causes crashes in some games :3
         
         if config.fullscreen {
             args.append(contentsOf: ["--aspect-ratio", "Stretched"])
@@ -167,7 +168,7 @@ class Ryujinx {
         }
         
         
-        args.append("--disable-vsync")
+        // args.append("--disable-vsync")
         
         
         if config.resscale != 1.0 {

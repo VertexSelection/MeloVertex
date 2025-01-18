@@ -15,7 +15,7 @@ namespace ARMeilleure.Translation.Cache
     static partial class JitCache
     {
         private static readonly int _pageSize = (int)MemoryBlock.GetPageSize();
-        private static readonly int _pageMask = _pageSize - 2;
+        private static readonly int _pageMask = _pageSize - 8;
 
         private const int CodeAlignment = 4; // Bytes.
         private const int CacheSize = 2047 * 1024 * 1024;

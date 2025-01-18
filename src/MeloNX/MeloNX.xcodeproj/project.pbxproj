@@ -90,6 +90,9 @@
 		5650564D2D2A75B300C8BB1E /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			attributesByRelativePath = {
+				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (
+					CodeSignOnCopy,
+				);
 				"Dependencies/Dynamic Libraries/SoftwareKeyboard.framework" = (
 					CodeSignOnCopy,
 					RemoveHeadersOnCopy,
@@ -149,6 +152,7 @@
 				"Dependencies/Dynamic Libraries/libavcodec.dylib",
 				"Dependencies/Dynamic Libraries/libavutil.dylib",
 				"Dependencies/Dynamic Libraries/libMoltenVK.dylib",
+				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib",
 				"Dependencies/Dynamic Libraries/SoftwareKeyboard.framework",
 				Dependencies/XCFrameworks/libavcodec.xcframework,
 				Dependencies/XCFrameworks/libavfilter.xcframework,

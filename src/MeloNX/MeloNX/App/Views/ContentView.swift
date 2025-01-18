@@ -48,8 +48,11 @@ struct ContentView: View {
         _config = State(initialValue: defaultConfig)
         
         let defaultSettings: [MoltenVKSettings] = [
-            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
-            MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1")
+            // MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "1"),
+            // MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2"),
+            // MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "0"),
+            // MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1"),
+            // MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "0")
         ]
         
         _settings = State(initialValue: defaultSettings)
@@ -61,7 +64,7 @@ struct ContentView: View {
     
     // MARK: - Body
     var body: some View {
-        if let game, quits == false {
+        if game != nil, quits == false {
             if isLoading {
                 emulationView
                     .onAppear() {
@@ -80,7 +83,7 @@ struct ContentView: View {
                     
                 }
                 .onAppear() {
-                    isAnimating = false
+                    isAnimating = false  
                 }
             }
         } else {
@@ -259,15 +262,11 @@ struct ContentView: View {
         
         config.gamepath = game.fileURL.path
         config.inputids = Array(Set(currentControllers.map(\.id)))
-        var setting: MoltenVKSettings
         
-        if game.titleName.lowercased() != "super mario odyssey" {
-            setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"))
-        } else {
-            setting = (MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "1"))
+        if game.titleName.lowercased() == "super mario odyssey" {
+            let setting = MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "1")
+            setenv(setting.string, setting.value, 1)
         }
-        setenv(setting.string, setting.value, 1)
-         
         
         
         if config.inputids.isEmpty {
