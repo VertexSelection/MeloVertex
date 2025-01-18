@@ -12,9 +12,6 @@ import SwiftUI
 
 func waitforcontroller() {
     if let window = theWindow {
-        
-        
-        
         // Function to recursively search for GCControllerView
         func findGCControllerView(in view: UIView) -> UIView? {
             // Check if current view is GCControllerView
@@ -44,11 +41,13 @@ func waitforcontroller() {
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             if findGCControllerView(in: window) == nil {
                 window.addSubview(containerView)
+                
+                window.bringSubviewToFront(containerView)
+                
+                timer.invalidate()
             } else {
                 timer.invalidate()
             }
-            
-            window.bringSubviewToFront(containerView)
         }
 
     }
@@ -59,6 +58,7 @@ class TransparentHostingContainerView: UIView {
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         // Check if the point is within the subviews of this container
         let view = super.hitTest(point, with: event)
+        print(view)
         
         // Return nil if the touch is outside visible content (passes through to views below)
         return view === self ? nil : view
