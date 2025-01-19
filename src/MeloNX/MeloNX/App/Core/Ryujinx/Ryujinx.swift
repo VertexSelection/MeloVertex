@@ -97,7 +97,7 @@ class Ryujinx {
         
         isRunning = true
         
-        DispatchQueue.main.async {
+        RunLoop.current.perform {
             let url = URL(string: config.gamepath)!
             
             do {

@@ -37,6 +37,20 @@ func waitforcontroller() {
         controllerHostingController.view.frame = containerView.bounds
         controllerHostingController.view.backgroundColor = .clear
         containerView.addSubview(controllerHostingController.view)
+        
+        class LandscapeViewController: UIViewController {
+            override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+                return .landscape
+            }
+
+            override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+                return .landscapeLeft
+            }
+        }
+
+        let landscapeVC = LandscapeViewController()
+        landscapeVC.modalPresentationStyle = .fullScreen
+        window.rootViewController?.present(landscapeVC, animated: false, completion: nil)
 
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             if findGCControllerView(in: window) == nil {
