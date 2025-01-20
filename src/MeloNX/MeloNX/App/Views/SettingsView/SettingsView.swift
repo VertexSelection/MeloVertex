@@ -276,7 +276,7 @@ struct SettingsView: View {
                     }
                     
                     if let cpuInfo = getCPUInfo(), cpuInfo.hasPrefix("Apple M") {
-                        if #available (iOS 16.4, *), (false) {
+                        if #available (iOS 16.4, *), getEntitlementValue("com.apple.private.hypervisor") {
                             Toggle(isOn: .constant(false)) {
                                 labelWithIcon("Hypervisor", iconName: "bolt.fill")
                             }
@@ -384,6 +384,8 @@ struct SettingsView: View {
                             Text("Remove Firmware")
                                 .font(.body)
                         }
+                        
+                        
                     } label: {
                         Text("Advanced Options")
                     }
