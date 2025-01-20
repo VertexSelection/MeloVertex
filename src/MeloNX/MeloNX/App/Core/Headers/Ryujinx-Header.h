@@ -10,7 +10,7 @@
 
 
 #import "SDL2/SDL.h"
-#import <utils.h>
+#import "utils.h"
 
 #ifdef __cplusplus
 extern "C" {
