@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 namespace Ryujinx.Cpu.AppleHv
 {
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     class HvAddressSpace : IDisposable
     {
         private const ulong KernelRegionBase = unchecked((ulong)-(1L << 39));

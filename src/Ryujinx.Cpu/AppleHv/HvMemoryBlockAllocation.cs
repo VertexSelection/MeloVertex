@@ -5,6 +5,7 @@ using System.Runtime.Versioning;
 namespace Ryujinx.Cpu.AppleHv
 {
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     readonly struct HvMemoryBlockAllocation : IDisposable
     {
         private readonly HvMemoryBlockAllocator _owner;

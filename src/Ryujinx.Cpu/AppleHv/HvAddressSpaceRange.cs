@@ -8,6 +8,7 @@ using System.Threading;
 namespace Ryujinx.Cpu.AppleHv
 {
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     class HvAddressSpaceRange : IDisposable
     {
         private const ulong AllocationGranule = 1UL << 14;

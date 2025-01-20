@@ -7,6 +7,7 @@ using System.Runtime.Versioning;
 namespace Ryujinx.Cpu.AppleHv
 {
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     class HvExecutionContextVcpu : IHvExecutionContext
     {
         private static readonly MemoryBlock _setSimdFpRegFuncMem;

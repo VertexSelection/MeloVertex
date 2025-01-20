@@ -5,6 +5,7 @@ using System.Threading;
 namespace Ryujinx.Cpu.AppleHv
 {
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     class HvVcpuPool
     {
         // Since there's a limit on the number of VCPUs we can create,

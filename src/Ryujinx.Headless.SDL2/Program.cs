@@ -1283,6 +1283,19 @@ namespace Ryujinx.Headless.SDL2
                 renderer = new ThreadedRenderer(renderer);
             }
 
+            bool AppleHV = false;
+
+            if ((!OperatingSystem.IsIOSVersionAtLeast(16, 4)) && options.UseHypervisor) 
+            {
+                AppleHV = true;
+            }
+            else if (OperatingSystem.IsIOS()) 
+            {
+                AppleHV = false;
+            } else {
+                AppleHV = options.UseHypervisor;
+            }
+
             HLEConfiguration configuration = new(_virtualFileSystem,
                 _libHacHorizonManager,
                 _contentManager,
@@ -1306,7 +1319,7 @@ namespace Ryujinx.Headless.SDL2
                 options.IgnoreMissingServices,
                 options.AspectRatio,
                 options.AudioVolume,
-                options.UseHypervisor ?? false,
+                AppleHV,
                 options.MultiplayerLanInterfaceId,
                 Common.Configuration.Multiplayer.MultiplayerMode.LdnMitm);
 

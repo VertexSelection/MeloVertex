@@ -4,6 +4,7 @@ using System.Runtime.Versioning;
 namespace Ryujinx.Cpu.AppleHv
 {
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     class HvCpuContext : ICpuContext
     {
         private readonly ITickSource _tickSource;

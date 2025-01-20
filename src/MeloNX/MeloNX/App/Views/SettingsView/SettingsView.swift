@@ -39,36 +39,36 @@ struct SettingsView: View {
         return memoryManagerModes.filter { $0.1.localizedCaseInsensitiveContains(searchText) }
     }
     
-
+    
     var body: some View {
         iOSNav {
             List {
-
-                    
+                
+                
                 // Graphics & Performance
                 Section {
                     Toggle(isOn: $config.fullscreen) {
                         labelWithIcon("Fullscreen", iconName: "rectangle.expand.vertical")
                     }
                     .tint(.blue)
-
+                    
                     Toggle(isOn: $config.disableShaderCache) {
                         labelWithIcon("Shader Cache", iconName: "memorychip")
                     }
                     .tint(.blue)
-
+                    
                     Toggle(isOn: $config.enableTextureRecompression) {
                         labelWithIcon("Texture Recompression", iconName: "rectangle.compress.vertical")
                     }
                     .tint(.blue)
-
+                    
                     Toggle(isOn: $config.disableDockedMode) {
                         labelWithIcon("Docked Mode", iconName: "dock.rectangle")
                     }
                     .tint(.blue)
                     
                     
-                                                        
+                    
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             labelWithIcon("Resolution Scale", iconName: "magnifyingglass")
@@ -91,7 +91,7 @@ struct SettingsView: View {
                                 )
                             }
                         }
-
+                        
                         Slider(value: $config.resscale, in: 0.1...3.0, step: 0.1) {
                             Text("Resolution Scale")
                         } minimumValueLabel: {
@@ -108,7 +108,7 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
                     .padding(.vertical, 8)
-
+                    
                     Toggle(isOn: $performacehud) {
                         labelWithIcon("Performance Overlay", iconName: "speedometer")
                     }
@@ -192,7 +192,7 @@ struct SettingsView: View {
                 } footer: {
                     Text("Select input devices and on-screen controls to play with. ")
                 }
-
+                
                 // Input Settings
                 Section {
                     
@@ -200,7 +200,7 @@ struct SettingsView: View {
                         labelWithIcon("List Input IDs", iconName: "list.bullet")
                     }
                     .tint(.blue)
-
+                    
                     Toggle(isOn: $ryuDemo) {
                         labelWithIcon("On-Screen Controller (Demo)", iconName: "hand.draw")
                     }
@@ -229,6 +229,28 @@ struct SettingsView: View {
                             labelWithIcon("Memory Manager Mode", iconName: "gearshape")
                         }
                     }
+                    
+                    if let cpuInfo = getCPUInfo(), cpuInfo.hasPrefix("Apple M") {
+                        if #available (iOS 16.4, *), (false) {
+                            Toggle(isOn: .constant(false)) {
+                                labelWithIcon("Hypervisor", iconName: "bolt.fill")
+                            }
+                            .tint(.blue)
+                            .disabled(true)
+                            .onAppear() {
+                                print("CPU Info: \(cpuInfo)")
+                            }
+                        } else {
+                            Toggle(isOn: $config.hypervisor) {
+                                labelWithIcon("Hypervisor", iconName: "bolt.fill")
+                            }
+                            .tint(.blue)
+                            .onAppear() {
+                                print("CPU Info: \(cpuInfo)")
+                                
+                            }
+                        }
+                    }
                 } header: {
                     Text("CPU Mode")
                         .font(.title3.weight(.semibold))
@@ -237,8 +259,8 @@ struct SettingsView: View {
                 } footer: {
                     Text("Select how memory is managed. 'Host (fast)' is best for most users.")
                 }
-
-
+                
+                
                 // Other Settings
                 Section {
                     
@@ -251,7 +273,7 @@ struct SettingsView: View {
                         labelWithIcon("Debug Logs", iconName: "exclamationmark.bubble")
                     }
                     .tint(.blue)
-
+                    
                     Toggle(isOn: $config.tracelogs) {
                         labelWithIcon("Trace Logs", iconName: "waveform.path")
                     }
@@ -264,11 +286,11 @@ struct SettingsView: View {
                 } footer: {
                     Text("Enable logs for troubleshooting and Enable automatic TrollStore JIT.")
                 }
-
+                
                 // Advanced
                 Section {
                     DisclosureGroup {
-
+                        
                         HStack {
                             labelWithIcon("Page Size", iconName: "textformat.size")
                             Spacer()
@@ -276,7 +298,7 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                             
                         }
-
+                        
                         TextField("Additional Arguments", text: Binding(
                             get: {
                                 config.additionalArgs.joined(separator: " ")
@@ -351,6 +373,15 @@ struct SettingsView: View {
         }
 #endif
     }
+    
+    func getCPUInfo() -> String? {
+        let device = MTLCreateSystemDefaultDevice()
+        
+        let gpu = device?.name
+        print("GPU: " + (gpu ?? ""))
+        return gpu
+    }
+
     
     // Original loadSettings function assumed to exist
     func loadSettings() -> Ryujinx.Configuration? {

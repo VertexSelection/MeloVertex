@@ -3,6 +3,7 @@ using System.Runtime.Versioning;
 
 namespace Ryujinx.Cpu.AppleHv
 {
+    [SupportedOSPlatform("ios")]
     [SupportedOSPlatform("macos")]
     public class HvEngine : ICpuEngine
     {

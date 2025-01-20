@@ -265,9 +265,10 @@ namespace Ryujinx.Cpu.AppleHv
     }
 
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     static partial class HvApi
     {
-        public const string LibraryName = "/System/Library/Frameworks/Hypervisor.framework/Hypervisor";
+        public const string LibraryName = "Hypervisor.framework/Hypervisor";
 
         [LibraryImport(LibraryName, SetLastError = true)]
         public static partial HvResult hv_vm_get_max_vcpu_count(out uint max_vcpu_count);

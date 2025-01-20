@@ -4,6 +4,7 @@ using System.Runtime.Versioning;
 namespace Ryujinx.Cpu.AppleHv
 {
     [SupportedOSPlatform("macos")]
+    [SupportedOSPlatform("ios")]
     unsafe class HvVcpu
     {
         private const ulong InterruptIntervalNs = 16 * 1000000; // 16 ms
