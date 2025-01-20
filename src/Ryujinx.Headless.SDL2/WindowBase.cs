@@ -186,7 +186,7 @@ namespace Ryujinx.Headless.SDL2
             }
 
             // WindowHandle = SDL_GetWindowFromID(1);
-            WindowHandle = SDL_CreateWindow($"Ryujinx {Program.Version}{titleNameSection}{titleVersionSection}{titleIdSection}{titleArchSection}", SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId), SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId), Width, Height, DefaultFlags | FullscreenFlag | GetWindowFlags());
+            WindowHandle = SDL_CreateWindow($"Ryujinx {Program.Version}{titleNameSection}{titleVersionSection}{titleIdSection}{titleArchSection}", 0, 0, Width, Height, DefaultFlags | FullscreenFlag | GetWindowFlags());
 
             if (WindowHandle == IntPtr.Zero)
             {
@@ -217,7 +217,10 @@ namespace Ryujinx.Headless.SDL2
                         {
                             Width = evnt.window.data1;
                             Height = evnt.window.data2;
-                            Renderer?.Window.SetSize(Width, Height);
+                            if (Renderer?.Window != null)
+                            {
+                                Renderer.Window.SetSize(Width, Height);
+                            }
                             MouseDriver.SetClientSize(Width, Height);
                         }
                         break;

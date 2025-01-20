@@ -114,6 +114,28 @@ struct GameLibraryView: View {
                     let firmware = Ryujinx.shared.fetchFirmwareVersion()
                     firmwareversion = (firmware == "" ? "0" : firmware)
                 }
+                .fileImporter(isPresented: $firmwareInstaller, allowedContentTypes: [.item]) { result in
+                    switch result {
+                        
+                    case .success(let url):
+                        
+                        do {
+                            
+                            let fun = url.startAccessingSecurityScopedResource()
+                            let path = url.path
+                            
+                            Ryujinx.shared.installFirmware(firmwarePath: path)
+                            
+                            firmwareversion = (Ryujinx.shared.fetchFirmwareVersion() == "" ? "0" : Ryujinx.shared.fetchFirmwareVersion())
+                            if fun  {
+                                url.stopAccessingSecurityScopedResource()
+                            }
+                        }
+                        
+                    case .failure(let error):
+                        print(error)
+                    }
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -124,7 +146,9 @@ struct GameLibraryView: View {
                         
                         if firmwareversion == "0" {
                             Button {
-                                firmwareInstaller.toggle()
+                                DispatchQueue.main.async {
+                                    firmwareInstaller.toggle()
+                                }
                             } label: {
                                 Text("Install Firmware")
                             }
@@ -147,8 +171,9 @@ struct GameLibraryView: View {
                                 Text("Mii Maker")
                             }
                             Button {
-                                
-                                isImporting.toggle()
+                                DispatchQueue.main.async {
+                                    isImporting.toggle()
+                                }
                             } label: {
                                 Text("Open game from system")
                             }
@@ -177,29 +202,7 @@ struct GameLibraryView: View {
         .onChange(of: searchText) { _ in
             isSearching = !searchText.isEmpty
         }
-        .fileImporter(isPresented: $firmwareInstaller, allowedContentTypes: [.item]) { result in
-            switch result {
-                
-            case .success(let url):
-                
-                do {
-                    
-                    let fun = url.startAccessingSecurityScopedResource()
-                    let path = url.path
-                    
-                    Ryujinx.shared.installFirmware(firmwarePath: path)
-                    
-                    firmwareversion = (Ryujinx.shared.fetchFirmwareVersion() == "" ? "0" : Ryujinx.shared.fetchFirmwareVersion())
-                    if fun  {
-                        url.stopAccessingSecurityScopedResource()
-                    }
-                }
-                
-            case .failure(let error):
-                print(error)
-            }
-        }
-        .fileImporter(isPresented: $isImporting, allowedContentTypes: [.zip, .data]) { result in
+        .fileImporter(isPresented: $isImporting, allowedContentTypes: [.zip, .folder]) { result in
             switch result {
             case .success(let url):
                 guard url.startAccessingSecurityScopedResource() else {

@@ -58,6 +58,10 @@ func waitforcontroller() {
                 
                 window.bringSubviewToFront(containerView)
                 
+                let window = SDL_GetWindowFromID(1)
+                
+                SDL_SetWindowPosition(window, 0, 0);
+                
                 timer.invalidate()
             } else {
                 timer.invalidate()

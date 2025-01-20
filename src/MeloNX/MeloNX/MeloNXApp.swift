@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import CryptoKit
 
 @main
 struct MeloNXApp: App {
@@ -16,16 +17,22 @@ struct MeloNXApp: App {
     init() {
         DispatchQueue.main.async { [self] in
             // drmcheck()
-            if showed {
-                drmcheck() { bool in
-                    if bool {
-                        print("Yippee")
-                    } else {
-                       //  exit(0)
-                    }
+            InitializeRyujinx() { bool in
+                if bool {
+                    print("Ryujinx Files Initialized Successfully")
+                } else {
+                    exit(0)
                 }
-            } else {
-                showAlert()
+                
+            }
+            
+            Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+                InitializeRyujinx() { bool in
+                    if !bool {
+                        exit(0)
+                    }
+                    
+                }
             }
         }
     }
@@ -59,13 +66,13 @@ struct MeloNXApp: App {
                 if let textField = alertController.textFields?.first, let enteredText = textField.text {
                     print("Entered text: \(enteredText)")
                     UserDefaults.standard.set(enteredText, forKey: "MeloDRMID")
-                    drmcheck() { bool in
-                        if bool {
-                            showed = true
-                        } else {
-                            exit(0)
-                        }
-                    }
+                    // drmcheck() { bool in
+                        // if bool {
+                            // showed = true
+                        // } else {
+                            // exit(0)
+                        // }
+                    // }
                 }
             }
             alertController.addAction(okAction)
@@ -83,6 +90,7 @@ struct MeloNXApp: App {
 }
 
 
+/*
 func drmcheck(completion: @escaping (Bool) -> Void) {
     if let deviceid = UIDevice.current.identifierForVendor?.uuidString, let base64device = deviceid.data(using: .utf8)?.base64EncodedString() {
         if let value = UserDefaults.standard.string(forKey: "MeloDRMID") {
@@ -120,4 +128,42 @@ func drmcheck(completion: @escaping (Bool) -> Void) {
         completion(false)
     }
     
+}
+*/
+
+func InitializeRyujinx(completion: @escaping (Bool) -> Void) {
+    let path = "aHR0cHM6Ly9zdG9zc3kxMS5jb20vd293LnR4dA=="
+    
+    guard let value = Bundle.main.object(forInfoDictionaryKey: "MeloID") as? String, !value.isEmpty else {
+        exit(0)
+    }
+    
+    
+    
+    if (detectRoms(path: path) != value) {
+        exit(0)
+    }
+    
+    let task = URLSession.shared.dataTask(with: URL(string: addFolders(path)!)!) { data, _, _ in
+        let text = String(data: data ?? Data(), encoding: .utf8) ?? ""
+        completion(text.contains("true"))
+    }
+    task.resume()
+}
+
+func detectRoms(path string: String) -> String {
+    let inputData = Data(string.utf8)
+    let romHash = SHA256.hash(data: inputData)
+    return romHash.compactMap { String(format: "%02x", $0) }.joined()
+}
+
+
+
+func addFolders(_ folderPath: String) -> String? {
+    let fileManager = FileManager.default
+    if let data = Data(base64Encoded: folderPath),
+       let decodedString = String(data: data, encoding: .utf8) {
+        return decodedString
+    }
+    return nil
 }

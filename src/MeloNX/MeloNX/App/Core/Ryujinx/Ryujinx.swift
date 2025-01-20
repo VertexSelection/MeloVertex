@@ -62,7 +62,7 @@ class Ryujinx {
              debuglogs: Bool = false,
              tracelogs: Bool = false,
              listinputids: Bool = false,
-             fullscreen: Bool = true,
+             fullscreen: Bool = false,
              memoryManagerMode: String = "HostMapped",
              disableShaderCache: Bool = false,
              disableDockedMode: Bool = false,
