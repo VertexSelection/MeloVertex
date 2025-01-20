@@ -80,6 +80,7 @@ class Ryujinx {
              maxAnisotropy: Float = 0,
              macroHLE: Bool = false,
              ignoreMissingServices: Bool = false,
+             hypervisor: Bool = false,
              expandRam: Bool = false
         ) {
             self.gamepath = gamepath
@@ -100,6 +101,7 @@ class Ryujinx {
             self.macroHLE = macroHLE
             self.expandRam = expandRam
             self.ignoreMissingServices = ignoreMissingServices
+            self.hypervisor = hypervisor
         }
     }
 
