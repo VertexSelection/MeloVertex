@@ -56,6 +56,11 @@ class Ryujinx {
         var disableDockedMode: Bool
         var enableTextureRecompression: Bool
         var additionalArgs: [String]
+        var maxAnisotropy: Float
+        var macroHLE: Bool
+        var ignoreMissingServices: Bool
+        var expandRam: Bool
+        
         
 
         init(gamepath: String,
@@ -72,7 +77,10 @@ class Ryujinx {
              enableTextureRecompression: Bool = true,
              additionalArgs: [String] = [],
              resscale: Float = 1.00,
-             hypervisor: Bool = false
+             maxAnisotropy: Float = 0,
+             macroHLE: Bool = false,
+             ignoreMissingServices: Bool = false,
+             expandRam: Bool = false
         ) {
             self.gamepath = gamepath
             self.inputids = inputids
@@ -88,7 +96,10 @@ class Ryujinx {
             self.resscale = resscale
             self.nintendoinput = nintendoinput
             self.enableInternet = enableInternet
-            self.hypervisor = hypervisor
+            self.maxAnisotropy = maxAnisotropy
+            self.macroHLE = macroHLE
+            self.expandRam = expandRam
+            self.ignoreMissingServices = ignoreMissingServices
         }
     }
 
@@ -180,6 +191,22 @@ class Ryujinx {
         
         if config.resscale != 1.0 {
             args.append(contentsOf: ["--resolution-scale", String(config.resscale)])
+        }
+        
+        if config.expandRam {
+            args.append(contentsOf: ["--expand-ram", String(config.maxAnisotropy)])
+        }
+        
+        if config.ignoreMissingServices {
+            args.append(contentsOf: ["--ignore-missing-services", String(config.maxAnisotropy)])
+        }
+        
+        if config.maxAnisotropy != 0 {
+            args.append(contentsOf: ["--max-anisotropy", String(config.maxAnisotropy)])
+        }
+        
+        if !config.macroHLE {
+            args.append("--disable-macro-hle")
         }
         
         if !config.disableShaderCache { // same with disableShaderCache

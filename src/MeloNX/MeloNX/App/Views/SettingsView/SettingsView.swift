@@ -32,6 +32,7 @@ struct SettingsView: View {
     @AppStorage("performacehud") var performacehud: Bool = false
     
     @State private var showResolutionInfo = false
+    @State private var showAnisotropicInfo = false
     @State private var searchText = ""
     
     var filteredMemoryModes: [(String, String)] {
@@ -66,6 +67,10 @@ struct SettingsView: View {
                         labelWithIcon("Docked Mode", iconName: "dock.rectangle")
                     }
                     .tint(.blue)
+                    
+                    Toggle(isOn: $config.macroHLE) {
+                        labelWithIcon("Macro HLE", iconName: "gearshape")
+                    }.tint(.blue)
                     
                     
                     
@@ -109,6 +114,46 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                     
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            labelWithIcon("Max Anisotropic Scale", iconName: "magnifyingglass")
+                                .font(.headline)
+                            Spacer()
+                            Button {
+                                showAnisotropicInfo.toggle()
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .symbolRenderingMode(.hierarchical)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Learn more about Max Anisotropic Scale")
+                            .alert(isPresented: $showAnisotropicInfo) {
+                                Alert(
+                                    title: Text("Max Anisotripic Scale"),
+                                    message: Text("Adjust the internal Anisotropic resolution. Higher values improve visuals but may reduce performance. Default at 0 lets game decide."),
+                                    dismissButton: .default(Text("OK"))
+                                )
+                            }
+                        }
+
+                        Slider(value: $config.maxAnisotropy, in: 0...16.0, step: 0.1) {
+                            Text("Resolution Scale")
+                        } minimumValueLabel: {
+                            Text("0x")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        } maximumValueLabel: {
+                            Text("16.0x")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(config.maxAnisotropy, specifier: "%.2f")x")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+
                     Toggle(isOn: $performacehud) {
                         labelWithIcon("Performance Overlay", iconName: "speedometer")
                     }
@@ -229,28 +274,6 @@ struct SettingsView: View {
                             labelWithIcon("Memory Manager Mode", iconName: "gearshape")
                         }
                     }
-                    
-                    if let cpuInfo = getCPUInfo(), cpuInfo.hasPrefix("Apple M") {
-                        if #available (iOS 16.4, *), (false) {
-                            Toggle(isOn: .constant(false)) {
-                                labelWithIcon("Hypervisor", iconName: "bolt.fill")
-                            }
-                            .tint(.blue)
-                            .disabled(true)
-                            .onAppear() {
-                                print("CPU Info: \(cpuInfo)")
-                            }
-                        } else {
-                            Toggle(isOn: $config.hypervisor) {
-                                labelWithIcon("Hypervisor", iconName: "bolt.fill")
-                            }
-                            .tint(.blue)
-                            .onAppear() {
-                                print("CPU Info: \(cpuInfo)")
-                                
-                            }
-                        }
-                    }
                 } header: {
                     Text("CPU Mode")
                         .font(.title3.weight(.semibold))
@@ -259,8 +282,27 @@ struct SettingsView: View {
                 } footer: {
                     Text("Select how memory is managed. 'Host (fast)' is best for most users.")
                 }
+
+            
+            Section {
                 
                 
+                Toggle(isOn: $config.expandRam) {
+                    labelWithIcon("Expand Guest Ram (6GB)", iconName: "exclamationmark.bubble")
+                }
+                .tint(.red)
+
+                Toggle(isOn: $config.ignoreMissingServices) {
+                    labelWithIcon("Ignore Missing Services", iconName: "waveform.path")
+                }
+                .tint(.red)
+            } header: {
+                Text("Hacks")
+                    .font(.title3.weight(.semibold))
+                    .textCase(nil)
+                    .headerProminence(.increased)
+            }
+
                 // Other Settings
                 Section {
                     
