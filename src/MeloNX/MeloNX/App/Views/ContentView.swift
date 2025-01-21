@@ -34,6 +34,7 @@ struct ContentView: View {
     @AppStorage("JIT") var isJITEnabled: Bool = false
     @State var isMK8: Bool = false
     @AppStorage("quit") var quit: Bool = false
+    @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = false
     
     @State var quits: Bool = false
     @State private var clumpOffset: CGFloat = -100
@@ -263,9 +264,10 @@ struct ContentView: View {
         config.gamepath = game.fileURL.path
         config.inputids = Array(Set(currentControllers.map(\.id)))
         
-        if game.titleName.lowercased() == "super mario odyssey" {
+        if mVKPreFillBuffer {
             let setting = MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "1")
             setenv(setting.string, setting.value, 1)
+            print("Prefill Metal Command Buffer Enabled")
         }
         
         

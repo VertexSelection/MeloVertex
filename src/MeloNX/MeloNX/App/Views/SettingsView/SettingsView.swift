@@ -29,6 +29,8 @@ struct SettingsView: View {
     @AppStorage("RyuDemoControls") var ryuDemo: Bool = false
     @AppStorage("MTL_HUD_ENABLED") var metalHUDEnabled: Bool = false
     
+    @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = false
+    
     @AppStorage("performacehud") var performacehud: Bool = false
     
     @State private var showResolutionInfo = false
@@ -354,6 +356,10 @@ struct SettingsView: View {
                 // Advanced
                 Section {
                     DisclosureGroup {
+                        
+                        Toggle(isOn: $mVKPreFillBuffer) {
+                            labelWithIcon("MVK: Pre-Fill Metal Command Buffers", iconName: "gearshape")
+                        }.tint(.blue)
                         
                         HStack {
                             labelWithIcon("Page Size", iconName: "textformat.size")
