@@ -322,7 +322,7 @@ namespace Ryujinx.Headless.SDL2
 
             var gameInfo = GetGameInfo(stream, extension);
 
-            return new GameInfoNative(0, gameInfo.TitleName, 0, gameInfo.Developer, 0, gameInfo.Icon);
+            return new GameInfoNative(gameInfo.FileSize, gameInfo.TitleName, gameInfo.TitleId, gameInfo.Developer, gameInfo.Version, gameInfo.Icon);
         }
 
         public static GameInfo? GetGameInfo(Stream gameStream, string extension)

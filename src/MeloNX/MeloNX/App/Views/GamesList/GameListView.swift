@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 
 struct GameLibraryView: View {
     @Binding var startemu: Game?
+    // @State var importDLCs = false
     @State private var games: [Game] = []
     @State private var searchText = ""
     @State private var isSearching = false
@@ -154,30 +155,34 @@ struct GameLibraryView: View {
                             }
                             
                         } else {
-                            Button {
-                                Ryujinx.shared.removeFirmware()
-                                let firmware = Ryujinx.shared.fetchFirmwareVersion()
-                                firmwareversion = (firmware == "" ? "0" : firmware)
-                            } label: {
-                                Text("Remove Firmware")
-                            }
-                            
-                            
-                            Button {
-                                let game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "MiiMaker")!, titleName: "Mii Maker", titleId: "0", developer: "Nintendo", version: firmwareversion)
-                                
-                                self.startemu = game
-                            } label: {
-                                Text("Mii Maker")
-                            }
-                            Button {
-                                DispatchQueue.main.async {
-                                    isImporting.toggle()
+                            Menu("Firmware") {
+                                Button {
+                                    Ryujinx.shared.removeFirmware()
+                                    let firmware = Ryujinx.shared.fetchFirmwareVersion()
+                                    firmwareversion = (firmware == "" ? "0" : firmware)
+                                } label: {
+                                    Text("Remove Firmware")
                                 }
-                            } label: {
-                                Text("Open game from system")
+                                
+                                
+                                Button {
+                                    let game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "MiiMaker")!, titleName: "Mii Maker", titleId: "0", developer: "Nintendo", version: firmwareversion)
+                                    
+                                    self.startemu = game
+                                } label: {
+                                    Text("Mii Maker")
+                                }
+                                Button {
+                                    DispatchQueue.main.async {
+                                        isImporting.toggle()
+                                    }
+                                } label: {
+                                    Text("Open game from system")
+                                }
                             }
                         }
+                        
+                        
                         
                         Button {
                             let documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!

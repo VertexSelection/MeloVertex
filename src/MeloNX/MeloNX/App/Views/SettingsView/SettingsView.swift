@@ -226,6 +226,7 @@ struct SettingsView: View {
                                         .font(.body)
                                 }
                                 .tint(.blue)
+                                .onDrag({ NSItemProvider() })
                             } label: {
                                 
                                 if let controller = currentControllers.firstIndex(where: { $0.id == controller.id } )  {
