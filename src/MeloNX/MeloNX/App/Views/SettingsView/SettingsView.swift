@@ -50,8 +50,12 @@ struct SettingsView: View {
                 
                 // Graphics & Performance
                 Section {
-                    Toggle(isOn: $config.fullscreen) {
-                        labelWithIcon("Fullscreen", iconName: "rectangle.expand.vertical")
+                    Picker(selection: $config.aspectRatio) {
+                        ForEach(AspectRatio.allCases, id: \.self) { ratio in
+                            Text(ratio.displayName).tag(ratio)
+                        }
+                    } label: {
+                        labelWithIcon("Aspect Ratio", iconName: "rectangle.expand.vertical")
                     }
                     .tint(.blue)
                     

@@ -12,7 +12,6 @@ import Darwin
 import UIKit
 import MetalKit
 // import SDL
-import SoftwareKeyboard
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String
@@ -227,24 +226,10 @@ struct ContentView: View {
     
     private func setupEmulation() {
         patchMakeKeyAndVisible()
+        isVCA = (currentControllers.first(where: { $0 == onscreencontroller }) != nil)
         
-        if (currentControllers.first(where: { $0 == onscreencontroller }) != nil) {
-            
-            isVCA = true
-            
-            DispatchQueue.main.async {
-                start(displayid: 1)
-            }
-            
-            
-        } else {
-            isVCA = false
-            
-            DispatchQueue.main.async {
-                start(displayid: 1)
-            }
-            
-            
+        DispatchQueue.main.async {
+            start(displayid: 1)
         }
     }
     

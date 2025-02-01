@@ -28,6 +28,27 @@ struct iOSNav<Content: View>: View {
     }
 }
 
+public enum AspectRatio: String, Codable, CaseIterable {
+    case fixed4x3 = "Fixed4x3"
+    case fixed16x9 = "Fixed16x9"
+    case fixed16x10 = "Fixed16x10"
+    case fixed21x9 = "Fixed21x9"
+    case fixed32x9 = "Fixed32x9"
+    case stretched = "Stretched"
+
+    var displayName: String {
+        switch self {
+        case .fixed4x3: return "4:3"
+        case .fixed16x9: return "16:9 (Default)"
+        case .fixed16x10: return "16:10"
+        case .fixed21x9: return "21:9"
+        case .fixed32x9: return "32:9"
+        case .stretched: return "Stretched (Full Screen)"
+        }
+    }
+}
+
+
 class Ryujinx {
     private var isRunning = false
     
@@ -49,7 +70,7 @@ class Ryujinx {
         var nintendoinput: Bool
         var enableInternet: Bool
         var listinputids: Bool
-        var fullscreen: Bool
+        var aspectRatio: AspectRatio
         var memoryManagerMode: String
         var disableShaderCache: Bool
         var hypervisor: Bool
@@ -68,7 +89,7 @@ class Ryujinx {
              debuglogs: Bool = false,
              tracelogs: Bool = false,
              listinputids: Bool = false,
-             fullscreen: Bool = false,
+             aspectRatio: AspectRatio = .fixed16x9,
              memoryManagerMode: String = "HostMappedUnsafe",
              disableShaderCache: Bool = false,
              disableDockedMode: Bool = false,
@@ -88,7 +109,7 @@ class Ryujinx {
             self.debuglogs = debuglogs
             self.tracelogs = tracelogs
             self.listinputids = listinputids
-            self.fullscreen = fullscreen
+            self.aspectRatio = aspectRatio
             self.disableShaderCache = disableShaderCache
             self.disableDockedMode = disableDockedMode
             self.enableTextureRecompression = enableTextureRecompression
@@ -174,10 +195,7 @@ class Ryujinx {
         // We don't need this. Ryujinx should handle it fine :3
         // this also causes crashes in some games :3
         
-        if config.fullscreen {
-            args.append(contentsOf: ["--aspect-ratio", "Stretched"])
-        }
-        
+        args.append(contentsOf: ["--aspect-ratio", config.aspectRatio.rawValue])
         
         if config.nintendoinput {
             args.append("--correct-controller")
@@ -280,7 +298,7 @@ class Ryujinx {
     }
     
     private func generateGamepadId(joystickIndex: Int32) -> String? {
-        var guid = SDL_JoystickGetDeviceGUID(joystickIndex)
+        let guid = SDL_JoystickGetDeviceGUID(joystickIndex)
 
         if guid.data.0 == 0 && guid.data.1 == 0 && guid.data.2 == 0 && guid.data.3 == 0 {
             return nil
