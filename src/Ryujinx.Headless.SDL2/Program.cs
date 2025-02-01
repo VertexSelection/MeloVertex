@@ -322,7 +322,14 @@ namespace Ryujinx.Headless.SDL2
 
             var gameInfo = GetGameInfo(stream, extension);
 
-            return new GameInfoNative(gameInfo.FileSize, gameInfo.TitleName, gameInfo.TitleId, gameInfo.Developer, gameInfo.Version, gameInfo.Icon);
+            return new GameInfoNative(
+                (ulong)gameInfo.FileSize, 
+                gameInfo.TitleName, 
+                gameInfo.TitleId, 
+                gameInfo.Developer, 
+                gameInfo.Version, 
+                gameInfo.Icon
+            );
         }
 
         public static GameInfo? GetGameInfo(Stream gameStream, string extension)
@@ -1482,42 +1489,41 @@ namespace Ryujinx.Headless.SDL2
         {
             public ulong FileSize;
             public fixed byte TitleName[512];
-            public ulong TitleId;
+            public fixed byte TitleId[32];
             public fixed byte Developer[256];
-            public uint Version;
+            public fixed byte Version[16];  
             public byte* ImageData;  
             public uint ImageSize;   
 
-            public GameInfoNative(ulong fileSize, string titleName, ulong titleId, string developer, uint version, byte[] imageData)
+            public GameInfoNative(ulong fileSize, string titleName, string titleId, string developer, string version, byte[] imageData)
             {
                 FileSize = fileSize;
-                TitleId = titleId;
-                Version = version;
 
-                fixed (byte* developerPtr = Developer)
                 fixed (byte* titleNamePtr = TitleName)
+                fixed (byte* titleIdPtr = TitleId)
+                fixed (byte* developerPtr = Developer)
+                fixed (byte* versionPtr = Version)
                 {
                     CopyStringToFixedArray(titleName, titleNamePtr, 512);
+                    CopyStringToFixedArray(titleId, titleIdPtr, 32);
                     CopyStringToFixedArray(developer, developerPtr, 256);
+                    CopyStringToFixedArray(version, versionPtr, 16);
                 }
 
                 if (imageData == null || imageData.Length > 4096 * 4096)
                 {
-                    // throw new ArgumentException("Image data must not exceed 4 MB.");
-                    ImageSize = (uint)0;
+                    ImageSize = 0;
                     ImageData = null;
                 }
                 else 
                 {
                     ImageSize = (uint)imageData.Length;
-                
                     ImageData = (byte*)Marshal.AllocHGlobal(imageData.Length);
-                
                     Marshal.Copy(imageData, 0, (IntPtr)ImageData, imageData.Length);
                 }
             }
 
-            // Don't forget to free the allocated memory
+            // Free allocated memory for ImageData
             public void Dispose()
             {
                 if (ImageData != null)
@@ -1526,17 +1532,14 @@ namespace Ryujinx.Headless.SDL2
                     ImageData = null;
                 }
             }
+
             private static void CopyStringToFixedArray(string source, byte* destination, int length)
             {
                 var span = new Span<byte>(destination, length);
+                span.Clear();
                 Encoding.UTF8.GetBytes(source, span);
             }
-
-            private static void CopyArrayToFixedArray(byte[] source, byte* destination, int maxLength)
-            {
-                var span = new Span<byte>(destination, maxLength);
-                source.AsSpan().CopyTo(span);
-            }
         }
+
     }
 }

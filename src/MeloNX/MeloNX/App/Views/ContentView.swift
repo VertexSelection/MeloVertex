@@ -52,6 +52,9 @@ struct ContentView: View {
             // MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2"),
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "0"),
             // MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1"),
+            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "192"),
+            MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2"),
+            //MVK_CONFIG_LOG_LEVEL
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "0")
         ]
         
@@ -284,12 +287,6 @@ struct ContentView: View {
         
         config.gamepath = game.fileURL.path
         config.inputids = Array(Set(currentControllers.map(\.id)))
-        
-        if mVKPreFillBuffer {
-            let setting = MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "1")
-            setenv(setting.string, setting.value, 1)
-            print("Prefill Metal Command Buffer Enabled")
-        }
         
         
         if config.inputids.isEmpty {

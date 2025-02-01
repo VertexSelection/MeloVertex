@@ -134,12 +134,13 @@ class Ryujinx {
         
         isRunning = true
         
-        RunLoop.current.perform {
-            let url = URL(string: config.gamepath)!
+        MainThread {
+            
+            let url = URL(string: config.gamepath)
             
             do {
                 let args = self.buildCommandLineArgs(from: config)
-                let accessing = url.startAccessingSecurityScopedResource()
+                let accessing = url?.startAccessingSecurityScopedResource()
                 
                 // Convert Arguments to ones that Ryujinx can Read
                 let cArgs = args.map { strdup($0) }
@@ -151,8 +152,8 @@ class Ryujinx {
                 
                 if result != 0 {
                     self.isRunning = false
-                    if accessing {
-                        url.stopAccessingSecurityScopedResource()
+                    if let accessing, accessing {
+                        url!.stopAccessingSecurityScopedResource()
                     }
                     
                     throw RyujinxError.executionError(code: result)
@@ -175,6 +176,19 @@ class Ryujinx {
 
     var running: Bool {
         return isRunning
+    }
+    
+    
+    func MainThread(_ block: @escaping @Sendable () -> Void) {
+        if #available(iOS 17.0, *) {
+            RunLoop.current.perform {
+                block()
+            }
+        } else {
+            DispatchQueue.main.async {
+                block()
+            }
+        }
     }
 
     private func buildCommandLineArgs(from config: Configuration) -> [String] {

@@ -22,6 +22,51 @@ public struct Game: Identifiable, Equatable {
     var version: String
     var icon: UIImage?
     
+    
+    static func convertGameInfoToGame(gameInfo: GameInfo, url: URL) -> Game {
+        var gameInfo = gameInfo
+        var gameTemp = Game(containerFolder: url.deletingLastPathComponent(), fileType: .item, fileURL: url, titleName: "", titleId: "", developer: "", version: "")
+        
+        gameTemp.titleName = withUnsafePointer(to: &gameInfo.TitleName) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                String(cString: $0)
+            }
+        }
+        
+        gameTemp.developer = withUnsafePointer(to: &gameInfo.Developer) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                String(cString: $0)
+            }
+        }
+        
+        gameTemp.titleId = withUnsafePointer(to: &gameInfo.TitleId) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                String(cString: $0)
+            }
+        }
+        
+        
+        gameTemp.version = withUnsafePointer(to: &gameInfo.Version) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                String(cString: $0)
+            }
+        }
+        
+        let imageSize = Int(gameInfo.ImageSize)
+        if imageSize > 0, imageSize <= 1024 * 1024 {
+            let imageData = Data(bytes: gameInfo.ImageData, count: imageSize)
+            
+            gameTemp.icon = UIImage(data: imageData)
+        } else {
+            print("Invalid image size.")
+            
+        }
+
+        
+        return gameTemp
+        
+    }
+    
     func createImage(from gameInfo: GameInfo) -> UIImage? {
         // Access the struct
         let gameInfoValue = gameInfo

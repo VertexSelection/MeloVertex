@@ -19,10 +19,10 @@ extern "C" {
 struct GameInfo {
     long FileSize;
     char TitleName[512];
-    long TitleId;
+    char TitleId[32];
     char Developer[256];
-    int Version;
-    unsigned char* ImageData; 
+    char Version[16];
+    unsigned char* ImageData;
     unsigned int ImageSize;
 };
 

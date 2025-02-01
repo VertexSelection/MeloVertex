@@ -223,30 +223,8 @@ struct GameLibraryView: View {
                     
                     var gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
                     
-                    var game = Game(containerFolder: url.deletingLastPathComponent(), fileType: .item, fileURL: url, titleName: "", titleId: "", developer: "", version: "")
-                    
-                    game.titleName = withUnsafePointer(to: &gameInfo.TitleName) {
-                        $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
-                            String(cString: $0)
-                        }
-                    }
-                    
-                    game.developer = withUnsafePointer(to: &gameInfo.Developer) {
-                        $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
-                            String(cString: $0)
-                        }
-                    }
-                    
-                    game.titleId = String(gameInfo.TitleId)
-                    
-                    print(String(gameInfo.TitleId))
-                    
-                    
-                    game.version = String(gameInfo.Version)
-                    
-                    game.icon = game.createImage(from: gameInfo)
+                    let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: url)
             
-                    
                     DispatchQueue.main.async {
                         startemu = game
                     }
@@ -321,29 +299,10 @@ struct GameLibraryView: View {
                     let fileExtension = (fileURLCandidate.pathExtension as NSString).utf8String
                     let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
                     
-                    var gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
                     
-                    var game = Game(containerFolder: romsDirectory, fileType: .item, fileURL: fileURLCandidate, titleName: "", titleId: "", developer: "", version: "")
+                    let gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
                     
-                    game.titleName = withUnsafePointer(to: &gameInfo.TitleName) {
-                        $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
-                            String(cString: $0)
-                        }
-                    }
-                    
-                    game.developer = withUnsafePointer(to: &gameInfo.Developer) {
-                        $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
-                            String(cString: $0)
-                        }
-                    }
-                    
-                    game.titleId = String(gameInfo.TitleId)
-                    
-                    
-                    game.version = String(gameInfo.Version)
-                    
-                    game.icon = game.createImage(from: gameInfo)
-            
+                    let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: fileURLCandidate)
                     
                     games.append(game)
                 } catch {

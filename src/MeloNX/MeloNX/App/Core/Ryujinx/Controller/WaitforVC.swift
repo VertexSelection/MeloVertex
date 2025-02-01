@@ -33,7 +33,6 @@ func waitForController() {
     let controllerView = ControllerView()
     let newHostingController = UIHostingController(rootView: controllerView)
     
-    // Store reference globally to prevent deallocation
     hostingController = newHostingController
     
     let containerView = newHostingController.view!
@@ -50,7 +49,7 @@ func waitForController() {
                 SDL_SetWindowPosition(sdlWindow, 0, 0)
             }
 
-            timer.invalidate() // Stop the timer after adding the view
+            timer.invalidate()
         }
     }
 }

@@ -580,6 +580,7 @@ namespace Ryujinx.Graphics.Vulkan
                             {
                                 texture.Sampler = _dummySampler.GetSampler().Get(cbs).Value;
                             }
+                            
                             if (OperatingSystem.IsIOS()) {
                                 Span<DescriptorImageInfo> singleTexture = textures.Slice(i, 1);
                                 dsc.UpdateImages(0, binding + i, singleTexture, DescriptorType.CombinedImageSampler);
