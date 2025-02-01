@@ -198,7 +198,7 @@ struct SettingsView: View {
                     
                     
                     
-                    ForEach(controllersList) { controller in
+                    ForEach(currentControllers) { controller in
                         
                         var customBinding: Binding<Bool> {
                             Binding(
@@ -223,13 +223,25 @@ struct SettingsView: View {
                                 }
                                 .tint(.blue)
                             } label: {
-                                let controller = String((controllersList.firstIndex(where: { $0.id == controller.id }) ?? 0) + 1)
                                 
-                                
-                                Text("Player \(controller)")
+                                if let controller = currentControllers.firstIndex(where: { $0.id == controller.id } )  {
+                                    Text("Player \(controller + 1)")
+                                        .onAppear() {
+                                            // print(currentControllers.firstIndex(where: { $0.id == controller.id }) ?? 0)
+                                            print(currentControllers.count)
+                                            
+                                            if currentControllers.count > 2 {
+                                                print(currentControllers[1])
+                                                print(currentControllers[2])
+                                            }
+                                        }
+                                }
                             }
                             
                         }
+                    }
+                    .onMove { from, to in
+                        currentControllers.move(fromOffsets: from, toOffset: to)
                     }
                 } header: {
                     Text("Input Selector")

@@ -279,35 +279,58 @@ class Ryujinx {
         }
     }
     
-    func getConnectedControllers() -> [Controller] {
-        
+    private func generateGamepadId(joystickIndex: Int32) -> String? {
+        var guid = SDL_JoystickGetDeviceGUID(joystickIndex)
 
-        guard let jsonPtr = get_game_controllers() else {
-            return []
+        if guid.data.0 == 0 && guid.data.1 == 0 && guid.data.2 == 0 && guid.data.3 == 0 {
+            return nil
         }
-        
-        // Convert the unmanaged memory (C string) to a Swift String
-        let jsonString = String(cString: jsonPtr)
-        
+
+        let reorderedGUID: [UInt8] = [
+            guid.data.3, guid.data.2, guid.data.1, guid.data.0,
+            guid.data.5, guid.data.4,
+            guid.data.7, guid.data.6,
+            guid.data.8, guid.data.9,
+            guid.data.10, guid.data.11, guid.data.12, guid.data.13, guid.data.14, guid.data.15
+        ]
+
+        let guidString = reorderedGUID.map { String(format: "%02X", $0) }.joined().lowercased()
+
+        func substring(_ str: String, _ start: Int, _ end: Int) -> String {
+            let startIdx = str.index(str.startIndex, offsetBy: start)
+            let endIdx = str.index(str.startIndex, offsetBy: end)
+            return String(str[startIdx..<endIdx])
+        }
+
+        let formattedGUID = "\(substring(guidString, 0, 8))-\(substring(guidString, 8, 12))-\(substring(guidString, 12, 16))-\(substring(guidString, 16, 20))-\(substring(guidString, 20, 32))"
+
+        return "\(joystickIndex)-\(formattedGUID)"
+    }
+    
+    func getConnectedControllers() -> [Controller] {
         var controllers: [Controller] = []
-        
-        // Splitting the string by newline
-        let lines = jsonString.components(separatedBy: "\n")
-        
-        // Parsing each line
-        for line in lines {
-            if line.contains(":") {
-                let parts = line.components(separatedBy: ":")
-                if parts.count == 2 {
-                    let id = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
-                    let name = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                    controllers.append(Controller(id: id, name: name))
+
+        let numJoysticks = SDL_NumJoysticks()
+
+        for i in 0..<numJoysticks {
+            if let controller = SDL_GameControllerOpen(i) {
+                let guid = generateGamepadId(joystickIndex: i)
+                let name = String(cString: SDL_GameControllerName(controller))
+                
+                print("Controller \(i): \(name), GUID: \(guid ?? "")")
+                
+                guard let guid else {
+                    SDL_GameControllerClose(controller)
+                    return []
                 }
+                
+                controllers.append(Controller(id: guid, name: name))
+
+                SDL_GameControllerClose(controller)
             }
-        }
+         }
         
         return controllers
-        
     }
     
     func removeFirmware() {

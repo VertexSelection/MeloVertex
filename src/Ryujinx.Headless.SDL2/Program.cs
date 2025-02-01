@@ -95,12 +95,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using SDL2;
 
-public class GamepadInfo
-{
-    public string Id { get; set; }
-    public string Name { get; set; }
-}
-
 namespace Ryujinx.Headless.SDL2
 {
     class Program
@@ -315,44 +309,6 @@ namespace Ryujinx.Headless.SDL2
                 _emulationContext.Dispose();
                 _emulationContext = null;
             }
-        }
-        
-
-
-
-        [UnmanagedCallersOnly(EntryPoint = "get_game_controllers")]
-        public static unsafe IntPtr GetGamepadList()
-        {
-            List<GamepadInfo> gamepads = new List<GamepadInfo>();
-            IGamepad gamepad;
-            if (_inputManager == null)
-            {
-                _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
-            }
-
-            // Collect gamepads from the keyboard driver
-            foreach (string id in _inputManager.KeyboardDriver.GamepadsIds)
-            {
-                gamepad = _inputManager.KeyboardDriver.GetGamepad(id);
-                gamepads.Add(new GamepadInfo { Id = id, Name = gamepad.Name });
-                gamepad.Dispose();
-            }
-
-            // Collect gamepads from the gamepad driver
-            foreach (string id in _inputManager.GamepadDriver.GamepadsIds)
-            {
-                gamepad = _inputManager.GamepadDriver.GetGamepad(id);
-                gamepads.Add(new GamepadInfo { Id = id, Name = gamepad.Name });
-                gamepad.Dispose();
-            }
-
-            // Serialize the gamepad list to a custom string format
-            string result = string.Join("\n", gamepads.Select(g => $"{g.Id}:{g.Name}")); // Ensure System.Linq is available
-
-            // Convert the string to unmanaged memory
-            IntPtr ptr = Marshal.StringToHGlobalAnsi(result);
-
-            return ptr;
         }
 
         [UnmanagedCallersOnly(EntryPoint = "get_game_info")]

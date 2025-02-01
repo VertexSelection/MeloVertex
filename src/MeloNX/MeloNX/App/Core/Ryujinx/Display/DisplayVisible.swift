@@ -23,10 +23,7 @@ extension UIWindow {
         
         if UserDefaults.standard.bool(forKey: "isVirtualController") {
             if let window = theWindow {
-        
-
-                
-                waitforcontroller()
+                waitForController()
             }
         }
     }

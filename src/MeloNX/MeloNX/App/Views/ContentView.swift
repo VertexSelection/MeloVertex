@@ -91,9 +91,35 @@ struct ContentView: View {
             mainMenuView
                 .onAppear() {
                     quits = false
+                    
+                    initControllerObservers()
                 }
         }
         
+    }
+    
+    
+    private func initControllerObservers() {
+        NotificationCenter.default.addObserver(
+            forName: .GCControllerDidConnect,
+            object: nil,
+            queue: .main) { notification in
+                if let controller = notification.object as? GCController {
+                    print("Controller connected: \(controller.productCategory)")
+                    refreshControllersList()
+                }
+        }
+        
+        
+        NotificationCenter.default.addObserver(
+            forName: .GCControllerDidDisconnect,
+            object: nil,
+            queue: .main) { notification in
+                if let controller = notification.object as? GCController {
+                    print("Controller disconnected: \(controller.productCategory)")
+                    refreshControllersList()
+                }
+        }
     }
         
     // MARK: - View Components
@@ -175,15 +201,17 @@ struct ContentView: View {
     private var mainMenuView: some View {
         MainTabView(startemu: $game, config: $config, MVKconfig: $settings, controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
             .onAppear() {
-                refreshControllersList()
-                    
-                        
-                        let isJIT = UserDefaults.standard.bool(forKey: "JIT-ENABLED")
-                        
-                        if !isJIT, useTrollStore {
-                            askForJIT()
-                        }
-                    
+                Timer.scheduledTimer(withTimeInterval: 1, repeats: false) { timer in
+                    refreshControllersList()
+                }
+                
+                
+                let isJIT = UserDefaults.standard.bool(forKey: "JIT-ENABLED")
+                
+                if !isJIT, useTrollStore {
+                    askForJIT()
+                }
+                
             }
     }
     
@@ -229,13 +257,21 @@ struct ContentView: View {
         
         controllersList.removeAll(where: { $0.id == "0"})
         
-        if controllersList.count > 2 {
-            let controller =  controllersList[2]
+        currentControllers = []
+        
+        if controllersList.count == 1 {
+            let controller = controllersList[0]
             currentControllers.append(controller)
-        } else if let controller = controllersList.first(where: { $0.id == onscreencontroller.id }), !controllersList.isEmpty {
-            currentControllers.append(controller)
+        } else if (controllersList.count - 1) >= 1 {
+            for controller in controllersList {
+                if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
+                    currentControllers.append(controller)
+                }
+            }
         }
     }
+    
+    
 
     func showAlert(title: String, message: String, showOk: Bool, completion: @escaping (Bool) -> Void) {
         DispatchQueue.main.async {

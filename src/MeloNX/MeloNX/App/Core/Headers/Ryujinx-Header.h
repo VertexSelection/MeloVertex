@@ -9,7 +9,7 @@
 #define RyujinxHeader
 
 
-#import "SDL2/SDL.h"
+#include <SDL2/SDL.h>
 #import "utils.h"
 
 #ifdef __cplusplus
@@ -39,8 +39,6 @@ int main_ryujinx_sdl(int argc, char **argv);
 int get_current_fps();
 
 void initialize();
-
-const char* get_game_controllers();
 
 #ifdef __cplusplus
 }

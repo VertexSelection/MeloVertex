@@ -10,64 +10,48 @@ import GameController
 import UIKit
 import SwiftUI
 
-func waitforcontroller() {
-    if let window = theWindow {
-        // Function to recursively search for GCControllerView
-        func findGCControllerView(in view: UIView) -> UIView? {
-            // Check if current view is GCControllerView
-            if String(describing: type(of: view)) == "ControllerView" {
-                return view
-            }
-            
-            // Search through subviews
-            for subview in view.subviews {
-                if let found = findGCControllerView(in: subview) {
-                    return found
-                }
-            }
-            
-            return nil
+var hostingController: UIHostingController<ControllerView>? // Store reference to prevent deallocation
+
+func waitForController() {
+    guard let window = theWindow else { return }
+
+    // Function to search for an existing UIHostingController with ControllerView
+    func findGCControllerView(in view: UIView) -> UIHostingController<ControllerView>? {
+        if let hostingVC = view.next as? UIHostingController<ControllerView> {
+            return hostingVC
         }
         
-        let controllerView = ControllerView()
-        let controllerHostingController = UIHostingController(rootView: controllerView)
-        let containerView = TransparentHostingContainerView(frame: window.bounds)
-        containerView.backgroundColor = .clear
-
-        controllerHostingController.view.frame = containerView.bounds
-        controllerHostingController.view.backgroundColor = .clear
-        containerView.addSubview(controllerHostingController.view)
+        for subview in view.subviews {
+            if let found = findGCControllerView(in: subview) {
+                return found
+            }
+        }
         
-        class LandscapeViewController: UIViewController {
-            override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-                return .landscape
+        return nil
+    }
+    
+    let controllerView = ControllerView()
+    let newHostingController = UIHostingController(rootView: controllerView)
+    
+    // Store reference globally to prevent deallocation
+    hostingController = newHostingController
+    
+    let containerView = newHostingController.view!
+    containerView.backgroundColor = .clear
+    containerView.frame = window.bounds
+    containerView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+
+    Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+        if findGCControllerView(in: window) == nil {
+            window.addSubview(containerView)
+            window.bringSubviewToFront(containerView)
+
+            if let sdlWindow = SDL_GetWindowFromID(1) {
+                SDL_SetWindowPosition(sdlWindow, 0, 0)
             }
 
-            override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-                return .landscapeLeft
-            }
+            timer.invalidate() // Stop the timer after adding the view
         }
-
-        let landscapeVC = LandscapeViewController()
-        landscapeVC.modalPresentationStyle = .fullScreen
-        window.rootViewController?.present(landscapeVC, animated: false, completion: nil)
-
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-            if findGCControllerView(in: window) == nil {
-                window.addSubview(containerView)
-                
-                window.bringSubviewToFront(containerView)
-                
-                let window = SDL_GetWindowFromID(1)
-                
-                SDL_SetWindowPosition(window, 0, 0);
-                
-                timer.invalidate()
-            } else {
-                timer.invalidate()
-            }
-        }
-
     }
 }
 
