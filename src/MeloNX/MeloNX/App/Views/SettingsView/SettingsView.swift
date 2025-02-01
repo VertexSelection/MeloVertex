@@ -374,9 +374,9 @@ struct SettingsView: View {
                 Section {
                     DisclosureGroup {
                         
-                        // Toggle(isOn: $mVKPreFillBuffer) {
-                            // labelWithIcon("MVK: Pre-Fill Metal Command Buffers", iconName: "gearshape")
-                        // }.tint(.blue)
+                        Toggle(isOn: $mVKPreFillBuffer) {
+                            labelWithIcon("MVK: Pre-Fill Metal Command Buffers", iconName: "gearshape")
+                        }.tint(.blue)
                         
                         HStack {
                             labelWithIcon("Page Size", iconName: "textformat.size")
