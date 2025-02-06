@@ -19,23 +19,31 @@ struct MoltenVKSettings: Codable, Hashable {
 }
 
 struct ContentView: View {
-    // MARK: - Properties
-    @State private var theWindow: UIWindow?
+    // Games
     @State private var game: Game?
+    
+    // Controllers
     @State private var controllersList: [Controller] = []
     @State private var currentControllers: [Controller] = []
+    @State var onscreencontroller: Controller = Controller(id: "", name: "")
+    @State private var isVirtualControllerActive: Bool = false
+    @AppStorage("isVirtualController") var isVCA: Bool = true
+    
+    // Settings and Configuration
     @State private var config: Ryujinx.Configuration
     @State var settings: [MoltenVKSettings]
     @AppStorage("useTrollStore") var useTrollStore: Bool = false
-    @State private var isVirtualControllerActive: Bool = false
-    @AppStorage("isVirtualController") var isVCA: Bool = true
-    @State var onscreencontroller: Controller = Controller(id: "", name: "")
+    
+    // JIT
     @AppStorage("JIT") var isJITEnabled: Bool = false
+    
+    // Other Configuration
     @State var isMK8: Bool = false
     @AppStorage("quit") var quit: Bool = false
+    @State var quits: Bool = false
     @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = true
     
-    @State var quits: Bool = false
+    // Loading Animation
     @State private var clumpOffset: CGFloat = -100
     private let clumpWidth: CGFloat = 100
     private let animationDuration: Double = 1.0
@@ -50,11 +58,11 @@ struct ContentView: View {
         let defaultSettings: [MoltenVKSettings] = [
             // MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "1"),
             // MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2"),
+            // Metal Private API isn't needed and causes more stutters
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "0"),
-            // MoltenVKSettings(string: "MVK_CONFIG_RESUME_LOST_DEVICE", value: "1"),
-            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "192"),
-            //MVK_CONFIG_LOG_LEVEL
-            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "0")
+            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "0"),
+            // Uses more ram but makes performance higher, may add an option in settings to change or enable / disable this value (default 64 or 192 depending on what i decide)
+            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "1024"),
         ]
         
         _settings = State(initialValue: defaultSettings)
@@ -70,6 +78,8 @@ struct ContentView: View {
             if isLoading {
                 emulationView
                     .onAppear() {
+                        // This is fro the old exiting game feature that didn't work properly. will look into it and figure out a better alternative
+                        /*
                         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
                             timer.invalidate()
                             quits = quit
@@ -79,8 +89,10 @@ struct ContentView: View {
                                 timer.invalidate()
                             }
                         }
+                         */
                     }
             } else {
+                // This is when the game starts to stop the animation
                 VStack {
                     
                 }
@@ -89,11 +101,12 @@ struct ContentView: View {
                 }
             }
         } else {
+            // This is the main menu view that includes the Settings and the Game Selector
             mainMenuView
                 .onAppear() {
                     quits = false
                     
-                    initControllerObservers()
+                    initControllerObservers() // This initializes the Controller Observers that refreshes the controller list when a new controller connecvts.
                 }
         }
         
@@ -217,12 +230,12 @@ struct ContentView: View {
     }
     
     // MARK: - Helper Methods
-    var SdlInitFlags: uint = SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO | SDL_INIT_VIDEO;
+    var SdlInitFlags: uint = SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO | SDL_INIT_VIDEO; // Initialises SDL2 for Events, Game Controller, Joystick, Audio and Video.
     private func initializeSDL() {
         setMoltenVKSettings()
-        SDL_SetMainReady()
-        SDL_iPhoneSetEventPump(SDL_TRUE)
-        SDL_Init(SdlInitFlags)
+        SDL_SetMainReady() // Sets SDL Ready
+        SDL_iPhoneSetEventPump(SDL_TRUE) // Allow iOS Set Event Pump (Check out SDL2 Documentation here)
+        SDL_Init(SdlInitFlags) // Initialises SDL2
         initialize()
     }
     
@@ -305,9 +318,8 @@ struct ContentView: View {
     
     
 
-    
+    // Sets MoltenVK Environment Variables
     private func setMoltenVKSettings() {
-        
         settings.forEach { setting in
             setenv(setting.string, setting.value, 1)
         }

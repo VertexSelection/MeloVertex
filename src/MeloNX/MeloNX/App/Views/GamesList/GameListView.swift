@@ -449,9 +449,10 @@ struct GameListRow: View {
                 }
                 
                 Button {
-                    // Add info action
+                    let pasteboard = UIPasteboard.general
+                    pasteboard.string = game.titleId
                 } label: {
-                    Label("Game Info", systemImage: "info.circle")
+                    Label("Game ID: \(game.titleId)", systemImage: "info.circle")
                 }
             }
         }

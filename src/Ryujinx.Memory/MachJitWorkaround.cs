@@ -46,7 +46,7 @@ namespace Ryujinx.Memory
 
         private const IntPtr TASK_NULL = 0;
         private static readonly IntPtr _selfTask;
-        private static readonly int DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024; 
+        private static readonly int DEFAULT_CHUNK_SIZE = 1024 * 1024; 
 
         static MachJitWorkaround()
         {
@@ -61,6 +61,8 @@ namespace Ryujinx.Memory
             {
                 return totalSize;
             }
+
+            chunkSize /= 2;
             
             int chunkCount = Math.Max(4, totalSize / DEFAULT_CHUNK_SIZE);
             return (totalSize + chunkCount - 1) / chunkCount;

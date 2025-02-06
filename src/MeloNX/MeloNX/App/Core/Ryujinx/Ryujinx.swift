@@ -182,11 +182,15 @@ class Ryujinx {
     func MainThread(_ block: @escaping @Sendable () -> Void) {
         if #available(iOS 17.0, *) {
             RunLoop.current.perform {
-                block()
+                autoreleasepool {
+                    block()
+                }
             }
         } else {
             DispatchQueue.main.async {
-                block()
+                autoreleasepool {
+                    block()
+                }
             }
         }
     }

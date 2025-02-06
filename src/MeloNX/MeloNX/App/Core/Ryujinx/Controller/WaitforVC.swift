@@ -12,6 +12,7 @@ import SwiftUI
 
 var hostingController: UIHostingController<ControllerView>? // Store reference to prevent deallocation
 
+// Swts up a timer that adds subview to the Window and Repeats until the ControllerView is found in the Window to ensure that the controller shows.
 func waitForController() {
     guard let window = theWindow else { return }
 
@@ -40,8 +41,10 @@ func waitForController() {
     containerView.frame = window.bounds
     containerView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
+    // Timer for controller
     Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
         if findGCControllerView(in: window) == nil {
+            // Adds Virtual Controller Subview
             window.addSubview(containerView)
             window.bringSubviewToFront(containerView)
 
