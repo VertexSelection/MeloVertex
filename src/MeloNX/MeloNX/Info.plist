@@ -6,5 +6,48 @@
 	<string>1d0e26921bac938456ee7210ff4f2fa701dc16c02de1760e0aa757db28818ec7</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.nintendo.switch-package</string>
+			<key>UTTypeDescription</key>
+			<string>Nintendo Switch Package</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.archive</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>nsp</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/x-nsp</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.nintendo.switch-cartridge</string>
+			<key>UTTypeDescription</key>
+			<string>Nintendo Switch Cartridge</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.archive</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>xci</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/x-xci</string>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

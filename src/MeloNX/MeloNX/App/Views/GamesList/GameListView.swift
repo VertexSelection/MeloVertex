@@ -8,6 +8,10 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+extension UTType {
+    static let nsp = UTType(exportedAs: "com.nintendo.switch-package")
+    static let xci = UTType(exportedAs: "com.nintendo.switch-cartridge")
+}
 
 struct GameLibraryView: View {
     @Binding var startemu: Game?
@@ -22,6 +26,9 @@ struct GameLibraryView: View {
     @State var firmwareversion = "0"
     @State var isImporting: Bool = false
     @State var startgame = false
+    @State var isSelectingGameFile = false
+    @State var isViewingGameInfo: Bool = false
+    @State var gameInfo: Game?
     
     
     var filteredGames: [Game] {
@@ -88,7 +95,7 @@ struct GameLibraryView: View {
                                 
                                 LazyVStack(spacing: 2) {
                                     ForEach(filteredGames) { game in
-                                        GameListRow(game: game, startemu: $startemu)
+                                        GameListRow(game: game, startemu: $startemu, games: $games, isViewingGameInfo: $isViewingGameInfo, gameInfo: $gameInfo)
                                             .onTapGesture {
                                                 addToRecentGames(game)
                                             }
@@ -98,7 +105,7 @@ struct GameLibraryView: View {
                         } else {
                             LazyVStack(spacing: 2) {
                                 ForEach(filteredGames) { game in
-                                    GameListRow(game: game, startemu: $startemu)
+                                    GameListRow(game: game, startemu: $startemu, games: $games, isViewingGameInfo: $isViewingGameInfo, gameInfo: $gameInfo)
                                         .onTapGesture {
                                             addToRecentGames(game)
                                         }
@@ -111,17 +118,13 @@ struct GameLibraryView: View {
                     loadGames()
                     loadRecentGames()
                     
-                    
                     let firmware = Ryujinx.shared.fetchFirmwareVersion()
                     firmwareversion = (firmware == "" ? "0" : firmware)
                 }
                 .fileImporter(isPresented: $firmwareInstaller, allowedContentTypes: [.item]) { result in
                     switch result {
-                        
                     case .success(let url):
-                        
                         do {
-                            
                             let fun = url.startAccessingSecurityScopedResource()
                             let path = url.path
                             
@@ -132,7 +135,6 @@ struct GameLibraryView: View {
                                 url.stopAccessingSecurityScopedResource()
                             }
                         }
-                        
                     case .failure(let error):
                         print(error)
                     }
@@ -140,8 +142,15 @@ struct GameLibraryView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        isSelectingGameFile.toggle()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+                
+                ToolbarItem(placement: .topBarLeading) {
                     Menu {
-                        
                         Text("Firmware Version: \(firmwareversion)")
                             .tint(.white)
                         
@@ -164,7 +173,6 @@ struct GameLibraryView: View {
                                     Text("Remove Firmware")
                                 }
                                 
-                                
                                 Button {
                                     let game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "MiiMaker")!, titleName: "Mii Maker", titleId: "0", developer: "Nintendo", version: firmwareversion)
                                     
@@ -182,8 +190,6 @@ struct GameLibraryView: View {
                             }
                         }
                         
-                        
-                        
                         Button {
                             let documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
                             let sharedurl = documentsUrl.absoluteString.replacingOccurrences(of: "file://", with: "shareddocuments://")
@@ -198,7 +204,6 @@ struct GameLibraryView: View {
                         Image(systemName: "ellipsis.circle")
                             .foregroundColor(.blue)
                     }
-                    
                 }
             }
         }
@@ -231,14 +236,53 @@ struct GameLibraryView: View {
                 } catch {
                     print(error)
                 }
-                
 
             case .failure(let err):
                 print("File import failed: \(err.localizedDescription)")
             }
         }
-
-
+        .fileImporter(isPresented: $isSelectingGameFile, allowedContentTypes: [.nsp, .xci, .zip, .folder]) { result in
+            switch result {
+            case .success(let url):
+                guard url.startAccessingSecurityScopedResource() else {
+                    print("Failed to access security-scoped resource")
+                    return
+                }
+                defer { url.stopAccessingSecurityScopedResource() }
+                
+                do {
+                    let fileManager = FileManager.default
+                    let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+                    let romsDirectory = documentsDirectory.appendingPathComponent("roms")
+                    
+                    if !fileManager.fileExists(atPath: romsDirectory.path) {
+                        try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
+                    }
+                    
+                    let destinationURL = romsDirectory.appendingPathComponent(url.lastPathComponent)
+                    try fileManager.copyItem(at: url, to: destinationURL)
+                    
+                    loadGames()
+                } catch {
+                    print("Error copying game file: \(error)")
+                }
+            case .failure(let err):
+                print("File import failed: \(err.localizedDescription)")
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { isViewingGameInfo && gameInfo != nil },
+            set: { newValue in
+                if !newValue {
+                    isViewingGameInfo = false
+                    gameInfo = nil
+                }
+            }
+        )) {
+            if let game = gameInfo {
+                GameInfoSheet(game: game)
+            }
+        }
     }
     
     
@@ -274,14 +318,15 @@ struct GameLibraryView: View {
         }
     }
     
-    private func loadGames() {
+// MARK: - loads games from roms
+    func loadGames() {
         let fileManager = FileManager.default
         guard let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
         
         let romsDirectory = documentsDirectory.appendingPathComponent("roms")
         
         // Check if "roms" folder exists; if not, create it
-        if !fileManager.fileExists(atPath: romsDirectory.path) {
+        if (!fileManager.fileExists(atPath: romsDirectory.path)) {
             do {
                 try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
             } catch {
@@ -314,8 +359,21 @@ struct GameLibraryView: View {
             print("Error loading games from roms folder: \(error)")
         }
     }
+    
+// MARK: - Delete Game Function
+    func deleteGame(game: Game) {
+        let fileManager = FileManager.default
+        do {
+            try fileManager.removeItem(at: game.fileURL)
+            games.removeAll { $0.id == game.id }
+            loadGames()
+        } catch {
+            print("Error deleting game: \(error)")
+        }
+    }
 }
 
+// MARK: -Game Model
 extension Game: Codable {
     enum CodingKeys: String, CodingKey {
         case titleName, titleId, developer, version, fileURL
@@ -344,6 +402,7 @@ extension Game: Codable {
     }
 }
 
+// MARK: -Recent Game Card
 struct RecentGameCard: View {
     let game: Game
     @Binding var startemu: Game?
@@ -390,9 +449,15 @@ struct RecentGameCard: View {
     }
 }
 
+// MARK: -Game List Item
 struct GameListRow: View {
     let game: Game
     @Binding var startemu: Game?
+    @Binding var games: [Game] // Add this binding
+    @Binding var isViewingGameInfo: Bool
+    @Binding var gameInfo: Game?
+    @State var gametoDelete: Game?
+    @State var showGameDeleteConfirmation: Bool = false
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -442,20 +507,52 @@ struct GameListRow: View {
             .padding(.vertical, 8)
             .background(Color(.systemBackground))
             .contextMenu {
-                Button {
-                    startemu = game
-                } label: {
-                    Label("Play Now", systemImage: "play.fill")
+                Section {
+                    Button {
+                        startemu = game
+                    } label: {
+                        Label("Play Now", systemImage: "play.fill")
+                    }
+                    
+                    Button {
+                        gameInfo = game
+                        isViewingGameInfo.toggle()
+                    } label: {
+                        Label("Game Info", systemImage: "info.circle")
+                    }
                 }
                 
-                Button {
-                    let pasteboard = UIPasteboard.general
-                    pasteboard.string = game.titleId
-                } label: {
-                    Label("Game ID: \(game.titleId)", systemImage: "info.circle")
+                Section {
+                    Button(role: .destructive) {
+                        gametoDelete = game
+                        showGameDeleteConfirmation.toggle()
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
                 }
             }
         }
         .buttonStyle(.plain)
+        .confirmationDialog("Are you sure you want to delete this game?", isPresented: $showGameDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                if let game = gametoDelete {
+                    deleteGame(game: game)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to delete \(gametoDelete?.titleName ?? "this game")?")
+        }
+    }
+    
+    private func deleteGame(game: Game) {
+        let fileManager = FileManager.default
+        do {
+            try fileManager.removeItem(at: game.fileURL)
+            games.removeAll { $0.id == game.id }
+        } catch {
+            print("Error deleting game: \(error)")
+        }
     }
 }
+

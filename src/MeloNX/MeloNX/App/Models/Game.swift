@@ -13,7 +13,6 @@ public struct Game: Identifiable, Equatable {
 
     var containerFolder: URL
     var fileType: UTType
-    
     var fileURL: URL
 
     var titleName: String
@@ -59,12 +58,8 @@ public struct Game: Identifiable, Equatable {
             gameTemp.icon = UIImage(data: imageData)
         } else {
             print("Invalid image size.")
-            
         }
-
-        
         return gameTemp
-        
     }
     
     func createImage(from gameInfo: GameInfo) -> UIImage? {
@@ -82,7 +77,6 @@ public struct Game: Identifiable, Equatable {
         let imageData = Data(bytes: gameInfoValue.ImageData, count: imageSize)
 
         // Create a UIImage (or NSImage on macOS)
-        
         print(imageData)
         
         return UIImage(data: imageData)
