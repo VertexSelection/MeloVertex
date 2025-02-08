@@ -61,8 +61,6 @@ namespace Ryujinx.Memory
             {
                 return totalSize;
             }
-
-            chunkSize /= 2;
             
             int chunkCount = Math.Max(4, totalSize / DEFAULT_CHUNK_SIZE);
             return (totalSize + chunkCount - 1) / chunkCount;
