@@ -75,7 +75,7 @@ struct ContentView: View {
     // MARK: - Body
     var body: some View {
         if game != nil, quits == false {
-            if isLoading {
+            if Ryujinx.shared.metalLayer == nil {
                 emulationView
                     .onAppear() {
                         // This is fro the old exiting game feature that didn't work properly. will look into it and figure out a better alternative
@@ -93,12 +93,10 @@ struct ContentView: View {
                     }
             } else {
                 // This is when the game starts to stop the animation
-                VStack {
-                    
-                }
-                .onAppear() {
-                    isAnimating = false  
-                }
+                EmulationView()
+                    .onAppear() {
+                        isAnimating = false
+                    }
             }
         } else {
             // This is the main menu view that includes the Settings and the Game Selector
@@ -234,7 +232,7 @@ struct ContentView: View {
     private func initializeSDL() {
         setMoltenVKSettings()
         SDL_SetMainReady() // Sets SDL Ready
-        SDL_iPhoneSetEventPump(SDL_TRUE) // Allow iOS Set Event Pump (Check out SDL2 Documentation here)
+        SDL_iPhoneSetEventPump(SDL_TRUE) // Set iOS Event Pump to true (Check out SDL2 Documentation here)
         SDL_Init(SdlInitFlags) // Initialises SDL2
         initialize()
     }

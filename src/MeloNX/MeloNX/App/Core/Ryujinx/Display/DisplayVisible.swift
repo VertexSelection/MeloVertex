@@ -17,17 +17,11 @@ extension UIWindow {
     // Also waits for the window to append the on-screen controller
     @objc func wdb_makeKeyAndVisible() {
         if #available(iOS 13.0, *) {
-            self.windowScene = (UIApplication.shared.connectedScenes.first! as! UIWindowScene)
+            // self.windowScene = (UIApplication.shared.connectedScenes.first! as! UIWindowScene)
         }
         self.wdb_makeKeyAndVisible()
         theWindow = self
-        
-        
-        if UserDefaults.standard.bool(forKey: "isVirtualController") {
-            if let window = theWindow {
-                waitForController()
-            }
-        }
+        Ryujinx.shared.repeatuntilfindLayer()
     }
 }
 

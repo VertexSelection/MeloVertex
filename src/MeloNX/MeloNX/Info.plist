@@ -9,15 +9,15 @@
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.nintendo.switch-package</string>
-			<key>UTTypeDescription</key>
-			<string>Nintendo Switch Package</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
 				<string>public.archive</string>
 			</array>
+			<key>UTTypeDescription</key>
+			<string>Nintendo Switch Package</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.nintendo.switch-package</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
@@ -29,15 +29,15 @@
 			</dict>
 		</dict>
 		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.nintendo.switch-cartridge</string>
-			<key>UTTypeDescription</key>
-			<string>Nintendo Switch Cartridge</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
 				<string>public.archive</string>
 			</array>
+			<key>UTTypeDescription</key>
+			<string>Nintendo Switch Cartridge</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.nintendo.switch-cartridge</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>

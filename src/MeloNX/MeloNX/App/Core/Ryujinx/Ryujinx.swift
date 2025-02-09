@@ -55,7 +55,12 @@ class Ryujinx {
     let virtualController = VirtualController()
     
     @Published var controllerMap: [Controller] = []
-    @State var firmwareversion = "0"
+    @Published var metalLayer: CAMetalLayer? = nil
+    @Published var firmwareversion = "0"
+    
+    var shouldMetal: Bool {
+        metalLayer == nil
+    }
     
     static let shared = Ryujinx()
     
@@ -399,6 +404,63 @@ class Ryujinx {
         } catch {
             print("Error removing folder: \(error)")
         }
+    }
+    
+    
+    func repeatuntilfindLayer() {
+        DispatchQueue.global(qos: .background).async {
+            while self.metalLayer == nil {
+                let layer = self.getMetalLayer(nil)
+
+                if layer != nil {
+                    DispatchQueue.main.async {
+                        self.metalLayer = layer
+                    }
+                    break
+                }
+
+                Thread.sleep(forTimeInterval: 0.1)
+            }
+        }
+    }
+
+    
+    func getMetalLayer(_ window: OpaquePointer?) -> CAMetalLayer? {
+        var window = window
+        if window == nil {
+            window = SDL_GetWindowFromID(1)
+        }
+
+        var windowInfo = SDL_SysWMinfo()
+        SDL_GetWindowWMInfo(window, &windowInfo)
+
+        
+        guard let uiWindow = windowInfo.info.uikit.window,
+              let rootView = uiWindow.takeUnretainedValue().rootViewController?.view else {
+            print("Unable to get root view")
+            return nil
+        }
+
+        func findMetalLayer(in view: UIView) -> CAMetalLayer? {
+            if let metalLayer = view.layer as? CAMetalLayer {
+                return metalLayer
+            }
+            
+            for subview in view.subviews {
+                if let metalLayer = findMetalLayer(in: subview) {
+                    return metalLayer
+                }
+            }
+            
+            return nil
+        }
+
+        if let existingLayer = findMetalLayer(in: rootView) {
+            print("Found Metal Layer")
+            return existingLayer
+        }
+        print("found nothing")
+        return nil
     }
 
 

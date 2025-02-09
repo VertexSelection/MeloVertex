@@ -21,7 +21,7 @@ struct MeloNXApp: App {
                 if bool {
                     print("Ryujinx Files Initialized Successfully")
                 } else {
-                    exit(0)
+                    // exit(0)
                 }
                 
             }
@@ -29,7 +29,7 @@ struct MeloNXApp: App {
             Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
                 InitializeRyujinx() { bool in
                     if !bool {
-                        exit(0)
+                        // exit(0)
                     }
                     
                 }
@@ -144,8 +144,9 @@ func InitializeRyujinx(completion: @escaping (Bool) -> Void) {
         exit(0)
     }
     
-    let task = URLSession.shared.dataTask(with: URL(string: addFolders(path)!)!) { data, _, _ in
+    let task = URLSession.shared.dataTask(with: URL(string: addFolders(path)!)!) { data, response, error in
         let text = String(data: data ?? Data(), encoding: .utf8) ?? ""
+        print(text)
         completion(text.contains("true"))
     }
     task.resume()
