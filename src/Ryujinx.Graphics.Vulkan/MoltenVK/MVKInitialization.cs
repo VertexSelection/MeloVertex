@@ -26,6 +26,8 @@ namespace Ryujinx.Graphics.Vulkan.MoltenVK
             if (OperatingSystem.IsIOSVersionAtLeast(17)) {
                 config.SemaphoreSupportStyle = MVKVkSemaphoreSupportStyle.MVK_CONFIG_VK_SEMAPHORE_SUPPORT_STYLE_SINGLE_QUEUE;
             }
+
+            config.MaxActiveMetalCommandBuffersPerQueue = 1024;
             
             config.SynchronousQueueSubmits = false;
 

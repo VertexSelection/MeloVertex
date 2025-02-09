@@ -5,6 +5,8 @@
 //  Created by Stossy11 on 3/11/2024.
 //
 
+#define DRM 1
+
 #ifndef RyujinxHeader
 #define RyujinxHeader
 
@@ -12,6 +14,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 #import "utils.h"
+
 
 #ifdef __cplusplus
 extern "C" {

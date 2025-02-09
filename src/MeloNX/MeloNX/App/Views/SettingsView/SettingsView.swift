@@ -29,6 +29,8 @@ struct SettingsView: View {
     @AppStorage("RyuDemoControls") var ryuDemo: Bool = false
     @AppStorage("MTL_HUD_ENABLED") var metalHUDEnabled: Bool = false
     
+    @AppStorage("showScreenShotButton") var ssb: Bool = false
+    
     @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = false
     
     @AppStorage("performacehud") var performacehud: Bool = false
@@ -103,7 +105,7 @@ struct SettingsView: View {
                             }
                         }
                         
-                        Slider(value: $config.resscale, in: 0.1...3.0, step: 0.1) {
+                        Slider(value: $config.resscale, in: 0.1...3.0, step: 0.05) {
                             Text("Resolution Scale")
                         } minimumValueLabel: {
                             Text("0.1x")
@@ -347,6 +349,11 @@ struct SettingsView: View {
                 // Other Settings
                 Section {
                     
+                    Toggle(isOn: $ssb) {
+                        labelWithIcon("Screenshot Button", iconName: "square.and.arrow.up")
+                    }
+                    .tint(.blue)
+                    
                     Toggle(isOn: $useTrollStore) {
                         labelWithIcon("TrollStore", iconName: "troll.svg")
                     }
@@ -361,13 +368,15 @@ struct SettingsView: View {
                         labelWithIcon("Trace Logs", iconName: "waveform.path")
                     }
                     .tint(.blue)
+                    
+                    
                 } header: {
                     Text("Miscellaneous Options")
                         .font(.title3.weight(.semibold))
                         .textCase(nil)
                         .headerProminence(.increased)
                 } footer: {
-                    Text("Enable logs for troubleshooting and Enable automatic TrollStore JIT.")
+                    Text("Enable trace and debug logs for troubleshooting, enable Screenshotting without distractions and Enable automatic TrollStore JIT.")
                 }
                 
                 // Advanced

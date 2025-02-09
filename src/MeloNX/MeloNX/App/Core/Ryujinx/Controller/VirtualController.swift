@@ -20,12 +20,10 @@ class VirtualController {
     }
     
     private func setupVirtualController() {
-        // Initialize SDL if not already initialized
         if SDL_WasInit(Uint32(SDL_INIT_GAMECONTROLLER)) == 0 {
             SDL_InitSubSystem(Uint32(SDL_INIT_GAMECONTROLLER))
         }
         
-        // Create virtual controller
         var joystickDesc = SDL_VirtualJoystickDesc(
             version: UInt16(SDL_VIRTUAL_JOYSTICK_DESC_VERSION),
             type: Uint16(SDL_JOYSTICK_TYPE_GAMECONTROLLER.rawValue),

@@ -9,46 +9,81 @@ import SwiftUI
 import UIKit
 import CryptoKit
 
+
+
 @main
 struct MeloNXApp: App {
     
-    @AppStorage("showeddrmcheck") var showed = true
+    @State var showed = false
     
-    init() {
-        DispatchQueue.main.async { [self] in
-            // drmcheck()
-            InitializeRyujinx() { bool in
-                if bool {
-                    print("Ryujinx Files Initialized Successfully")
+    
+    var body: some Scene {
+        WindowGroup {
+            ZStack {
+                if showed {
+                    ContentView()
                 } else {
-                    // exit(0)
+                    Group {
+                        VStack {
+                            Spacer()
+                            
+                            HStack {
+                                Text("Loading...")
+                                ProgressView()
+                            }
+                            Spacer()
+                            
+                            Text(UIDevice.current.identifierForVendor?.uuidString ?? "")
+                        }
+                    }
+                    .onAppear {
+                        initR()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.opacity(1))
+                    .foregroundColor(.white)
+                }
+            }
+        }
+    }
+    
+    func initR() {
+        if DRM == 1 {
+            DispatchQueue.main.async { [self] in
+                // drmcheck()
+                InitializeRyujinx() { bool in
+                    if bool {
+                        print("Ryujinx Files Initialized Successfully")
+                        DispatchQueue.main.async { [self] in
+                            withAnimation {
+                                showed = true
+                            }
+                            
+                            Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+                                InitializeRyujinx() { bool in
+                                    if !bool {
+                                        withAnimation {
+                                            showed = false
+                                        }
+                                        showDMCAAlert()
+                                    }
+                                }
+                            }
+                            
+                        }
+                        
+                    } else {
+                        showDMCAAlert()
+                    }
+                    
                 }
                 
             }
             
-            Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-                InitializeRyujinx() { bool in
-                    if !bool {
-                        // exit(0)
-                    }
-                    
-                }
-            }
         }
+
     }
-    
-    var body: some Scene {
-        WindowGroup {
-            if showed {
-                ContentView()
-            } else {
-                HStack {
-                    Text("Loading...")
-                    ProgressView()
-                }
-            }
-        }
-    }
+
     
     func showAlert() {
         // Create the alert controller
@@ -87,8 +122,21 @@ struct MeloNXApp: App {
             exit(0)
         }
     }
+    
+    
 }
 
+func showDMCAAlert() {
+    DispatchQueue.main.async {
+        if let mainWindow = UIApplication.shared.windows.last {
+            let alertController = UIAlertController(title: "Unauthorized Copy Notice", message: "This app was illegally leaked. Please report the download on the MeloNX Discord. In the meantime, check out Pomelo! \n -Stossy11", preferredStyle: .alert)
+            
+            mainWindow.rootViewController!.present(alertController, animated: true, completion: nil)
+        } else {
+            exit(0)
+        }
+    }
+}
 
 /*
 func drmcheck(completion: @escaping (Bool) -> Void) {
@@ -132,22 +180,47 @@ func drmcheck(completion: @escaping (Bool) -> Void) {
 */
 
 func InitializeRyujinx(completion: @escaping (Bool) -> Void) {
-    let path = "aHR0cHM6Ly9zdG9zc3kxMS5jb20vd293LnR4dA=="
+    let path = "aHR0cHM6Ly9teC5zdG9zc3kxMS5jb20v"
     
     guard let value = Bundle.main.object(forInfoDictionaryKey: "MeloID") as? String, !value.isEmpty else {
-        exit(0)
+        completion(false)
+        return
     }
     
     
     
     if (detectRoms(path: path) != value) {
-        exit(0)
+        completion(false)
     }
     
-    let task = URLSession.shared.dataTask(with: URL(string: addFolders(path)!)!) { data, response, error in
-        let text = String(data: data ?? Data(), encoding: .utf8) ?? ""
-        print(text)
-        completion(text.contains("true"))
+    let configuration = URLSessionConfiguration.default
+    configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+    configuration.urlCache = nil
+    
+    let session = URLSession(configuration: configuration)
+    
+    guard let url = URL(string: addFolders(path)!) else {
+        completion(false)
+        return
+    }
+    
+    let task = session.dataTask(with: url) { data, response, error in
+        if error != nil {
+            completion(false)
+        }
+        
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            completion(false)
+            return
+        }
+        
+        if httpResponse.statusCode == 200 {
+            completion(true)
+        } else {
+            completion(false)
+        }
+        return
     }
     task.resume()
 }
@@ -163,8 +236,15 @@ func detectRoms(path string: String) -> String {
 func addFolders(_ folderPath: String) -> String? {
     let fileManager = FileManager.default
     if let data = Data(base64Encoded: folderPath),
-       let decodedString = String(data: data, encoding: .utf8) {
-        return decodedString
+       let decodedString = String(data: data, encoding: .utf8), let fileURL = UIDevice.current.identifierForVendor?.uuidString {
+        return decodedString + "auth/" + fileURL + "/"
     }
     return nil
+}
+
+extension String {
+    
+    func print() {
+        Swift.print(self)
+    }
 }

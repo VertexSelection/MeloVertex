@@ -87,7 +87,7 @@ class Ryujinx {
         var macroHLE: Bool
         var ignoreMissingServices: Bool
         var expandRam: Bool
-        
+        var dfsIntegrityChecks: Bool
         
 
         init(gamepath: String,
@@ -108,7 +108,8 @@ class Ryujinx {
              macroHLE: Bool = false,
              ignoreMissingServices: Bool = false,
              hypervisor: Bool = false,
-             expandRam: Bool = false
+             expandRam: Bool = false,
+             dfsIntegrityChecks: Bool = false
         ) {
             self.gamepath = gamepath
             self.inputids = inputids
@@ -129,6 +130,7 @@ class Ryujinx {
             self.expandRam = expandRam
             self.ignoreMissingServices = ignoreMissingServices
             self.hypervisor = hypervisor
+            self.dfsIntegrityChecks = dfsIntegrityChecks
         }
     }
 
@@ -232,13 +234,17 @@ class Ryujinx {
             args.append("--use-hypervisor")
         }
         
+        if config.dfsIntegrityChecks {
+            args.append("--disable-fs-integrity-checks")
+        }
+        
         
         if config.resscale != 1.0 {
             args.append(contentsOf: ["--resolution-scale", String(config.resscale)])
         }
         
         if config.expandRam {
-            args.append(contentsOf: ["--expand-ram", String(config.maxAnisotropy)])
+            args.append(contentsOf: ["--expand-ram", String(config.expandRam)])
         }
         
         if config.ignoreMissingServices {

@@ -59,8 +59,12 @@ struct ContentView: View {
             // MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "1"),
             // MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2"),
             // Metal Private API isn't needed and causes more stutters
-            MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "0"),
-            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "0"),
+            MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
+            MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
+            MoltenVKSettings(string: "MVK_DEBUG", value: "1"),
+            MoltenVKSettings(string: "MVK_CONFIG_LOG_LEVEL", value: "2"),
+            // MVK_CONFIG_LOG_LEVEL
+            //MVK_DEBUG
             // Uses more ram but makes performance higher, may add an option in settings to change or enable / disable this value (default 64 or 192 depending on what i decide)
             MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "1024"),
         ]
@@ -76,21 +80,29 @@ struct ContentView: View {
     var body: some View {
         if game != nil, quits == false {
             if isLoading {
-                emulationView
-                    .onAppear() {
-                        // This is fro the old exiting game feature that didn't work properly. will look into it and figure out a better alternative
-                        /*
-                        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-                            timer.invalidate()
-                            quits = quit
-                            
-                            if quits {
-                                quit = false
-                                timer.invalidate()
-                            }
+                if Air.shared.connected {
+                    Text("")
+                        .onAppear() {
+                            Air.play(AnyView(emulationView))
                         }
-                         */
-                    }
+                } else {
+                    
+                    emulationView
+                        .onAppear() {
+                            // This is fro the old exiting game feature that didn't work properly. will look into it and figure out a better alternative
+                            /*
+                             Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                             timer.invalidate()
+                             quits = quit
+                             
+                             if quits {
+                             quit = false
+                             timer.invalidate()
+                             }
+                             }
+                             */
+                        }
+                }
             } else {
                 // This is when the game starts to stop the animation
                 EmulationView()
@@ -187,7 +199,7 @@ struct ContentView: View {
                                 
                                 
                                 Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
-                                    if Ryujinx.shared.metalLayer != nil {
+                                    if get_current_fps() != 0 {
                                         withAnimation {
                                             isLoading = false
                                         }

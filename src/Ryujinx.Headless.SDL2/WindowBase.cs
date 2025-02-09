@@ -450,23 +450,12 @@ namespace Ryujinx.Headless.SDL2
             };
             renderLoopThread.Start();
 
-            Thread nvidiaStutterWorkaround = null;
-            if (Renderer is OpenGLRenderer)
-            {
-                nvidiaStutterWorkaround = new Thread(NvidiaStutterWorkaround)
-                {
-                    Name = "GUI.NvidiaStutterWorkaround",
-                };
-                nvidiaStutterWorkaround.Start();
-            }
-
             MainLoop();
 
             // NOTE: The render loop is allowed to stay alive until the renderer itself is disposed, as it may handle resource dispose.
             // We only need to wait for all commands submitted during the main gpu loop to be processed.
             _gpuDoneEvent.WaitOne();
             _gpuDoneEvent.Dispose();
-            nvidiaStutterWorkaround?.Join();
 
             Exit();
         }
