@@ -75,7 +75,7 @@ struct ContentView: View {
     // MARK: - Body
     var body: some View {
         if game != nil, quits == false {
-            if Ryujinx.shared.metalLayer == nil {
+            if isLoading {
                 emulationView
                     .onAppear() {
                         // This is fro the old exiting game feature that didn't work properly. will look into it and figure out a better alternative
@@ -187,8 +187,10 @@ struct ContentView: View {
                                 
                                 
                                 Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
-                                    if get_current_fps() != 0 {
-                                        isLoading = false
+                                    if Ryujinx.shared.metalLayer != nil {
+                                        withAnimation {
+                                            isLoading = false
+                                        }
                                         isAnimating = false
                                         timer.invalidate()
                                     }
@@ -217,6 +219,11 @@ struct ContentView: View {
                     refreshControllersList()
                 }
                 
+                Air.play(AnyView(
+                    Text("Select Game")
+                        .font(.system(size: 100))
+                    
+                ))
                 
                 let isJIT = UserDefaults.standard.bool(forKey: "JIT-ENABLED")
                 

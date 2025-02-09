@@ -57,6 +57,7 @@ class Ryujinx {
     @Published var controllerMap: [Controller] = []
     @Published var metalLayer: CAMetalLayer? = nil
     @Published var firmwareversion = "0"
+    @Published var emulationUIView = UIView()
     
     var shouldMetal: Bool {
         metalLayer == nil
