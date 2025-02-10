@@ -16,6 +16,7 @@ struct MeloNXApp: App {
     
     @State var showed = false
     @Environment(\.scenePhase) var scenePhase
+    @State var alert: UIAlertController? = nil
     
     var body: some Scene {
         WindowGroup {
@@ -65,7 +66,14 @@ struct MeloNXApp: App {
                                         withAnimation {
                                             showed = false
                                         }
-                                        showDMCAAlert()
+                                        if !(alert?.isViewLoaded ?? false) {
+                                            alert = showDMCAAlert()
+                                        }
+                                    } else {
+                                        DispatchQueue.main.async {
+                                            alert?.dismiss(animated: true)
+                                            showed = true
+                                        }
                                     }
                                 }
                             }
@@ -85,7 +93,7 @@ struct MeloNXApp: App {
     }
 
     
-    func showAlert() {
+    func showAlert() -> UIAlertController? {
         // Create the alert controller
         if let mainWindow = UIApplication.shared.windows.last {
             let alertController = UIAlertController(title: "Enter license", message: "Enter license key:", preferredStyle: .alert)
@@ -118,23 +126,26 @@ struct MeloNXApp: App {
             
             // Present the alert
             mainWindow.rootViewController!.present(alertController, animated: true, completion: nil)
+            
+            return alertController
         } else {
-
+            return nil
         }
     }
     
     
 }
 
-func showDMCAAlert() {
-    DispatchQueue.main.async {
-        if let mainWindow = UIApplication.shared.windows.last {
-            let alertController = UIAlertController(title: "Unauthorized Copy Notice", message: "This app was illegally leaked. Please report the download on the MeloNX Discord. In the meantime, check out Pomelo! \n -Stossy11", preferredStyle: .alert)
-            
-            mainWindow.rootViewController!.present(alertController, animated: true, completion: nil)
-        } else {
-            // uhoh
-        }
+func showDMCAAlert() -> UIAlertController? {
+    if let mainWindow = UIApplication.shared.windows.last {
+        let alertController = UIAlertController(title: "Unauthorized Copy Notice", message: "This app was illegally leaked. Please report the download on the MeloNX Discord. In the meantime, check out Pomelo! \n -Stossy11", preferredStyle: .alert)
+        
+        mainWindow.rootViewController!.present(alertController, animated: true, completion: nil)
+        
+        return alertController
+    } else {
+        // uhoh
+        return nil
     }
 }
 

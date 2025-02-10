@@ -60,15 +60,6 @@ void ShowAlert(NSString* title, NSString* message, _Bool* showok)
 
 __attribute__((constructor)) static void entry(int argc, char **argv)
 {
-    if (isJITEnabled()) {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        [defaults setBool:YES forKey:@"JIT"];
-        [defaults synchronize]; // Ensure the value is saved immediately
-    } else {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        [defaults setBool:NO forKey:@"JIT"];
-        [defaults synchronize]; // Ensure the value is saved immediately
-    }
     
     if (getEntitlementValue(@"com.apple.developer.kernel.increased-memory-limit")) {
         NSLog(@"Entitlement Does Exist");

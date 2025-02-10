@@ -35,7 +35,7 @@ struct ContentView: View {
     @AppStorage("useTrollStore") var useTrollStore: Bool = false
     
     // JIT
-    @AppStorage("JIT") var isJITEnabled: Bool = false
+    @AppStorage("jitStreamerEB") var jitStreamerEB: Bool = false
     
     // Other Configuration
     @State var isMK8: Bool = false
@@ -71,7 +71,7 @@ struct ContentView: View {
         
         _settings = State(initialValue: defaultSettings)
         
-        print("JIT Enabled: \(isJITEnabled)")
+        print("JIT Enabled: \(isJITEnabled())")
         
         initializeSDL()
     }
@@ -122,6 +122,7 @@ struct ContentView: View {
                     if let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
                        components.host == "game" {
                         if let text = components.queryItems?.first(where: { $0.name == "id" })?.value {
+
                             game = Ryujinx.shared.games.first(where: { $0.titleId == text })
                         } else if let text = components.queryItems?.first(where: { $0.name == "name" })?.value {
                             game = Ryujinx.shared.games.first(where: { $0.titleName == text })
@@ -247,10 +248,14 @@ struct ContentView: View {
                     
                 ))
                 
-                let isJIT = UserDefaults.standard.bool(forKey: "JIT-ENABLED")
+                let isJIT = isJITEnabled()
                 
                 if !isJIT, useTrollStore {
                     askForJIT()
+                }
+                
+                if !isJIT, jitStreamerEB {
+                    enableJITEB()
                 }
                 
             }

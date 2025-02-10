@@ -6,6 +6,7 @@
 //
 
 #define DRM 1
+#define CS_DEBUGGED 0x10000000
 
 #ifndef RyujinxHeader
 #define RyujinxHeader

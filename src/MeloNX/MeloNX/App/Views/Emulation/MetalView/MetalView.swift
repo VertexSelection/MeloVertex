@@ -10,8 +10,9 @@ import MetalKit
 
 struct MetalView: UIViewRepresentable {
     
+    var airplay: Bool // just in case :3
+    
     func makeUIView(context: Context) -> UIView {
-        
         let metalLayer = Ryujinx.shared.metalLayer!
         metalLayer.frame = Ryujinx.shared.emulationUIView.bounds
         Ryujinx.shared.emulationUIView.contentScaleFactor = metalLayer.contentsScale // Right size and Fix Touch :3

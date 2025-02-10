@@ -18,6 +18,8 @@ struct SettingsView: View {
     @Binding var onscreencontroller: Controller
     @AppStorage("useTrollStore") var useTrollStore: Bool = false
     
+    @AppStorage("jitStreamerEB") var jitStreamerEB: Bool = false
+    
     @AppStorage("ignoreJIT") var ignoreJIT: Bool = false
     
     var memoryManagerModes = [
@@ -354,21 +356,50 @@ struct SettingsView: View {
                     }
                     .tint(.blue)
                     
-                    Toggle(isOn: $useTrollStore) {
-                        labelWithIcon("TrollStore", iconName: "troll.svg")
+                    if #available(iOS 17.0.1, *) {
+                        Toggle(isOn: $jitStreamerEB) {
+                            labelWithIcon("JitStreamer EB", iconName: "bolt.heart")
+                        }
+                        .tint(.blue)
+                        .contextMenu {
+                            Button {
+                                if let mainWindow = UIApplication.shared.windows.last {
+                                    let alertController = UIAlertController(title: "About JitStreamer EB", message: "JitStreamer EB is an Amazing Application to Enable JIT on the go, made by one of the best iOS developers of all time jkcoxson <3", preferredStyle: .alert)
+                                    
+                                    let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
+                                        UIApplication.shared.open(URL(string: "https://jkcoxson.com/jitstreamer")!)
+                                    }
+                                    alertController.addAction(learnMoreButton)
+                                    
+                                    let doneButton = UIAlertAction(title: "Done", style: .cancel, handler: nil)
+                                    alertController.addAction(doneButton)
+                                    
+                                    mainWindow.rootViewController?.present(alertController, animated: true)
+                                }
+                            } label: {
+                                Text("About")
+                            }
+                        }
+                    } else {
+                        Toggle(isOn: $useTrollStore) {
+                            labelWithIcon("TrollStore", iconName: "troll.svg")
+                        }
+                        .tint(.blue)
                     }
-                    .tint(.blue)
                     
-                    Toggle(isOn: $config.debuglogs) {
-                        labelWithIcon("Debug Logs", iconName: "exclamationmark.bubble")
+                    DisclosureGroup {
+                        Toggle(isOn: $config.debuglogs) {
+                            labelWithIcon("Debug Logs", iconName: "exclamationmark.bubble")
+                        }
+                        .tint(.blue)
+                        
+                        Toggle(isOn: $config.tracelogs) {
+                            labelWithIcon("Trace Logs", iconName: "waveform.path")
+                        }
+                        .tint(.blue)
+                    } label: {
+                        Text("Logs")
                     }
-                    .tint(.blue)
-                    
-                    Toggle(isOn: $config.tracelogs) {
-                        labelWithIcon("Trace Logs", iconName: "waveform.path")
-                    }
-                    .tint(.blue)
-                    
                     
                 } header: {
                     Text("Miscellaneous Options")
@@ -381,6 +412,8 @@ struct SettingsView: View {
                 
                 // Advanced
                 Section {
+                    labelWithIcon("JIT Acquisition: \(isJITEnabled() ? "Aquired" : "Not Aquired" )", iconName: "bolt.fill")
+                    
                     DisclosureGroup {
                         
                         Toggle(isOn: $mVKPreFillBuffer) {

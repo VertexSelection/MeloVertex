@@ -17,10 +17,10 @@ struct EmulationView: View {
             if isAirplaying {
                 Text("")
                     .onAppear {
-                        Air.play(AnyView(MetalView().ignoresSafeArea()))
+                        Air.play(AnyView(MetalView(airplay: true).ignoresSafeArea()))
                     }
             } else {
-                MetalView() // The Emulation View
+                MetalView(airplay: false) // The Emulation View
                     .ignoresSafeArea()
                     .edgesIgnoringSafeArea(.all)
             }
