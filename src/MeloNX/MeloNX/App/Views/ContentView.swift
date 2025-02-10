@@ -118,6 +118,16 @@ struct ContentView: View {
                     
                     initControllerObservers() // This initializes the Controller Observers that refreshes the controller list when a new controller connecvts.
                 }
+                .onOpenURL() { url in
+                    if let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
+                       components.host == "game" {
+                        if let text = components.queryItems?.first(where: { $0.name == "id" })?.value {
+                            game = Ryujinx.shared.games.first(where: { $0.titleId == text })
+                        } else if let text = components.queryItems?.first(where: { $0.name == "name" })?.value {
+                            game = Ryujinx.shared.games.first(where: { $0.titleName == text })
+                        }
+                    }
+                }
         }
         
     }

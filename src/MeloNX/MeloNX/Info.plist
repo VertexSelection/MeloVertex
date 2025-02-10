@@ -2,8 +2,29 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.stossy11.MeloNX</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>melonx</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>melonx</string>
+	</array>
 	<key>MeloID</key>
 	<string>83f67a0a96bd8628a150d7853e360db5bae64e7769524fae399c4b8e7e6aff17</string>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>LaunchGameIntent</string>
+	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UTExportedTypeDeclarations</key>

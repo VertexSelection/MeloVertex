@@ -15,7 +15,7 @@ import CryptoKit
 struct MeloNXApp: App {
     
     @State var showed = false
-    
+    @Environment(\.scenePhase) var scenePhase
     
     var body: some Scene {
         WindowGroup {
@@ -61,7 +61,7 @@ struct MeloNXApp: App {
                             
                             Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
                                 InitializeRyujinx() { bool in
-                                    if !bool {
+                                    if !bool, (scenePhase != .background || scenePhase == .inactive) {
                                         withAnimation {
                                             showed = false
                                         }
@@ -119,7 +119,7 @@ struct MeloNXApp: App {
             // Present the alert
             mainWindow.rootViewController!.present(alertController, animated: true, completion: nil)
         } else {
-            exit(0)
+
         }
     }
     
@@ -133,7 +133,7 @@ func showDMCAAlert() {
             
             mainWindow.rootViewController!.present(alertController, animated: true, completion: nil)
         } else {
-            exit(0)
+            // uhoh
         }
     }
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-public struct Game: Identifiable, Equatable {
+public struct Game: Identifiable, Equatable, Hashable {
     public var id = UUID()
 
     var containerFolder: URL

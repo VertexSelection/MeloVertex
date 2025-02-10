@@ -58,6 +58,7 @@ class Ryujinx {
     @Published var metalLayer: CAMetalLayer? = nil
     @Published var firmwareversion = "0"
     @Published var emulationUIView = UIView()
+    @Published var games: [Game] = []
     
     var shouldMetal: Bool {
         metalLayer == nil
@@ -65,7 +66,9 @@ class Ryujinx {
     
     static let shared = Ryujinx()
     
-    private init() {}
+    private init() {
+        self.games = loadGames()
+    }
     
     public struct Configuration : Codable, Equatable {
         var gamepath: String
@@ -201,6 +204,53 @@ class Ryujinx {
                 }
             }
         }
+    }
+    
+    func loadGames() -> [Game] {
+        let fileManager = FileManager.default
+        guard let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return [] }
+        
+        let romsDirectory = documentsDirectory.appendingPathComponent("roms")
+        
+        if (!fileManager.fileExists(atPath: romsDirectory.path)) {
+            do {
+                try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                print("Failed to create roms directory: \(error)")
+            }
+        }
+        var games: [Game] = []
+        
+        do {
+            let files = try fileManager.contentsOfDirectory(at: romsDirectory, includingPropertiesForKeys: nil)
+            
+            for fileURLCandidate in files {
+                if fileURLCandidate.pathExtension == "zip" {
+                    continue
+                }
+                
+                do {
+                    let handle = try FileHandle(forReadingFrom: fileURLCandidate)
+                    let fileExtension = (fileURLCandidate.pathExtension as NSString).utf8String
+                    let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
+                    
+                    
+                    let gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
+                    
+                    let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: fileURLCandidate)
+                    
+                    games.append(game)
+                } catch {
+                    print(error)
+                }
+            }
+            
+            return games
+        } catch {
+            print("Error loading games from roms folder: \(error)")
+            return games
+        }
+        
     }
 
     private func buildCommandLineArgs(from config: Configuration) -> [String] {

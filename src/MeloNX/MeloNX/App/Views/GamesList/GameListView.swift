@@ -16,7 +16,6 @@ extension UTType {
 struct GameLibraryView: View {
     @Binding var startemu: Game?
     // @State var importDLCs = false
-    @State private var games: [Game] = []
     @State private var searchText = ""
     @State private var isSearching = false
     @AppStorage("recentGames") private var recentGamesData: Data = Data()
@@ -29,13 +28,18 @@ struct GameLibraryView: View {
     @State var isSelectingGameFile = false
     @State var isViewingGameInfo: Bool = false
     @State var gameInfo: Game?
-    
+    var games: Binding<[Game]> {
+        Binding(
+            get: { Ryujinx.shared.games },
+            set: { Ryujinx.shared.games = $0 }
+        )
+    }
     
     var filteredGames: [Game] {
         if searchText.isEmpty {
-            return games
+            return Ryujinx.shared.games
         }
-        return games.filter {
+        return Ryujinx.shared.games.filter {
             $0.titleName.localizedCaseInsensitiveContains(searchText) ||
             $0.developer.localizedCaseInsensitiveContains(searchText)
         }
@@ -52,7 +56,7 @@ struct GameLibraryView: View {
                             .padding(.top, 12)
                     }
                     
-                    if games.isEmpty {
+                    if Ryujinx.shared.games.isEmpty {
                         VStack(spacing: 16) {
                             Image(systemName: "gamecontroller.fill")
                                 .font(.system(size: 64))
@@ -95,7 +99,7 @@ struct GameLibraryView: View {
                                 
                                 LazyVStack(spacing: 2) {
                                     ForEach(filteredGames) { game in
-                                        GameListRow(game: game, startemu: $startemu, games: $games, isViewingGameInfo: $isViewingGameInfo, gameInfo: $gameInfo)
+                                        GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, gameInfo: $gameInfo)
                                             .onTapGesture {
                                                 addToRecentGames(game)
                                             }
@@ -105,7 +109,7 @@ struct GameLibraryView: View {
                         } else {
                             LazyVStack(spacing: 2) {
                                 ForEach(filteredGames) { game in
-                                    GameListRow(game: game, startemu: $startemu, games: $games, isViewingGameInfo: $isViewingGameInfo, gameInfo: $gameInfo)
+                                    GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, gameInfo: $gameInfo)
                                         .onTapGesture {
                                             addToRecentGames(game)
                                         }
@@ -115,7 +119,6 @@ struct GameLibraryView: View {
                     }
                 }
                 .onAppear {
-                    loadGames()
                     loadRecentGames()
                     
                     let firmware = Ryujinx.shared.fetchFirmwareVersion()
@@ -262,7 +265,7 @@ struct GameLibraryView: View {
                     let destinationURL = romsDirectory.appendingPathComponent(url.lastPathComponent)
                     try fileManager.copyItem(at: url, to: destinationURL)
                     
-                    loadGames()
+                    Ryujinx.shared.games = Ryujinx.shared.loadGames()
                 } catch {
                     print("Error copying game file: \(error)")
                 }
@@ -317,56 +320,15 @@ struct GameLibraryView: View {
             recentGames = []
         }
     }
-    
-// MARK: - loads games from roms
-    func loadGames() {
-        let fileManager = FileManager.default
-        guard let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-        
-        let romsDirectory = documentsDirectory.appendingPathComponent("roms")
-        
-        // Check if "roms" folder exists; if not, create it
-        if (!fileManager.fileExists(atPath: romsDirectory.path)) {
-            do {
-                try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                print("Failed to create roms directory: \(error)")
-            }
-        }
-        games = []
-        // Load games only from "roms" folder
-        do {
-            let files = try fileManager.contentsOfDirectory(at: romsDirectory, includingPropertiesForKeys: nil)
-            
-            files.forEach { fileURLCandidate in
-                do {
-                    let handle = try FileHandle(forReadingFrom: fileURLCandidate)
-                    let fileExtension = (fileURLCandidate.pathExtension as NSString).utf8String
-                    let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
-                    
-                    
-                    let gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
-                    
-                    let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: fileURLCandidate)
-                    
-                    games.append(game)
-                } catch {
-                    print(error)
-                }
-            }
-            
-        } catch {
-            print("Error loading games from roms folder: \(error)")
-        }
-    }
+
     
 // MARK: - Delete Game Function
     func deleteGame(game: Game) {
         let fileManager = FileManager.default
         do {
             try fileManager.removeItem(at: game.fileURL)
-            games.removeAll { $0.id == game.id }
-            loadGames()
+            Ryujinx.shared.games.removeAll { $0.id == game.id }
+            Ryujinx.shared.games = Ryujinx.shared.loadGames()
         } catch {
             print("Error deleting game: \(error)")
         }

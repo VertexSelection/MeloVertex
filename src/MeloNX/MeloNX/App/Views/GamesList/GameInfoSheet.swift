@@ -52,6 +52,14 @@ struct GameInfoSheet: View {
                             .bold()
                         
                         Text("**Version:** \(game.version)")
+                        Text("**Title ID:** \(game.titleId)")
+                            .contextMenu {
+                                Button {
+                                    UIPasteboard.general.string = game.titleId
+                                } label: {
+                                    Text("Copy Title ID")
+                                }
+                            }
                         Text("**Game Size:** \(fetchFileSize(for: game.fileURL) ?? 0) bytes")
                         Text("**File Type:** .\(getFileType(game.fileURL))")
                         Text("**Game URL:** \(trimGameURL(game.fileURL))")
