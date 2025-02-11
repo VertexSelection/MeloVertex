@@ -86,38 +86,45 @@ struct ContentView: View {
                             Air.play(AnyView(emulationView))
                         }
                 } else {
-                    
-                    emulationView
-                        .onAppear() {
-                            // This is fro the old exiting game feature that didn't work properly. will look into it and figure out a better alternative
-                            /*
-                             Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-                             timer.invalidate()
-                             quits = quit
-                             
-                             if quits {
-                             quit = false
-                             timer.invalidate()
-                             }
-                             }
-                             */
-                        }
+                    ZStack {
+                        emulationView
+                            .onAppear() {
+                                // This is fro the old exiting game feature that didn't work properly. will look into it and figure out a better alternative
+                                /*
+                                 Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                                 timer.invalidate()
+                                 quits = quit
+                                 
+                                 if quits {
+                                 quit = false
+                                 timer.invalidate()
+                                 }
+                                 }
+                                 */
+                            }
+                    }
                 }
             } else {
                 // This is when the game starts to stop the animation
-                EmulationView()
-                    .onAppear() {
-                        isAnimating = false
+                if #available(iOS 16, *) {
+                    EmulationView()
+                        .persistentSystemOverlays(.hidden)
+                        .onAppear() {
+                            isAnimating = false
+                        }
+                } else {
+                    VStack {
+                        
                     }
+                    
+                }
             }
         } else {
             // This is the main menu view that includes the Settings and the Game Selector
             mainMenuView
                 .onAppear() {
                     quits = false
-                    
-                    
-                    
+
                     initControllerObservers() // This initializes the Controller Observers that refreshes the controller list when a new controller connecvts.
                 }
                 .onOpenURL() { url in
@@ -216,6 +223,7 @@ struct ContentView: View {
                                         withAnimation {
                                             isLoading = false
                                         }
+                                        
                                         isAnimating = false
                                         timer.invalidate()
                                     }
