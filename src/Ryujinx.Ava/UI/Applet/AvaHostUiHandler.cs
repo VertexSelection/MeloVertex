@@ -98,43 +98,10 @@ namespace Ryujinx.Ava.UI.Applet
             return okPressed;
         }
 
-        public bool DisplayInputDialog(SoftwareKeyboardUiArgs args, out string userText)
+        public void DisplayInputDialog(SoftwareKeyboardUiArgs args, Action<string> onTextEntered)
         {
-            ManualResetEvent dialogCloseEvent = new(false);
-
-            bool okPressed = false;
-            bool error = false;
-            string inputText = args.InitialText ?? "";
-
-            Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                try
-                {
-                    var response = await SwkbdAppletDialog.ShowInputDialog(LocaleManager.Instance[LocaleKeys.SoftwareKeyboard], args);
-
-                    if (response.Result == UserResult.Ok)
-                    {
-                        inputText = response.Input;
-                        okPressed = true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    error = true;
-
-                    await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogSoftwareKeyboardErrorExceptionMessage, ex));
-                }
-                finally
-                {
-                    dialogCloseEvent.Set();
-                }
-            });
-
-            dialogCloseEvent.WaitOne();
-
-            userText = error ? null : inputText;
-
-            return error || okPressed;
+            onTextEntered?.Invoke("MeloNX");
+            return;
         }
 
         public void ExecuteProgram(Switch device, ProgramSpecifyKind kind, ulong value)

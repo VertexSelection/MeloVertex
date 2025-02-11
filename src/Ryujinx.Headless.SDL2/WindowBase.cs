@@ -460,12 +460,19 @@ namespace Ryujinx.Headless.SDL2
             Exit();
         }
 
-        public bool DisplayInputDialog(SoftwareKeyboardUiArgs args, out string userText)
+        public void DisplayInputDialog(SoftwareKeyboardUiArgs args, Action<string> onTextEntered)
         {
             // SDL2 doesn't support input dialogs
-            userText = "Ryujinx";
-
-            return true;
+            // Trying to use Objective-C on iDevices
+            if (OperatingSystem.IsIOS())
+            {
+                AlertHelper.ShowAlertWithTextInput(args.HeaderText, args.SubtitleText, args.GuideText, (inputText) =>
+                {
+                    onTextEntered?.Invoke(inputText);
+                });
+            } else {
+                onTextEntered?.Invoke("");
+            }
         }
 
         public bool DisplayMessageDialog(string title, string message)

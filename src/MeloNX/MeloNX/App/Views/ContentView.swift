@@ -61,8 +61,8 @@ struct ContentView: View {
             // Metal Private API isn't needed and causes more stutters
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
-            MoltenVKSettings(string: "MVK_DEBUG", value: "1"),
-            MoltenVKSettings(string: "MVK_CONFIG_LOG_LEVEL", value: "2"),
+            MoltenVKSettings(string: "MVK_DEBUG", value: "0"),
+            // MoltenVKSettings(string: "MVK_CONFIG_LOG_LEVEL", value: "0"),
             // MVK_CONFIG_LOG_LEVEL
             //MVK_DEBUG
             // Uses more ram but makes performance higher, may add an option in settings to change or enable / disable this value (default 64 or 192 depending on what i decide)
@@ -115,6 +115,8 @@ struct ContentView: View {
             mainMenuView
                 .onAppear() {
                     quits = false
+                    
+                    
                     
                     initControllerObservers() // This initializes the Controller Observers that refreshes the controller list when a new controller connecvts.
                 }

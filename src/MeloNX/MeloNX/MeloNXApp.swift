@@ -21,7 +21,7 @@ struct MeloNXApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if showed {
+                if showed || DRM != 1 {
                     ContentView()
                 } else {
                     Group {
@@ -137,10 +137,12 @@ struct MeloNXApp: App {
 }
 
 func showDMCAAlert() -> UIAlertController? {
-    if let mainWindow = UIApplication.shared.windows.last {
+    if let mainWindow = UIApplication.shared.windows.first {
         let alertController = UIAlertController(title: "Unauthorized Copy Notice", message: "This app was illegally leaked. Please report the download on the MeloNX Discord. In the meantime, check out Pomelo! \n -Stossy11", preferredStyle: .alert)
         
-        mainWindow.rootViewController!.present(alertController, animated: true, completion: nil)
+        DispatchQueue.main.async {
+            mainWindow.rootViewController!.present(alertController, animated: true, completion: nil)
+        }
         
         return alertController
     } else {

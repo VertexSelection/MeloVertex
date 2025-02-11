@@ -1,5 +1,6 @@
 using Ryujinx.HLE.HOS.Applets;
 using Ryujinx.HLE.HOS.Services.Am.AppletOE.ApplicationProxyService.ApplicationProxy.Types;
+using System;
 
 namespace Ryujinx.HLE.Ui
 {
@@ -10,7 +11,7 @@ namespace Ryujinx.HLE.Ui
         /// </summary>
         /// <param name="userText">Text that the user entered. Set to `null` on internal errors</param>
         /// <returns>True when OK is pressed, False otherwise. Also returns True on internal errors</returns>
-        bool DisplayInputDialog(SoftwareKeyboardUiArgs args, out string userText);
+        public void DisplayInputDialog(SoftwareKeyboardUiArgs args, Action<string> onTextEntered);
 
         /// <summary>
         /// Displays a Message Dialog box to the user and blocks until it is closed.

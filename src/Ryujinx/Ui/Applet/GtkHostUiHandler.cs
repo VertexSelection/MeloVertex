@@ -81,57 +81,10 @@ namespace Ryujinx.Ui.Applet
             return okPressed;
         }
 
-        public bool DisplayInputDialog(SoftwareKeyboardUiArgs args, out string userText)
+        public void DisplayInputDialog(SoftwareKeyboardUiArgs args, Action<string> onTextEntered)
         {
-            ManualResetEvent dialogCloseEvent = new(false);
-
-            bool okPressed = false;
-            bool error = false;
-            string inputText = args.InitialText ?? "";
-
-            Application.Invoke(delegate
-            {
-                try
-                {
-                    var swkbdDialog = new SwkbdAppletDialog(_parent)
-                    {
-                        Title = "Software Keyboard",
-                        Text = args.HeaderText,
-                        SecondaryText = args.SubtitleText,
-                    };
-
-                    swkbdDialog.InputEntry.Text = inputText;
-                    swkbdDialog.InputEntry.PlaceholderText = args.GuideText;
-                    swkbdDialog.OkButton.Label = args.SubmitText;
-
-                    swkbdDialog.SetInputLengthValidation(args.StringLengthMin, args.StringLengthMax);
-                    swkbdDialog.SetInputValidation(args.KeyboardMode);
-
-                    if (swkbdDialog.Run() == (int)ResponseType.Ok)
-                    {
-                        inputText = swkbdDialog.InputEntry.Text;
-                        okPressed = true;
-                    }
-
-                    swkbdDialog.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    error = true;
-
-                    GtkDialog.CreateErrorDialog($"Error displaying Software Keyboard: {ex}");
-                }
-                finally
-                {
-                    dialogCloseEvent.Set();
-                }
-            });
-
-            dialogCloseEvent.WaitOne();
-
-            userText = error ? null : inputText;
-
-            return error || okPressed;
+            onTextEntered?.Invoke("MeloNX");
+            return;
         }
 
         public void ExecuteProgram(HLE.Switch device, ProgramSpecifyKind kind, ulong value)

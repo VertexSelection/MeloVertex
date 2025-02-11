@@ -67,6 +67,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4E7023A52D5A98E2002C7183 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		4E80A98D2CD6F54500029585 /* MeloNX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeloNX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80A99D2CD6F54700029585 /* MeloNXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80A9A72CD6F54700029585 /* MeloNXUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,7 +97,7 @@
 				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (
 					CodeSignOnCopy,
 				);
-				"Dependencies/Dynamic Libraries/SoftwareKeyboard.framework" = (
+				"Dependencies/Dynamic Libraries/RyujinxKeyboard.framework" = (
 					CodeSignOnCopy,
 					RemoveHeadersOnCopy,
 				);
@@ -157,7 +158,7 @@
 				"Dependencies/Dynamic Libraries/libavutil.dylib",
 				"Dependencies/Dynamic Libraries/libMoltenVK.dylib",
 				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib",
-				"Dependencies/Dynamic Libraries/SoftwareKeyboard.framework",
+				"Dependencies/Dynamic Libraries/RyujinxKeyboard.framework",
 				Dependencies/XCFrameworks/libavcodec.xcframework,
 				Dependencies/XCFrameworks/libavfilter.xcframework,
 				Dependencies/XCFrameworks/libavformat.xcframework,
@@ -232,6 +233,7 @@
 		4E80AA192CD700F500029585 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4E7023A52D5A98E2002C7183 /* UIKit.framework */,
 				4E80AA622CD7122800029585 /* GameController.framework */,
 			);
 			name = Frameworks;
@@ -634,6 +636,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -656,6 +662,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
@@ -713,6 +723,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -735,6 +749,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",

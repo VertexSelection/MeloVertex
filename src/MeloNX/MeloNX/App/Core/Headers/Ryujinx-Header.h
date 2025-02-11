@@ -5,7 +5,7 @@
 //  Created by Stossy11 on 3/11/2024.
 //
 
-#define DRM 1
+#define DRM 0
 #define CS_DEBUGGED 0x10000000
 
 #ifndef RyujinxHeader

@@ -195,7 +195,11 @@ struct GameLibraryView: View {
                         
                         Button {
                             let documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-                            let sharedurl = documentsUrl.absoluteString.replacingOccurrences(of: "file://", with: "shareddocuments://")
+                            var sharedurl = documentsUrl.absoluteString.replacingOccurrences(of: "file://", with: "shareddocuments://")
+                            if ProcessInfo.processInfo.isiOSAppOnMac {
+                                sharedurl = documentsUrl.absoluteString
+                            }
+                            print(sharedurl)
                             let furl = URL(string: sharedurl)!
                             if UIApplication.shared.canOpenURL(furl) {
                                 UIApplication.shared.open(furl, options: [:])

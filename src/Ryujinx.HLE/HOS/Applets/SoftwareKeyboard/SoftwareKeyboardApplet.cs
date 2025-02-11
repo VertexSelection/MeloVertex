@@ -14,6 +14,8 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
+
 
 namespace Ryujinx.HLE.HOS.Applets
 {
@@ -51,10 +53,10 @@ namespace Ryujinx.HLE.HOS.Applets
 
         private byte[] _transferMemory;
 
-        private string _textValue = "";
+        public string _textValue = "";
         private int _cursorBegin = 0;
         private Encoding _encoding = Encoding.Unicode;
-        private KeyboardResult _lastResult = KeyboardResult.NotSet;
+        public KeyboardResult _lastResult = KeyboardResult.NotSet;
 
         private IDynamicTextInputHandler _dynamicTextInputHandler = null;
         private SoftwareKeyboardRenderer _keyboardRenderer = null;
@@ -180,9 +182,6 @@ namespace Ryujinx.HLE.HOS.Applets
             return _keyboardRenderer?.DrawTo(destination, position) ?? false;
         }
 
-    [DllImport("SoftwareKeyboard.framework/SoftwareKeyboard", EntryPoint = "displayInputDialog", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void DisplayInputDialog(ref SoftwareKeyboardUiArgs args, out IntPtr userInput);
-
 
         private void ExecuteForegroundKeyboard()
         {
@@ -223,26 +222,8 @@ namespace Ryujinx.HLE.HOS.Applets
                     InitialText = initialText,
                 };
 
-                IntPtr userInputPtr;
-
-                DisplayInputDialog(ref args, out userInputPtr);
-                if (userInputPtr != IntPtr.Zero)
-                {
-                    // Convert the IntPtr to a string
-                    string userInput = Marshal.PtrToStringAnsi(userInputPtr);
-
-                    _textValue = userInput ?? DefaultInputText;
-                    _lastResult = KeyboardResult.Accept;
-
-                    Console.WriteLine($"User input: {userInput}");
-                }
-                else
-                {
-                    Console.WriteLine("No input was received or input was canceled.");
-
-                    _textValue = DefaultInputText;
-                    _lastResult = KeyboardResult.Cancel;
-                }
+                _textValue = DefaultInputText;
+                _lastResult = KeyboardResult.Cancel;
             }
             else
             {
@@ -259,37 +240,40 @@ namespace Ryujinx.HLE.HOS.Applets
                     StringLengthMax = _keyboardForegroundConfig.StringLengthMax,
                     InitialText = initialText,
                 };
+                _device.UiHandler.DisplayInputDialog(args, inputText => 
+                {
+                    Console.WriteLine($"User entered: {inputText}");
+                    
+                    _textValue = inputText ?? initialText ?? DefaultInputText;
+                    _lastResult = !string.IsNullOrEmpty(inputText) ? KeyboardResult.Accept : KeyboardResult.Cancel;
 
-                _lastResult = _device.UiHandler.DisplayInputDialog(args, out _textValue) ? KeyboardResult.Accept : KeyboardResult.Cancel;
-                _textValue ??= initialText ?? DefaultInputText;
-            }
+                    while (_textValue.Length < _keyboardForegroundConfig.StringLengthMin)
+                    {
+                        _textValue = string.Join(" ", _textValue, _textValue);
+                    }
 
-            // Ensure the text meets the minimum length requirement
-            while (_textValue.Length < _keyboardForegroundConfig.StringLengthMin)
-            {
-                _textValue = string.Join(" ", _textValue, _textValue);
-            }
+                    // Truncate the text if it exceeds the maximum length
+                    if (_textValue.Length > _keyboardForegroundConfig.StringLengthMax)
+                    {
+                        _textValue = _textValue[.._keyboardForegroundConfig.StringLengthMax];
+                    }
 
-            // Truncate the text if it exceeds the maximum length
-            if (_textValue.Length > _keyboardForegroundConfig.StringLengthMax)
-            {
-                _textValue = _textValue[.._keyboardForegroundConfig.StringLengthMax];
-            }
+                    // Handle text validation if required
+                    if (_keyboardForegroundConfig.CheckText)
+                    {
+                        // Submit text for validation
+                        _foregroundState = SoftwareKeyboardState.ValidationPending;
+                        PushForegroundResponse(true);
+                    }
+                    else
+                    {
+                        // Submit text as complete
+                        _foregroundState = SoftwareKeyboardState.Complete;
+                        PushForegroundResponse(false);
 
-            // Handle text validation if required
-            if (_keyboardForegroundConfig.CheckText)
-            {
-                // Submit text for validation
-                _foregroundState = SoftwareKeyboardState.ValidationPending;
-                PushForegroundResponse(true);
-            }
-            else
-            {
-                // Submit text as complete
-                _foregroundState = SoftwareKeyboardState.Complete;
-                PushForegroundResponse(false);
-
-                AppletStateChanged?.Invoke(this, null);
+                        AppletStateChanged?.Invoke(this, null);
+                    }
+                });
             }
         }
 
