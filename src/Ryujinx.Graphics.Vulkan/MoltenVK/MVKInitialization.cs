@@ -23,13 +23,9 @@ namespace Ryujinx.Graphics.Vulkan.MoltenVK
 
             config.UseMetalArgumentBuffers = true;
 
-            if (OperatingSystem.IsIOSVersionAtLeast(17)) {
-                config.SemaphoreSupportStyle = MVKVkSemaphoreSupportStyle.MVK_CONFIG_VK_SEMAPHORE_SUPPORT_STYLE_SINGLE_QUEUE;
-            }
+            config.SemaphoreSupportStyle = MVKVkSemaphoreSupportStyle.MVK_CONFIG_VK_SEMAPHORE_SUPPORT_STYLE_SINGLE_QUEUE;
 
             config.MaxActiveMetalCommandBuffersPerQueue = 1024;
-            
-            config.SynchronousQueueSubmits = false;
 
             config.ResumeLostDevice = true;
 

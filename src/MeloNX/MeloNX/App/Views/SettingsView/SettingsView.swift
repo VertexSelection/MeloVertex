@@ -34,6 +34,7 @@ struct SettingsView: View {
     @AppStorage("showScreenShotButton") var ssb: Bool = false
     
     @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = false
+    @AppStorage("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS") var syncqsubmits: Bool = false
     
     @AppStorage("performacehud") var performacehud: Bool = false
     
@@ -85,8 +86,7 @@ struct SettingsView: View {
                     Toggle(isOn: $config.macroHLE) {
                         labelWithIcon("Macro HLE", iconName: "gearshape")
                     }.tint(.blue)
-                    
-                    
+                        
                     
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
@@ -302,8 +302,12 @@ struct SettingsView: View {
                         }
                     }
                     
+                    Toggle(isOn: $config.disablePTC) {
+                        labelWithIcon("Disable PTC", iconName: "cpu")
+                    }.tint(.blue)
+                    
                     if let cpuInfo = getCPUInfo(), cpuInfo.hasPrefix("Apple M") {
-                        if #available (iOS 16.4, *), getEntitlementValue("com.apple.private.hypervisor") {
+                        if #available (iOS 16.4, *) {
                             Toggle(isOn: .constant(false)) {
                                 labelWithIcon("Hypervisor", iconName: "bolt.fill")
                             }
@@ -312,19 +316,18 @@ struct SettingsView: View {
                             .onAppear() {
                                 print("CPU Info: \(cpuInfo)")
                             }
-                        } else {
+                        } else if getEntitlementValue("com.apple.private.hypervisor") {
                             Toggle(isOn: $config.hypervisor) {
                                 labelWithIcon("Hypervisor", iconName: "bolt.fill")
                             }
                             .tint(.blue)
                             .onAppear() {
                                 print("CPU Info: \(cpuInfo)")
-                                
                             }
                         }
                     }
                 } header: {
-                    Text("CPU Mode")
+                    Text("CPU")
                         .font(.title3.weight(.semibold))
                         .textCase(nil)
                         .headerProminence(.increased)
@@ -390,6 +393,24 @@ struct SettingsView: View {
                         }
                         .tint(.blue)
                     }
+                    
+                    Toggle(isOn: $syncqsubmits) {
+                        labelWithIcon("MVK: Synchronous Queue Submits", iconName: "line.diagonal")
+                    }.tint(.blue)
+                        .contextMenu() {
+                            Button {
+                                if let mainWindow = UIApplication.shared.windows.last {
+                                    let alertController = UIAlertController(title: "About MVK: Synchronous Queue Submits", message: "Enable this option if Mario Kart 8 is crashing at Grand Prix mode.", preferredStyle: .alert)
+                                    
+                                    let doneButton = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+                                    alertController.addAction(doneButton)
+                                    
+                                    mainWindow.rootViewController?.present(alertController, animated: true)
+                                }
+                            } label: {
+                                Text("About")
+                            }
+                        }
                     
                     DisclosureGroup {
                         Toggle(isOn: $config.debuglogs) {

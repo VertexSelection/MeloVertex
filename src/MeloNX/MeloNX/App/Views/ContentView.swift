@@ -42,6 +42,7 @@ struct ContentView: View {
     @AppStorage("quit") var quit: Bool = false
     @State var quits: Bool = false
     @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = true
+    @AppStorage("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS") var syncqsubmits: Bool = false
     
     // Loading Animation
     @State private var clumpOffset: CGFloat = -100
@@ -62,6 +63,7 @@ struct ContentView: View {
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_DEBUG", value: "0"),
+            MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"),
             // MoltenVKSettings(string: "MVK_CONFIG_LOG_LEVEL", value: "0"),
             // MVK_CONFIG_LOG_LEVEL
             //MVK_DEBUG
@@ -351,6 +353,11 @@ struct ContentView: View {
         
         if mVKPreFillBuffer {
             let setting = MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2")
+            setenv(setting.string, setting.value, 1)
+        }
+        
+        if syncqsubmits {
+            let setting = MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "2")
             setenv(setting.string, setting.value, 1)
         }
         
