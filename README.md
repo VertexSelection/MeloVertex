@@ -1,6 +1,6 @@
 <p align="center">
-    <a href="https://github.com/MeloNX-Emu/MeloNX">
-        <img src="https://github.com/MeloNX-Emu/melonx-emu.github.io/blob/main/favicon.png?raw=true" alt="MeloNX Logo" width="120">
+    <a href="https://melonx.org">
+        <img src="https://melonx.org/static/imgs/MeloNX.svg" alt="MeloNX Logo" width="120">
     </a>
 </p>
 
