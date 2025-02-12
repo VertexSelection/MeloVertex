@@ -145,7 +145,7 @@ class Ryujinx {
         
         isRunning = true
         
-        MainThread {
+        RunLoop.current.perform {
             
             let url = URL(string: config.gamepath)
             
@@ -189,22 +189,6 @@ class Ryujinx {
         return isRunning
     }
     
-    
-    func MainThread(_ block: @escaping @Sendable () -> Void) {
-        if #available(iOS 17.0, *) {
-            RunLoop.current.perform {
-                autoreleasepool {
-                    block()
-                }
-            }
-        } else {
-            DispatchQueue.main.async {
-                autoreleasepool {
-                    block()
-                }
-            }
-        }
-    }
     
     func loadGames() -> [Game] {
         let fileManager = FileManager.default

@@ -17,7 +17,9 @@ extension UIWindow {
     // Makes the SDLWindow use the current WindowScene instead of making its own window.
     // Also waits for the window to append the on-screen controller
     @objc func wdb_makeKeyAndVisible() {
-        if #unavailable(iOS 17.0) {
+        let enabled =  UserDefaults.standard.bool(forKey: "oldWindowCode")
+        
+        if #unavailable(iOS 17.0), enabled {
             self.windowScene = (UIApplication.shared.connectedScenes.first! as! UIWindowScene)
         }
         
@@ -26,7 +28,7 @@ extension UIWindow {
         
         if #available(iOS 17, *) {
             Ryujinx.shared.repeatuntilfindLayer()
-        } else {
+        } else if UserDefaults.standard.bool(forKey: "isVirtualController") && enabled {
             waitForController()
         }
     }

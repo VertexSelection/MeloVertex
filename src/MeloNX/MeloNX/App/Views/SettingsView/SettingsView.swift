@@ -37,6 +37,9 @@ struct SettingsView: View {
     
     @AppStorage("performacehud") var performacehud: Bool = false
     
+    @AppStorage("oldWindowCode") var windowCode: Bool = false
+    
+    
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
     @State private var searchText = ""
@@ -67,6 +70,7 @@ struct SettingsView: View {
                         labelWithIcon("Shader Cache", iconName: "memorychip")
                     }
                     .tint(.blue)
+                    
                     
                     Toggle(isOn: $config.enableTextureRecompression) {
                         labelWithIcon("Texture Recompression", iconName: "rectangle.compress.vertical")
@@ -414,6 +418,13 @@ struct SettingsView: View {
                 Section {
                     labelWithIcon("JIT Acquisition: \(isJITEnabled() ? "Aquired" : "Not Aquired" )", iconName: "bolt.fill")
                     
+                    if #unavailable(iOS 17) {
+                        Toggle(isOn: $windowCode) {
+                            labelWithIcon("SDL Window", iconName: "macwindow.on.rectangle")
+                        }
+                        .tint(.blue)
+                    }
+                    
                     DisclosureGroup {
                         
                         Toggle(isOn: $mVKPreFillBuffer) {
@@ -464,7 +475,11 @@ struct SettingsView: View {
                         .textCase(nil)
                         .headerProminence(.increased)
                 } footer: {
-                    Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing)")
+                    if #available(iOS 17, *) {
+                        Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing).")
+                    } else {
+                        Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing). If the emulation is not showing (you may hear audio in some games), try enabling \"SDL Window\"")
+                    }
                 }
                 
             }
