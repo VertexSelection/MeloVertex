@@ -53,8 +53,10 @@ MeloNX works on iPhone X and later and iPad 7th Gen and later. Check out the Com
    - Use your preferred method to enable Just-In-Time (JIT) compilation.  
 
 5. **Add Necessary Files**  
+
+If having Issues installing firmware (Make sure your Keys are installed first)
    - If needed, install firmware and keys from **Ryujinx Desktop**.  
-   - Copy the **bis** and **system** folders if you encounter issues.  
+   - Copy the **bis** and **system** folders  
 
 ### Xcode
 
@@ -62,8 +64,10 @@ MeloNX works on iPhone X and later and iPad 7th Gen and later. Check out the Com
    - Visit the [guide here](https://git.743378673.xyz/MeloNX/MeloNX/src/branch/XC-ios-ht/Compile.md).
 
 2. **Add Necessary Files**  
+
+If having Issues installing firmware (Make sure your Keys are installed first)
    - If needed, install firmware and keys from **Ryujinx Desktop**.  
-   - Copy the **bis** and **system** folders if you encounter issues.  
+   - Copy the **bis** and **system** folders  
    
 ## Features
 
