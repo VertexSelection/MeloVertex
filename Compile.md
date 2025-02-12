@@ -1,33 +1,62 @@
-# How to compile MeloNX using macOS
+
+# Compiling MeloNX on macOS
 
 ## Prerequisites
-- [.NET 8.0](<https://dotnet.microsoft.com/en-us/download/dotnet/8.0>)
-- A computer with macOS
 
-## Compiling
-1. Clone the Git Repo and build Ryujinx
-    ```
-       git clone https://github.com/melonx-emu/melonx/tree/XC-ios-ht
-       cd melonx
-       ./compile.sh -x
-    ```
+Before you begin, ensure you have the following installed:
 
-2. Open the Xcode project, stored at MeloNX/src/MeloNX
+- [**.NET 8.0**](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- A Mac running **macOS**
 
-3. Make sure `Ryujinx.SDL2.Headless.dylib` is set to `Embed & Sign` in the General settings for the Xcode project
-  
-4. Signing & Capabilities
-    Change your 'Team' to your Developer Account (free or paid) and change Bundle Identifier to
-    `com.*your name*.MeloNX`
+## Compilation Steps
 
-6. Build and Run
-    `CMD+R`
+### 1. Clone the Repository and Build Ryujinx
 
-7. Check the [post-setup guide](<https://github.com/melonx-emu/melonx/tree/XC-ios-ht/postsetup.md>)
+Open a terminal and run:
 
-## If you don't have a paid developer account
-Make sure these entitlements are removed if you don't have a paid Apple Developer account
+```sh
+git clone https://git.743378673.xyz/MeloNX/MeloNX.git
+cd MeloNX
+./compile.sh
 ```
-    Extended Virtual Addressing
-    Increased Debugging Memory Limit
+
+### 2. Open the Xcode Project
+
+Navigate to the **Xcode project file** located at:
+
+```
+src/MeloNX/MeloNX.xcodeproj
+```
+
+Double-click to open it in **Xcode**.
+
+### 3. Configure the Project Settings
+
+- In **Xcode**, select the **MeloNX** project.
+- Under the **General** tab, find `Ryujinx.SDL2.Headless.dylib`.
+- Set its **Embed setting** to **"Embed & Sign"**.
+
+### 4. Configure Signing & Capabilities
+
+- In **Xcode**, go to **Signing & Capabilities**.
+- Set the **Team** to your **Apple Developer account** (free or paid).
+- Change the **Bundle Identifier** to:
+
+  ```
+  com.<your-name>.MeloNX
+  ```
+
+  *(Replace `<your-name>` with your actual name or identifier.)*
+
+### 5. Connect Your Device
+
+Ensure your **iPhone/iPad** is **connected** and **recognized** in Xcode.
+
+### 6. Build and Run
+
+Click the **Run (▶️) button** in Xcode to compile and launch MeloNX.
+
+---
+
+Now you're all set! 🚀 If you encounter issues, please join the discord at https://melonx.org
 ```
