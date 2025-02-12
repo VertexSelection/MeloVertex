@@ -6,7 +6,7 @@ on:
 
 jobs:
   notify-api:
-    runs-on: ubuntu-latest
+    runs-on: debian-trixie
     steps:
       - name: Send API Call for New Release
         run: |
