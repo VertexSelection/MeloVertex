@@ -253,9 +253,16 @@ struct ContentView: View {
                 }
                 
                 Air.play(AnyView(
-                    Text("Select Game")
-                        .font(.system(size: 100))
-                    
+                    VStack {
+                        Image(systemName: "gamecontroller")
+                            .font(.system(size: 300))
+                            .foregroundColor(.gray)
+                            .padding(.bottom, 10)
+                        
+                        Text("Select Game")
+                            .font(.system(size: 150))
+                            .bold()
+                    }
                 ))
                 
                 let isJIT = isJITEnabled()

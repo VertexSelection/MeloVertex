@@ -382,7 +382,7 @@ struct SettingsView: View {
                         }
                     } else {
                         Toggle(isOn: $useTrollStore) {
-                            labelWithIcon("TrollStore", iconName: "troll.svg")
+                            labelWithIcon("TrollStore JIT", iconName: "troll.svg")
                         }
                         .tint(.blue)
                     }
@@ -407,7 +407,7 @@ struct SettingsView: View {
                         .textCase(nil)
                         .headerProminence(.increased)
                 } footer: {
-                    Text("Enable trace and debug logs for troubleshooting, enable Screenshotting without distractions and Enable automatic TrollStore JIT.")
+                    Text("Enable trace and debug logs for advanced troubleshooting (Note: This degrades performance),\nEnable Screenshot Button for better screenshots\nand Enable TrollStore for automatic TrollStore JIT.")
                 }
                 
                 // Advanced
@@ -418,6 +418,10 @@ struct SettingsView: View {
                         
                         Toggle(isOn: $mVKPreFillBuffer) {
                             labelWithIcon("MVK: Pre-Fill Metal Command Buffers", iconName: "gearshape")
+                        }.tint(.blue)
+                        
+                        Toggle(isOn: $config.dfsIntegrityChecks) {
+                            labelWithIcon("Disable FS Integrity Checks", iconName: "checkmark.shield")
                         }.tint(.blue)
                         
                         HStack {
