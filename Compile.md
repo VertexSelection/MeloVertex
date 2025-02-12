@@ -19,7 +19,7 @@ cd MeloNX
 ./compile.sh
 ```
 
-You may need to run this command if compilation fails. (You will need to put in your user password. Your password will not be shown at all.)
+You may need to run this command if compilation fails, then run the `./compile.sh` command again (You will need to put in your user password. Your password will not be shown at all.)
 ```
 sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 ```
