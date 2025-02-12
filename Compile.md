@@ -37,7 +37,7 @@ Double-click to open it in **Xcode**.
 ### 3. Configure the Project Settings
 
 - In **Xcode**, select the **MeloNX** project.
-- Under the **General** tab, find `Ryujinx.SDL2.Headless.dylib`.
+- Under the **General** tab, find `Ryujinx.Headless.SDL2.dylib`.
 - Set its **Embed setting** to **"Embed & Sign"**.
 
 ### 4. Configure Signing & Capabilities
