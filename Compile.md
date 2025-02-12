@@ -1,4 +1,3 @@
-
 # Compiling MeloNX on macOS
 
 ## Prerequisites
@@ -18,6 +17,11 @@ Open a terminal and run:
 git clone https://git.743378673.xyz/MeloNX/MeloNX.git
 cd MeloNX
 ./compile.sh
+```
+
+You may need to run this command if compilation fails. (You will need to put in your user password. Your password will not be shown at all.)
+```
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 ```
 
 ### 2. Open the Xcode Project
