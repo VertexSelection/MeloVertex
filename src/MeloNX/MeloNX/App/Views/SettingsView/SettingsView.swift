@@ -416,7 +416,7 @@ struct SettingsView: View {
                 
                 // Advanced
                 Section {
-                    labelWithIcon("JIT Acquisition: \(isJITEnabled() ? "Aquired" : "Not Aquired" )", iconName: "bolt.fill")
+                    labelWithIcon("JIT Acquisition: \(isJITEnabled() ? "Acquired" : "Not Acquired" )", iconName: "bolt.fill")
                     
                     if #unavailable(iOS 17) {
                         Toggle(isOn: $windowCode) {
