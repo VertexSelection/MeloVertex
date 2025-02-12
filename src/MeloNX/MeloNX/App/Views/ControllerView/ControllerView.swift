@@ -45,7 +45,7 @@ struct ControllerView: View {
                                     DPadView()
                                 }
                             }
-                            .padding()
+                            Spacer()
                             VStack {
                                 ShoulderButtonsViewRight()
                                 ZStack {
@@ -53,7 +53,6 @@ struct ControllerView: View {
                                     ABXYView()
                                 }
                             }
-                            .padding()
                         }
                         
                         HStack {
@@ -63,8 +62,8 @@ struct ControllerView: View {
                                 .padding(.horizontal, 40)
                         }
                     }
-                    .padding(.bottom, geometry.size.height / 3.2) // very broken
                 }
+                
             } else {
                 // could be landscape
                 VStack {
@@ -100,12 +99,12 @@ struct ControllerView: View {
                                 // Spacer()
                                 VStack {
                                     // Spacer()
-                                    ButtonView(button: .back) // Adding the + button
+                                    ButtonView(button: .back) // Adding the - button
                                 }
                                 Spacer()
                                 VStack {
                                     // Spacer()
-                                    ButtonView(button: .start) // Adding the - button
+                                    ButtonView(button: .start) // Adding the + button
                                 }
                                 // Spacer()
                             }
