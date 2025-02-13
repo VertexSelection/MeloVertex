@@ -11,3 +11,5 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 Anyone who attempts or has attempted to merge MeloNX with Pomelo, or otherwise use this source code in conjunction with Pomelo, is prohibited from using, copying, modifying, or distributing the source code without first obtaining explicit, written permission from Stossy11.
 
 Additionally, the names of the developers or contributors to this project may not be used to endorse or promote products derived from this software without specific, prior written permission from the respective developer(s).
+
+Ryujinx is licensed under the MIT License. Copyright (c) Ryujinx contributors. All rights to Ryujinx are held by its respective copyright holders, and its use is subject to the terms of the MIT License.
