@@ -19,7 +19,7 @@
 
 # Compatibility
 
-MeloNX works on iPhone X and later and iPad 7th Gen and later. Check out the Compatibility on the <a href="https://melonx.org/compatibility/$0" target="_blank">website</a>.
+MeloNX works on iPhone X and later and iPad 7th Gen and later. Check out the Compatibility on the <a href="https://melonx.org/compatibility/" target="_blank">website</a>.
 
 # Usage
 
