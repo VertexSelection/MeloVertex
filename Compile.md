@@ -18,16 +18,16 @@ git clone https://git.743378673.xyz/MeloNX/MeloNX.git
 cd MeloNX
 ./compile.sh
 ```
+You may need to run this command if compilation fails, then run the `./compile.sh` command again (You will need to put in your user password. Your password will not be shown at all.)
+```
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+```
+
 
 However, if you only need to update MeloNX, make sure you have cd into the directory then run this then skip to step 5 
 ```
 git pull
 ./compile.sh
-```
-
-You may need to run this command if compilation fails, then run the `./compile.sh` command again (You will need to put in your user password. Your password will not be shown at all.)
-```
-sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 ```
 
 ### 2. Open the Xcode Project
