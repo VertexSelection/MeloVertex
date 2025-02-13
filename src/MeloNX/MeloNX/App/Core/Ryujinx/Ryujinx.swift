@@ -92,6 +92,7 @@ class Ryujinx {
         var expandRam: Bool
         var dfsIntegrityChecks: Bool
         var disablePTC: Bool
+        var disablevsync: Bool
         
 
         init(gamepath: String,
@@ -114,7 +115,8 @@ class Ryujinx {
              hypervisor: Bool = false,
              expandRam: Bool = false,
              dfsIntegrityChecks: Bool = false,
-             disablePTC: Bool = false
+             disablePTC: Bool = false,
+             disablevsync: Bool = false
         ) {
             self.gamepath = gamepath
             self.inputids = inputids
@@ -137,6 +139,7 @@ class Ryujinx {
             self.hypervisor = hypervisor
             self.dfsIntegrityChecks = dfsIntegrityChecks
             self.disablePTC = disablePTC
+            self.disablevsync = disablevsync
         }
     }
 
@@ -267,6 +270,11 @@ class Ryujinx {
         if config.disablePTC {
             args.append("--disable-ptc")
         }
+        
+        if config.disablevsync {
+            args.append("--disable-vsync")
+        }
+        
         
         if config.hypervisor {
             args.append("--use-hypervisor")

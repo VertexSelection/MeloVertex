@@ -14,8 +14,18 @@ struct MetalView: UIViewRepresentable {
     
     func makeUIView(context: Context) -> UIView {
         let metalLayer = Ryujinx.shared.metalLayer!
-        metalLayer.frame = Ryujinx.shared.emulationUIView.bounds
-        Ryujinx.shared.emulationUIView.contentScaleFactor = metalLayer.contentsScale // Right size and Fix Touch :3
+        
+        var view = UIView()
+        
+        metalLayer.frame = view.bounds
+        if airplay {
+            metalLayer.contentsScale = view.contentScaleFactor
+        } else {
+            Ryujinx.shared.emulationUIView.contentScaleFactor = metalLayer.contentsScale // Right size and Fix Touch :3
+        }
+        
+        Ryujinx.shared.emulationUIView = view
+        
         if !Ryujinx.shared.emulationUIView.subviews.contains(where: { $0 == metalLayer }) {
             Ryujinx.shared.emulationUIView.layer.addSublayer(metalLayer)
         }

@@ -72,6 +72,11 @@ struct SettingsView: View {
                     }
                     .tint(.blue)
                     
+                    Toggle(isOn: $config.disablevsync) {
+                        labelWithIcon("Disable VSync", iconName: "arrow.triangle.2.circlepath")
+                    }
+                    .tint(.blue)
+                    
                     
                     Toggle(isOn: $config.enableTextureRecompression) {
                         labelWithIcon("Texture Recompression", iconName: "rectangle.compress.vertical")
