@@ -65,7 +65,7 @@ Ensure your **iPhone/iPad** is **connected** and **selected** (Next to MeloNX wi
 - You will be need to press GET and wait for it to finish downloading and installing
 - Then you will be able to select your device and Build and Run.
 
-Make Sure you do **NOT** select the Simulator. (Which is the Generic names, e.g. "iPhone 16 Pro")
+Make Sure you do **NOT** select the Simulator. (Which is the Generic names and the ones with the non-coloured icons, e.g. "iPhone 16 Pro")
 
 ### 6. Build and Run
 
