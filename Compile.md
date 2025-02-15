@@ -60,11 +60,19 @@ Double-click to open it in **Xcode**.
 
 ### 5. Connect Your Device
 
-Ensure your **iPhone/iPad** is **connected** and **recognized** in Xcode.
+Ensure your **iPhone/iPad** is **connected** and **selected** (Next to MeloNX with the arrow) in Xcode.
+- You may need to install the iOS SDK. it will say next to MeloNX with the arrow saying "iOS XX Not Installed (GET)"
+- You will be need to press GET and wait for it to finish downloading and installing
+- Then you will be able to select your device and Build and Run.
+
+Make Sure you do **NOT** select the Simulator. (Which is the Generic names, e.g. "iPhone 16 Pro")
 
 ### 6. Build and Run
 
 Click the **Run (▶️) button** in Xcode to compile and launch MeloNX.
+- When running on your device, Click the **Spray Can Button** below the Run button 
+- Right Click where it says "> MeloNX PID XXXX" 
+- Press Detach in the Context Menu.
 
 ---
 
