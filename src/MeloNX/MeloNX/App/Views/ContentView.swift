@@ -309,8 +309,9 @@ struct ContentView: View {
             self.onscreencontroller = onscreen
         }
         
-        controllersList.removeAll(where: { $0.id == "0"})
-        
+        controllersList.removeAll(where: { $0.id == "0" || (!$0.name.starts(with: "GC - ") && $0 != onscreencontroller) })
+        controllersList.mutableForEach { $0.name = $0.name.replacingOccurrences(of: "GC - ", with: "") }
+
         currentControllers = []
         
         if controllersList.count == 1 {
@@ -318,7 +319,7 @@ struct ContentView: View {
             currentControllers.append(controller)
         } else if (controllersList.count - 1) >= 1 {
             for controller in controllersList {
-                if controller.id != onscreencontroller.id && controller.name.starts(with: "GC - ") && !currentControllers.contains(where: { $0.id == controller.id }) {
+                if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
                     currentControllers.append(controller)
                 }
             }
@@ -400,3 +401,10 @@ func loadSettings() -> Ryujinx.Configuration? {
     }
 }
 
+extension Array {
+    @inlinable public mutating func mutableForEach(_ body: (inout Element) throws -> Void) rethrows {
+        for index in self.indices {
+            try body(&self[index])
+        }
+    }
+}
