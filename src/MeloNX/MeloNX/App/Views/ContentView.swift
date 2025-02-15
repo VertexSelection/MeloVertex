@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var controllersList: [Controller] = []
     @State private var currentControllers: [Controller] = []
     @State var onscreencontroller: Controller = Controller(id: "", name: "")
+    @State var nativeControllers: [GCController: NativeController] = [:]
     @State private var isVirtualControllerActive: Bool = false
     @AppStorage("isVirtualController") var isVCA: Bool = true
     
@@ -50,7 +51,7 @@ struct ContentView: View {
     private let animationDuration: Double = 1.0
     @State private var isAnimating = false
     @State var isLoading = true
-    
+
     // MARK: - Initialization
     init() {
         let defaultConfig = loadSettings() ?? Ryujinx.Configuration(gamepath: "")
@@ -152,6 +153,7 @@ struct ContentView: View {
             queue: .main) { notification in
                 if let controller = notification.object as? GCController {
                     print("Controller connected: \(controller.productCategory)")
+                    nativeControllers[controller] = .init(controller)
                     refreshControllersList()
                 }
         }
@@ -163,6 +165,7 @@ struct ContentView: View {
             queue: .main) { notification in
                 if let controller = notification.object as? GCController {
                     print("Controller disconnected: \(controller.productCategory)")
+                    nativeControllers[controller] = nil
                     refreshControllersList()
                 }
         }
@@ -315,7 +318,7 @@ struct ContentView: View {
             currentControllers.append(controller)
         } else if (controllersList.count - 1) >= 1 {
             for controller in controllersList {
-                if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
+                if controller.id != onscreencontroller.id && controller.name.starts(with: "GC - ") && !currentControllers.contains(where: { $0.id == controller.id }) {
                     currentControllers.append(controller)
                 }
             }
