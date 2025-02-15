@@ -22,10 +22,12 @@ public struct Game: Identifiable, Equatable, Hashable {
     var icon: UIImage?
     
     
-    static func convertGameInfoToGame(gameInfo: GameInfo, url: URL) -> Game {
+    static func convertGameInfoToGame(gameInfo: GameInfo, url: URL) -> Game? {
+        guard gameInfo.FileSize != 0 else { return nil }
+
         var gameInfo = gameInfo
         var gameTemp = Game(containerFolder: url.deletingLastPathComponent(), fileType: .item, fileURL: url, titleName: "", titleId: "", developer: "", version: "")
-        
+
         gameTemp.titleName = withUnsafePointer(to: &gameInfo.TitleName) {
             $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
                 String(cString: $0)

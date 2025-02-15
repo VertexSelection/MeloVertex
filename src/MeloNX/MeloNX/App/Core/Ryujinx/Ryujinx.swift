@@ -227,8 +227,9 @@ class Ryujinx {
                     
                     let gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
                     
-                    let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: fileURLCandidate)
-                    
+                    guard let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: fileURLCandidate)
+                    else { continue }
+
                     games.append(game)
                 } catch {
                     print(error)

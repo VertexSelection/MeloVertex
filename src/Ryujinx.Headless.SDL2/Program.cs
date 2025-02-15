@@ -321,6 +321,9 @@ namespace Ryujinx.Headless.SDL2
             var stream = OpenFile(descriptor);
 
             var gameInfo = GetGameInfo(stream, extension);
+            if (gameInfo == null) {
+                return new GameInfoNative(0, "", "", "", "", new byte[0]);
+            }
 
             return new GameInfoNative(
                 (ulong)gameInfo.FileSize, 
