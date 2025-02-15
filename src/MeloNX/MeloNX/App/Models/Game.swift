@@ -23,8 +23,6 @@ public struct Game: Identifiable, Equatable, Hashable {
     
     
     static func convertGameInfoToGame(gameInfo: GameInfo, url: URL) -> Game? {
-        guard gameInfo.FileSize != 0 else { return nil }
-
         var gameInfo = gameInfo
         var gameTemp = Game(containerFolder: url.deletingLastPathComponent(), fileType: .item, fileURL: url, titleName: "", titleId: "", developer: "", version: "")
 

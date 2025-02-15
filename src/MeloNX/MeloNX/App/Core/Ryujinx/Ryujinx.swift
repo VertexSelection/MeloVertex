@@ -373,7 +373,18 @@ class Ryujinx {
             self.firmwareversion = version
         }
     }
-    
+
+    func setTitleUpdate(titleId: String, updatePath: String) {
+        guard let titleIdPtr = titleId.cString(using: .utf8),
+              let updatePathPtr = updatePath.cString(using: .utf8)
+        else {
+            print("Invalid firmware path")
+            return
+        }
+
+        set_title_update(titleIdPtr, updatePathPtr)
+    }
+
     private func generateGamepadId(joystickIndex: Int32) -> String? {
         let guid = SDL_JoystickGetDeviceGUID(joystickIndex)
 

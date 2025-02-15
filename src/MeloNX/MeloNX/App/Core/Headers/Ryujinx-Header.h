@@ -43,6 +43,8 @@ int main_ryujinx_sdl(int argc, char **argv);
 
 int get_current_fps();
 
+void set_title_update(const char* titleIdPtr, const char* updatePathPtr);
+
 void initialize();
 
 #ifdef __cplusplus
