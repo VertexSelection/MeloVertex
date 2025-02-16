@@ -42,72 +42,54 @@ struct GameLibraryView: View {
         }
         return Ryujinx.shared.games.filter {
             $0.titleName.localizedCaseInsensitiveContains(searchText) ||
-            $0.developer.localizedCaseInsensitiveContains(searchText)
+                $0.developer.localizedCaseInsensitiveContains(searchText)
         }
     }
     
     var body: some View {
         iOSNav {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 20) {
-                    if !isSearching {
-                        Text("Games")
-                            .font(.system(size: 34, weight: .bold))
-                            .padding(.horizontal)
-                            .padding(.top, 12)
+            List {
+                if Ryujinx.shared.games.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "gamecontroller.fill")
+                            .font(.system(size: 64))
+                            .foregroundColor(.secondary.opacity(0.7))
+                            .padding(.top, 60)
+                        Text("No Games Found")
+                            .font(.title2.bold())
+                            .foregroundColor(.primary)
+                        Text("Add ROM, Keys and Firmware to get started")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
                     }
-                    
-                    if Ryujinx.shared.games.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "gamecontroller.fill")
-                                .font(.system(size: 64))
-                                .foregroundColor(.secondary.opacity(0.7))
-                                .padding(.top, 60)
-                            Text("No Games Found")
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+                } else {
+                    if !isSearching && !recentGames.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Recent")
                                 .font(.title2.bold())
-                                .foregroundColor(.primary)
-                            Text("Add ROM, Keys and Firmware to get started")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
-                    } else {
-                        if !isSearching && !recentGames.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Recent")
-                                    .font(.title2.bold())
-                                    .padding(.horizontal)
+                                .padding(.horizontal)
                                 
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    LazyHStack(spacing: 16) {
-                                        ForEach(recentGames) { game in
-                                            RecentGameCard(game: game, startemu: $startemu)
-                                                .onTapGesture {
-                                                    addToRecentGames(game)
-                                                    startemu = game
-                                                }
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                }
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("All Games")
-                                    .font(.title2.bold())
-                                    .padding(.horizontal)
-                                
-                                LazyVStack(spacing: 2) {
-                                    ForEach(filteredGames) { game in
-                                        GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, gameInfo: $gameInfo)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                LazyHStack(spacing: 16) {
+                                    ForEach(recentGames) { game in
+                                        RecentGameCard(game: game, startemu: $startemu)
                                             .onTapGesture {
                                                 addToRecentGames(game)
+                                                startemu = game
                                             }
                                     }
                                 }
+                                .padding(.horizontal)
                             }
-                        } else {
+                        }
+                            
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("All Games")
+                                .font(.title2.bold())
+                                .padding(.horizontal)
+                                
                             LazyVStack(spacing: 2) {
                                 ForEach(filteredGames) { game in
                                     GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, gameInfo: $gameInfo)
@@ -117,42 +99,51 @@ struct GameLibraryView: View {
                                 }
                             }
                         }
-                    }
-                }
-                .onAppear {
-                    loadRecentGames()
-                    
-                    let firmware = Ryujinx.shared.fetchFirmwareVersion()
-                    firmwareversion = (firmware == "" ? "0" : firmware)
-                }
-                .fileImporter(isPresented: $firmwareInstaller, allowedContentTypes: [.item]) { result in
-                    switch result {
-                    case .success(let url):
-                        do {
-                            let fun = url.startAccessingSecurityScopedResource()
-                            let path = url.path
-                            
-                            Ryujinx.shared.installFirmware(firmwarePath: path)
-                            
-                            firmwareversion = (Ryujinx.shared.fetchFirmwareVersion() == "" ? "0" : Ryujinx.shared.fetchFirmwareVersion())
-                            if fun  {
-                                url.stopAccessingSecurityScopedResource()
-                            }
+                    } else {
+                        ForEach(filteredGames) { game in
+                            GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, gameInfo: $gameInfo)
+                                .onTapGesture {
+                                    addToRecentGames(game)
+                                }
                         }
-                    case .failure(let error):
-                        print(error)
                     }
                 }
             }
+            .navigationTitle("Games")
+            .navigationBarTitleDisplayMode(.large)
+            .onAppear {
+                loadRecentGames()
+                    
+                let firmware = Ryujinx.shared.fetchFirmwareVersion()
+                firmwareversion = (firmware == "" ? "0" : firmware)
+            }
+            .fileImporter(isPresented: $firmwareInstaller, allowedContentTypes: [.item]) { result in
+                switch result {
+                case .success(let url):
+                    do {
+                        let fun = url.startAccessingSecurityScopedResource()
+                        let path = url.path
+                            
+                        Ryujinx.shared.installFirmware(firmwarePath: path)
+                            
+                        firmwareversion = (Ryujinx.shared.fetchFirmwareVersion() == "" ? "0" : Ryujinx.shared.fetchFirmwareVersion())
+                        if fun {
+                            url.stopAccessingSecurityScopedResource()
+                        }
+                    }
+                case .failure(let error):
+                    print(error)
+                }
+            }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         isSelectingGameFile.toggle()
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
-                
+
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Text("Firmware Version: \(firmwareversion)")
@@ -215,7 +206,6 @@ struct GameLibraryView: View {
                 }
             }
         }
-        .background(Color(.systemGroupedBackground))
         .searchable(text: $searchText)
         .onChange(of: searchText) { _ in
             isSearching = !searchText.isEmpty
@@ -296,7 +286,6 @@ struct GameLibraryView: View {
         }
     }
     
-    
     private func addToRecentGames(_ game: Game) {
         recentGames.removeAll { $0.id == game.id }
         
@@ -329,8 +318,7 @@ struct GameLibraryView: View {
         }
     }
 
-    
-// MARK: - Delete Game Function
+    // MARK: - Delete Game Function
     func deleteGame(game: Game) {
         let fileManager = FileManager.default
         do {
@@ -343,7 +331,7 @@ struct GameLibraryView: View {
     }
 }
 
-// MARK: -Game Model
+// MARK: - Game Model
 extension Game: Codable {
     enum CodingKeys: String, CodingKey {
         case titleName, titleId, developer, version, fileURL
@@ -372,7 +360,7 @@ extension Game: Codable {
     }
 }
 
-// MARK: -Recent Game Card
+// MARK: - Recent Game Card
 struct RecentGameCard: View {
     let game: Game
     @Binding var startemu: Game?
@@ -393,7 +381,7 @@ struct RecentGameCard: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(colorScheme == .dark ?
-                                  Color(.systemGray5) : Color(.systemGray6))
+                                Color(.systemGray5) : Color(.systemGray6))
                             .frame(width: 140, height: 140)
                         
                         Image(systemName: "gamecontroller.fill")
@@ -419,7 +407,7 @@ struct RecentGameCard: View {
     }
 }
 
-// MARK: -Game List Item
+// MARK: - Game List Item
 struct GameListRow: View {
     let game: Game
     @Binding var startemu: Game?
@@ -447,7 +435,7 @@ struct GameListRow: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 8)
                             .fill(colorScheme == .dark ?
-                                  Color(.systemGray5) : Color(.systemGray6))
+                                Color(.systemGray5) : Color(.systemGray6))
                             .frame(width: 45, height: 45)
                         
                         Image(systemName: "gamecontroller.fill")
@@ -474,9 +462,6 @@ struct GameListRow: View {
                     .foregroundColor(.accentColor)
                     .opacity(0.8)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color(.systemBackground))
             .contextMenu {
                 Section {
                     Button {
@@ -533,4 +518,3 @@ struct GameListRow: View {
         }
     }
 }
-
