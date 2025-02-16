@@ -28,6 +28,7 @@ struct GameLibraryView: View {
     @State var isSelectingGameFile = false
     @State var isViewingGameInfo: Bool = false
     @State var isSelectingGameUpdate: Bool = false
+    @State var isSelectingGameDLC: Bool = false
     @State var gameInfo: Game?
     var games: Binding<[Game]> {
         Binding(
@@ -92,7 +93,7 @@ struct GameLibraryView: View {
                                 
                             LazyVStack(spacing: 2) {
                                 ForEach(filteredGames) { game in
-                                    GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, gameInfo: $gameInfo)
+                                    GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
                                         .onTapGesture {
                                             addToRecentGames(game)
                                         }
@@ -101,7 +102,7 @@ struct GameLibraryView: View {
                         }
                     } else {
                         ForEach(filteredGames) { game in
-                            GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, gameInfo: $gameInfo)
+                            GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
                                 .onTapGesture {
                                     addToRecentGames(game)
                                 }
@@ -271,6 +272,9 @@ struct GameLibraryView: View {
         .sheet(isPresented: $isSelectingGameUpdate) {
             UpdateManagerSheet(game: $gameInfo)
         }
+        .sheet(isPresented: $isSelectingGameDLC) {
+            DLCManagerSheet(game: $gameInfo)
+        }
         .sheet(isPresented: Binding(
             get: { isViewingGameInfo && gameInfo != nil },
             set: { newValue in
@@ -414,6 +418,7 @@ struct GameListRow: View {
     @Binding var games: [Game] // Add this binding
     @Binding var isViewingGameInfo: Bool
     @Binding var isSelectingGameUpdate: Bool
+    @Binding var isSelectingGameDLC: Bool
     @Binding var gameInfo: Game?
     @State var gametoDelete: Game?
     @State var showGameDeleteConfirmation: Bool = false
@@ -476,12 +481,21 @@ struct GameListRow: View {
                     } label: {
                         Label("Game Info", systemImage: "info.circle")
                     }
+                }
 
+                Section {
                     Button {
                         gameInfo = game
                         isSelectingGameUpdate.toggle()
                     } label: {
                         Label("Game Update Manager", systemImage: "chevron.up.circle")
+                    }
+
+                    Button {
+                        gameInfo = game
+                        isSelectingGameDLC.toggle()
+                    } label: {
+                        Label("Game DLC Manager", systemImage: "plus.viewfinder")
                     }
                 }
                 
