@@ -148,13 +148,27 @@ namespace Ryujinx.Headless.SDL2
             var updatePath = Marshal.PtrToStringAnsi(updatePathPtr);
             string _updateJsonPath = System.IO.Path.Combine(AppDataManager.GamesDirPath, titleId, "updates.json");
 
-            TitleUpdateMetadata _titleUpdateWindowData = new TitleUpdateMetadata
-                {
+            TitleUpdateMetadata _titleUpdateWindowData;
+
+            if (File.Exists(_updateJsonPath)) {
+                _titleUpdateWindowData = JsonHelper.DeserializeFromFile<TitleUpdateMetadata>(_updateJsonPath, _titleSerializerContext.TitleUpdateMetadata);
+
+                _titleUpdateWindowData.Paths ??= new List<string>();
+                if (!_titleUpdateWindowData.Paths.Contains(updatePath)) {
+                    _titleUpdateWindowData.Paths.Add(updatePath);
+                }
+
+                _titleUpdateWindowData.Selected = updatePath;
+            } else {
+                _titleUpdateWindowData = new TitleUpdateMetadata {
                     Selected = updatePath,
-                    Paths = new List<string>(),
+                    Paths = new List<string> { updatePath },
                 };
+            }
+
             JsonHelper.SerializeToFile(_updateJsonPath, _titleUpdateWindowData, _titleSerializerContext.TitleUpdateMetadata);
         }
+
 
 
         [UnmanagedCallersOnly(EntryPoint = "get_current_fps")]

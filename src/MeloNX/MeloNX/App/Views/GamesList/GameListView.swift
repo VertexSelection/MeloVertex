@@ -220,7 +220,7 @@ struct GameLibraryView: View {
         .onChange(of: searchText) { _ in
             isSearching = !searchText.isEmpty
         }
-        .fileImporter(isPresented: $isImporting, allowedContentTypes: [.zip, .folder]) { result in
+        .fileImporter(isPresented: $isImporting, allowedContentTypes: [.zip, .folder, .nsp, .xci]) { result in
             switch result {
             case .success(let url):
                 guard url.startAccessingSecurityScopedResource() else {
@@ -278,35 +278,8 @@ struct GameLibraryView: View {
                 print("File import failed: \(err.localizedDescription)")
             }
         }
-        .fileImporter(isPresented: $isSelectingGameUpdate, allowedContentTypes: [.nsp]) { result in
-            switch result {
-            case .success(let url):
-                guard let gameInfo, url.startAccessingSecurityScopedResource() else {
-                    print("Failed to access security-scoped resource")
-                    return
-                }
-                defer { url.stopAccessingSecurityScopedResource() }
-
-                do {
-                    let fileManager = FileManager.default
-                    let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-                    let romUpdatedDirectory = documentsDirectory.appendingPathComponent("updates")
-
-                    if !fileManager.fileExists(atPath: romUpdatedDirectory.path) {
-                        try fileManager.createDirectory(at: romUpdatedDirectory, withIntermediateDirectories: true, attributes: nil)
-                    }
-
-                    let destinationURL = romUpdatedDirectory.appendingPathComponent(url.lastPathComponent)
-                    try? fileManager.copyItem(at: url, to: destinationURL)
-
-                    Ryujinx.shared.setTitleUpdate(titleId: gameInfo.titleId, updatePath: destinationURL.path)
-                    Ryujinx.shared.games = Ryujinx.shared.loadGames()
-                } catch {
-                    print("Error copying game file: \(error)")
-                }
-            case .failure(let err):
-                print("File import failed: \(err.localizedDescription)")
-            }
+        .sheet(isPresented: $isSelectingGameUpdate) {
+            UpdateManagerSheet(game: $gameInfo)
         }
         .sheet(isPresented: Binding(
             get: { isViewingGameInfo && gameInfo != nil },
@@ -523,7 +496,7 @@ struct GameListRow: View {
                         gameInfo = game
                         isSelectingGameUpdate.toggle()
                     } label: {
-                        Label("Add Game Update", systemImage: "chevron.up.circle")
+                        Label("Game Update Manager", systemImage: "chevron.up.circle")
                     }
                 }
                 
