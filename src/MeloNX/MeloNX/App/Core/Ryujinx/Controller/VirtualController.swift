@@ -78,7 +78,7 @@ class VirtualController {
         }
     }
     
-    static func rumble(lowFreq: Float, highFreq: Float) {
+    static func rumble(lowFreq: Float, highFreq: Float, engine: CHHapticEngine? = nil) {
         do {
             // Low-frequency haptic pattern
             let lowFreqPattern = try CHHapticPattern(events: [
@@ -96,9 +96,23 @@ class VirtualController {
                 ], relativeTime: 0.2, duration: 0.2)
             ], parameters: [])
 
-            // Create and start the haptic engine
-            let engine = try CHHapticEngine()
-            try engine.start()
+            // Mutable engine
+            var engine = engine
+
+            // If no engine passed, use device engine
+            if engine == nil {
+                // Create and start the haptic engine
+                if hapticEngine == nil {
+                    hapticEngine = try CHHapticEngine()
+                    try hapticEngine?.start()
+                }
+
+                engine = hapticEngine
+            }
+
+            guard let engine else {
+                return print("Error creating haptic patterns: hapticEngine is nil")
+            }
 
             // Create and play the low-frequency player
             let lowFreqPlayer = try engine.makePlayer(with: lowFreqPattern)
@@ -112,6 +126,8 @@ class VirtualController {
             print("Error creating haptic patterns: \(error)")
         }
     }
+
+    private static var hapticEngine: CHHapticEngine?
 
     
     func updateAxisValue(value: Sint16, forAxis axis: SDL_GameControllerAxis) {

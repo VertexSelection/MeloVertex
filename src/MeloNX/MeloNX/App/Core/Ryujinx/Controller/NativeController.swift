@@ -11,13 +11,20 @@ import GameController
 class NativeController: Hashable {
     private var instanceID: SDL_JoystickID = -1
     private var controller: OpaquePointer?
-    private let nativeController: GCController
+    private var nativeController: GCController
+    private let controllerHaptics: CHHapticEngine?
 
     public var controllername: String { "GC - \(nativeController.vendorName ?? "Unknown")" }
 
     init(_ controller: GCController) {
         nativeController = controller
+        controllerHaptics = nativeController.haptics?.createEngine(withLocality: .default)
+        try? controllerHaptics?.start()
         setupHandheldController()
+    }
+
+    deinit {
+        cleanup()
     }
 
     private func setupHandheldController() {
@@ -37,7 +44,7 @@ class NativeController: Hashable {
                 button_mask: 0,
                 axis_mask: 0,
                 name: (controllername as NSString).utf8String,
-                userdata: nil,
+                userdata: Unmanaged.passUnretained(self).toOpaque(),
                 Update: { userdata in
                     // Update joystick state here
                 },
@@ -46,7 +53,9 @@ class NativeController: Hashable {
                 },
                 Rumble: { userdata, lowFreq, highFreq in
                     print("Rumble with \(lowFreq), \(highFreq)")
-                    VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq))
+                    guard let userdata else { return 0 }
+                    let _self = Unmanaged<NativeController>.fromOpaque(userdata).takeUnretainedValue()
+                    VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq), engine: _self.controllerHaptics)
                     return 0
                 },
                 RumbleTriggers: { userdata, leftRumble, rightRumble in
@@ -211,14 +220,11 @@ class NativeController: Hashable {
     }
 
     func cleanup() {
-        if let controller = controller {
+        if let controller {
+            SDL_JoystickDetachVirtual(instanceID)
             SDL_GameControllerClose(controller)
             self.controller = nil
         }
-    }
-
-    deinit {
-        cleanup()
     }
 
     func hash(into hasher: inout Hasher) {

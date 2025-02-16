@@ -165,6 +165,7 @@ struct ContentView: View {
             queue: .main) { notification in
                 if let controller = notification.object as? GCController {
                     print("Controller disconnected: \(controller.productCategory)")
+                    nativeControllers[controller]?.cleanup()
                     nativeControllers[controller] = nil
                     refreshControllersList()
                 }
