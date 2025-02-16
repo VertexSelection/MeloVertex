@@ -751,7 +751,8 @@ namespace Ryujinx.Headless.SDL2
 
                     if (File.Exists(titleUpdateMetadataPath))
                     {
-                        updatePath = JsonHelper.DeserializeFromFile(titleUpdateMetadataPath, _titleSerializerContext.TitleUpdateMetadata).Selected;
+                        string updatePathRelative = JsonHelper.DeserializeFromFile(titleUpdateMetadataPath, _titleSerializerContext.TitleUpdateMetadata).Selected;
+                        updatePath = Path.Combine(AppDataManager.BaseDirPath, updatePathRelative);
 
                         if (File.Exists(updatePath))
                         {

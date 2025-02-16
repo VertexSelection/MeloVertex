@@ -14,45 +14,52 @@ struct GameInfoSheet: View {
     
     var body: some View {
         iOSNav {
-            VStack {
-                if let icon = game.icon {
-                    Image(uiImage: icon)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 250, height: 250)
-                        .cornerRadius(10)
-                        .padding()
-                        .contextMenu {
-                            Button {
-                                UIImageWriteToSavedPhotosAlbum(icon, nil, nil, nil)
-                            } label: {
-                                Label("Save to Photos", systemImage: "square.and.arrow.down")
-                            }
+            List {
+                Section {}
+                header: {
+                    VStack(alignment: .center) {
+                        if let icon = game.icon {
+                            Image(uiImage: icon)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 250, height: 250)
+                                .cornerRadius(10)
+                                .padding()
+                                .contextMenu {
+                                    Button {
+                                        UIImageWriteToSavedPhotosAlbum(icon, nil, nil, nil)
+                                    } label: {
+                                        Label("Save to Photos", systemImage: "square.and.arrow.down")
+                                    }
+                                }
+                        } else {
+                            Image(systemName: "questionmark.circle")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 150, height: 150)
+                                .padding()
                         }
-                } else {
-                    Image(systemName: "questionmark.circle")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 150, height: 150)
-                        .padding()
-                }
-                
-                VStack(alignment: .leading) {
-                    VStack(alignment: .leading) {
-                        Text("**\(game.titleName)** | \(game.titleId.capitalized)")
-                        Text(game.developer)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        VStack(alignment: .center) {
+                            Text("**\(game.titleName)** | \(game.titleId.capitalized)")
+                                .multilineTextAlignment(.center)
+                            Text(game.developer)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 3)
                     }
-                    .padding(.vertical, 3)
-                    
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Information")
-                            .font(.title2)
-                            .bold()
-                        
-                        Text("**Version:** \(game.version)")
-                        Text("**Title ID:** \(game.titleId)")
+                    .frame(maxWidth: .infinity)
+                }
+
+                Section {
+                    HStack {
+                        Text("**Version**")
+                        Spacer()
+                        Text(game.version)
+                            .foregroundStyle(Color.secondary)
+                    }
+                    HStack {
+                        Text("**Title ID**")
                             .contextMenu {
                                 Button {
                                     UIPasteboard.general.string = game.titleId
@@ -60,15 +67,32 @@ struct GameInfoSheet: View {
                                     Text("Copy Title ID")
                                 }
                             }
-                        Text("**Game Size:** \(fetchFileSize(for: game.fileURL) ?? 0) bytes")
-                        Text("**File Type:** .\(getFileType(game.fileURL))")
-                        Text("**Game URL:** \(trimGameURL(game.fileURL))")
+                        Spacer()
+                        Text(game.titleId)
+                            .foregroundStyle(Color.secondary)
                     }
+                    HStack {
+                        Text("**Game Size**")
+                        Spacer()
+                        Text("\(fetchFileSize(for: game.fileURL) ?? 0) bytes")
+                            .foregroundStyle(Color.secondary)
+                    }
+                    HStack {
+                        Text("**File Type**")
+                        Spacer()
+                        Text(getFileType(game.fileURL))
+                            .foregroundStyle(Color.secondary)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("**Game URL**")
+                        Text(trimGameURL(game.fileURL))
+                            .foregroundStyle(Color.secondary)
+                    }
+                } header: {
+                    Text("Information")
                 }
-
-                Spacer()
+                .headerProminence(.increased)
             }
-            .padding(.horizontal, 5)
             .navigationTitle(game.titleName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -103,10 +127,6 @@ struct GameInfoSheet: View {
     }
     
     func getFileType(_ url: URL) -> String {
-        let path = url.path
-        if let range = path.range(of: ".") {
-            return String(path[range.upperBound...])
-        }
-        return "Unknown"
+        url.pathExtension
     }
 }

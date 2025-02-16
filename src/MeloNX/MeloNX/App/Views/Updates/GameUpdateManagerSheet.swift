@@ -15,39 +15,45 @@ struct UpdateManagerSheet: View {
     @Binding var game: Game?
     @State private var isSelectingGameUpdate = false
     @State private var jsonURL: URL? = nil
-    
+
     var body: some View {
         NavigationView {
-            VStack {
-                List(paths, id: \..self) { item in
-                    Button(action: {
-                        selectItem(item.lastPathComponent)
-                    }) {
-                        HStack {
-                            Text(item.lastPathComponent)
-                            if selectedItem == "\(game!.titleId)/\(item.lastPathComponent)" {
-                                Spacer()
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                    .contextMenu {
-                        Button {
-                            removeUpdate(item)
-                        } label: {
-                            Text("Remove Update")
+            List(paths, id: \..self, selection: $selectedItem) { item in
+                Button(action: {
+                    selectItem(item.lastPathComponent)
+                }) {
+                    HStack {
+                        Text(item.lastPathComponent)
+                            .foregroundStyle(Color(uiColor: .label))
+                        Spacer()
+                        if selectedItem == "updates/\(game!.titleId)/\(item.lastPathComponent)" {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(Color.accentColor)
+                                .font(.system(size: 24))
+                        } else {
+                            Image(systemName: "circle")
+                                .foregroundStyle(Color(uiColor: .secondaryLabel))
+                                .font(.system(size: 24))
                         }
                     }
                 }
+                .contextMenu {
+                    Button {
+                        removeUpdate(item)
+                    } label: {
+                        Text("Remove Update")
+                    }
+                }
             }
-            .onAppear() {
+            .onAppear {
                 print(URL.documentsDirectory.appendingPathComponent("games").appendingPathComponent(game!.titleId).appendingPathComponent("updates.json"))
                 
                 loadJSON(URL.documentsDirectory.appendingPathComponent("games").appendingPathComponent(game!.titleId).appendingPathComponent("updates.json"))
             }
             .navigationTitle("\(game!.titleName) Updates")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                Button("+") {
+                Button("Add", systemImage: "plus") {
                     isSelectingGameUpdate = true
                 }
             }
@@ -80,7 +86,8 @@ struct UpdateManagerSheet: View {
                     let destinationURL = romUpdatedDirectory.appendingPathComponent(url.lastPathComponent)
                     try? fileManager.copyItem(at: url, to: destinationURL)
 
-                    Ryujinx.shared.setTitleUpdate(titleId: gameInfo.titleId, updatePath: "\(gameInfo.titleId)/" + url.lastPathComponent)
+                    items.append("updates/" + gameInfo.titleId + "/" + url.lastPathComponent)
+                    selectItem(url.lastPathComponent)
                     Ryujinx.shared.games = Ryujinx.shared.loadGames()
                     loadJSON(jsonURL!)
                 } catch {
@@ -93,7 +100,7 @@ struct UpdateManagerSheet: View {
     }
     
     func removeUpdate(_ game: URL) {
-        let gameString = "\(self.game!.titleId)/\(game.lastPathComponent)"
+        let gameString = "updates/\(self.game!.titleId)/\(game.lastPathComponent)"
         paths.removeAll { $0 == game }
         items.removeAll { $0 == gameString }
         
@@ -108,6 +115,7 @@ struct UpdateManagerSheet: View {
         }
         
         saveJSON(selectedItem: selectedItem ?? "")
+        Ryujinx.shared.games = Ryujinx.shared.loadGames()
     }
     
     func saveJSON(selectedItem: String) {
@@ -122,26 +130,28 @@ struct UpdateManagerSheet: View {
     }
     
     func loadJSON(_ json: URL) {
-        
         self.jsonURL = json
-        print("Failed to read JSO")
         
-        guard let jsonURL = jsonURL else { return }
-        print("Failed to read JSOK")
+        guard let jsonURL else { return }
         
         do {
             let data = try Data(contentsOf: jsonURL)
             if let jsonDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let list = jsonDict["paths"] as? [String] {
-                var urls: [URL] = []
-                
-                for path in list {
-                    urls.append(URL.documentsDirectory.appendingPathComponent("updates").appendingPathComponent(path))
+               let list = jsonDict["paths"] as? [String]
+            {
+
+                let filteredList = list.filter { relativePath in
+                    let path = URL.documentsDirectory.appendingPathComponent(relativePath)
+                    return FileManager.default.fileExists(atPath: path.path)
                 }
-                
-                self.items = list
-                self.paths = urls
-                self.selectedItem = jsonDict["selected"] as? String
+
+                let urls: [URL] = filteredList.map { relativePath in
+                    URL.documentsDirectory.appendingPathComponent(relativePath)
+                }
+
+                items = filteredList
+                paths = urls
+                selectedItem = jsonDict["selected"] as? String
             }
         } catch {
             print("Failed to read JSON: \(error)")
@@ -155,17 +165,17 @@ struct UpdateManagerSheet: View {
         do {
             let newData = try JSONSerialization.data(withJSONObject: defaultData, options: .prettyPrinted)
             try newData.write(to: jsonURL)
-            self.items = []
-            self.selectedItem = ""
+            items = []
+            selectedItem = ""
         } catch {
             print("Failed to create default JSON: \(error)")
         }
     }
     
     func selectItem(_ item: String) {
-        let newSelection = "\(game!.titleId)/\(item)"
-        
-        guard let jsonURL = jsonURL else { return }
+        let newSelection = "updates/\(game!.titleId)/\(item)"
+
+        guard let jsonURL else { return }
         
         do {
             let data = try Data(contentsOf: jsonURL)
@@ -175,17 +185,17 @@ struct UpdateManagerSheet: View {
                 jsonDict["selected"] = ""
                 selectedItem = ""
             } else {
-                jsonDict["selected"] = newSelection
+                jsonDict["selected"] = "\(newSelection)"
                 selectedItem = newSelection
             }
             
             jsonDict["paths"] = items
-            
+
             let newData = try JSONSerialization.data(withJSONObject: jsonDict, options: .prettyPrinted)
             try newData.write(to: jsonURL)
+            Ryujinx.shared.games = Ryujinx.shared.loadGames()
         } catch {
             print("Failed to update JSON: \(error)")
         }
     }
-
 }
