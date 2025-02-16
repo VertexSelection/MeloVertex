@@ -5,6 +5,7 @@
 Before you begin, ensure you have the following installed:
 
 - [**.NET 8.0**](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- [**Xcode**](https://apps.apple.com/de/app/xcode/id497799835?l=en-GB&mt=12$0)
 - A Mac running **macOS**
 
 ## Compilation Steps
