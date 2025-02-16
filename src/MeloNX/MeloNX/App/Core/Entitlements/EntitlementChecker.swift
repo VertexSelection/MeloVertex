@@ -29,29 +29,29 @@ func SecTaskCopyValuesForEntitlements(
     _ error: UnsafeMutablePointer<Unmanaged<CFError>?>?
 ) -> CFDictionary?
 
-func checkAppEntitlements(_ ents: [String]) -> [String: Any]? {
+func checkAppEntitlements(_ ents: [String]) -> [String: Any] {
     guard let task = SecTaskCreateFromSelf(nil) else {
         print("Failed to create SecTask")
-        return nil
+        return [:]
     }
     
     guard let entitlements = SecTaskCopyValuesForEntitlements(task, ents as CFArray, nil) else {
         print("Failed to get entitlements")
-        return nil
+        return [:]
     }
     
-    return entitlements as? [String: Any]
+    return (entitlements as? [String: Any]) ?? [:]
 }
 
-func checkAppEntitlement(_ ent: String) -> Bool? {
+func checkAppEntitlement(_ ent: String) -> Bool {
     guard let task = SecTaskCreateFromSelf(nil) else {
         print("Failed to create SecTask")
-        return nil
+        return false
     }
     
     guard let entitlements = SecTaskCopyValueForEntitlement(task, ent as NSString, nil) else {
         print("Failed to get entitlements")
-        return nil
+        return false
     }
     
     return entitlements.boolValue != nil && entitlements.boolValue

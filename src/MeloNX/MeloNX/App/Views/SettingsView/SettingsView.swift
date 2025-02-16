@@ -385,7 +385,7 @@ struct SettingsView: View {
                     if let cpuInfo = getCPUInfo(), cpuInfo.hasPrefix("Apple M") {
                         if #available (iOS 16.4, *) {
                             Toggle(isOn: .constant(false)) {
-                                labelWithIcon("Hypervisor", iconName: "bolt.fill")
+                                labelWithIcon("Hypervisor", iconName: "bolt")
                             }
                             .tint(.blue)
                             .disabled(true)
@@ -394,7 +394,7 @@ struct SettingsView: View {
                             }
                         } else if getEntitlementValue("com.apple.private.hypervisor") {
                             Toggle(isOn: $config.hypervisor) {
-                                labelWithIcon("Hypervisor", iconName: "bolt.fill")
+                                labelWithIcon("Hypervisor", iconName: "bolt")
                             }
                             .tint(.blue)
                             .onAppear() {
@@ -511,10 +511,26 @@ struct SettingsView: View {
                     Text("Enable trace and debug logs for advanced troubleshooting (Note: This degrades performance),\nEnable Screenshot Button for better screenshots\nand Enable TrollStore for automatic TrollStore JIT.")
                 }
                 
-                // Advanced
+                // Info
                 Section {
+                    let totalMemory = ProcessInfo.processInfo.physicalMemory
+                    
                     labelWithIcon("JIT Acquisition: \(isJITEnabled() ? "Acquired" : "Not Acquired" )", iconName: "bolt.fill")
                     
+                    labelWithIcon("Increased Memory Limit Entitlement: \(checkAppEntitlement("com.apple.developer.kernel.increased-memory-limit") ? "Enabled" : "Disabled")", iconName: "memorychip")
+                    
+                    labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000))", iconName: "memorychip.fill")
+                } header: {
+                    Text("Information")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Shows info about Memory, Entitlement and JIT.")
+                }
+                
+                // Advanced
+                Section {
                     if #unavailable(iOS 17) {
                         Toggle(isOn: $windowCode) {
                             labelWithIcon("SDL Window", iconName: "macwindow.on.rectangle")
