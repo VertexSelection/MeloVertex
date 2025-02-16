@@ -42,7 +42,7 @@ struct ContentView: View {
     @AppStorage("quit") var quit: Bool = false
     @State var quits: Bool = false
     @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = true
-    @AppStorage("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS") var syncqsubmits: Bool = false
+    @AppStorage("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS") var syncqsubmits: Bool = true
     
     // Loading Animation
     @State private var clumpOffset: CGFloat = -100

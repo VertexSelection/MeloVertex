@@ -10,7 +10,7 @@ import MetalKit
 
 struct MetalView: UIViewRepresentable {
     
-    var airplay: Bool // just in case :3
+    var airplay: Bool = Air.shared.connected // just in case :3
     
     func makeUIView(context: Context) -> UIView {
         let metalLayer = Ryujinx.shared.metalLayer!

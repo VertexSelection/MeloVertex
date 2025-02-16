@@ -11,16 +11,18 @@ import SwiftUI
 struct EmulationView: View {
     @AppStorage("isVirtualController") var isVCA: Bool = true
     @AppStorage("showScreenShotButton") var ssb: Bool = false
+    @State var isPresentedThree: Bool = false
     @State var isAirplaying = Air.shared.connected
+    @Environment(\.scenePhase) var scenePhase
     var body: some View {
         ZStack {
             if isAirplaying {
                 Text("")
                     .onAppear {
-                        Air.play(AnyView(MetalView(airplay: true).ignoresSafeArea()))
+                        Air.play(AnyView(MetalView().ignoresSafeArea()))
                     }
             } else {
-                MetalView(airplay: false) // The Emulation View
+                MetalView() // The Emulation View
                     .ignoresSafeArea()
                     .edgesIgnoringSafeArea(.all)
             }
@@ -30,6 +32,7 @@ struct EmulationView: View {
             if isVCA {
                 ControllerView() // Virtual Controller
             }
+            
             
             if ssb {
                 Group {

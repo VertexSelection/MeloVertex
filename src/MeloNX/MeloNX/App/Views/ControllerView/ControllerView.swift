@@ -129,6 +129,8 @@ struct ControllerView: View {
 struct ShoulderButtonsViewLeft: View {
     @State var width: CGFloat = 160
     @State var height: CGFloat = 20
+    @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
+    
     var body: some View {
         HStack {
             ButtonView(button: .leftTrigger)
@@ -142,6 +144,9 @@ struct ShoulderButtonsViewLeft: View {
                 width *= 1.2
                 height *= 1.2
             }
+            
+            width *= CGFloat(controllerScale)
+            height *= CGFloat(controllerScale)
         }
     }
 }
@@ -149,6 +154,8 @@ struct ShoulderButtonsViewLeft: View {
 struct ShoulderButtonsViewRight: View {
     @State var width: CGFloat = 160
     @State var height: CGFloat = 20
+    @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
+    
     var body: some View {
         HStack {
             ButtonView(button: .rightShoulder)
@@ -162,12 +169,16 @@ struct ShoulderButtonsViewRight: View {
                 width *= 1.2
                 height *= 1.2
             }
+            
+            width *= CGFloat(controllerScale)
+            height *= CGFloat(controllerScale)
         }
     }
 }
 
 struct DPadView: View {
     @State var size: CGFloat = 145
+    @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     var body: some View {
         VStack {
             ButtonView(button: .dPadUp)
@@ -184,12 +195,16 @@ struct DPadView: View {
             if UIDevice.current.systemName.contains("iPadOS") {
                 size *= 1.2
             }
+            
+            size *= CGFloat(controllerScale)
         }
     }
 }
 
 struct ABXYView: View {
     @State var size: CGFloat = 145
+    @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
+    
     var body: some View {
         VStack {
             ButtonView(button: .X)
@@ -206,6 +221,8 @@ struct ABXYView: View {
             if UIDevice.current.systemName.contains("iPadOS") {
                 size *= 1.2
             }
+            
+            size *= CGFloat(controllerScale)
         }
     }
 }
@@ -218,6 +235,7 @@ struct ButtonView: View {
     @AppStorage("onscreenhandheld") var onscreenjoy: Bool = false
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.presentationMode) var presentationMode
+    @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
 
     
@@ -256,6 +274,9 @@ struct ButtonView: View {
                     width *= 1.2
                     height *= 1.2
                 }
+                
+                width *= CGFloat(controllerScale)
+                height *= CGFloat(controllerScale)
             }
     }
     

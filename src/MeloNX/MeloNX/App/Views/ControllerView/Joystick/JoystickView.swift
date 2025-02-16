@@ -13,11 +13,14 @@ public struct Joystick: View {
     @State var iscool: Bool? = nil
     
     @ObservedObject public var joystickMonitor = JoystickMonitor()
+    @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     var dragDiameter: CGFloat {
         var selfs = CGFloat(160)
+        selfs *= controllerScale
         if UIDevice.current.systemName.contains("iPadOS") {
             return selfs * 1.2
         }
+        
         return selfs
     }
     private let shape: JoystickShape = .circle

@@ -319,7 +319,6 @@ namespace Ryujinx.Headless.SDL2
 
             if (_window != null)
             {
-
                 _window.Exit();
                 _emulationContext.Dispose();
                 _emulationContext = null;
@@ -332,6 +331,7 @@ namespace Ryujinx.Headless.SDL2
             if (_virtualFileSystem == null) {
                 _virtualFileSystem = VirtualFileSystem.CreateInstance();
             }
+            
             var extension = Marshal.PtrToStringAnsi(extensionPtr);
             var stream = OpenFile(descriptor);
 

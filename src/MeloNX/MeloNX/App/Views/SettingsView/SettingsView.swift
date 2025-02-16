@@ -40,9 +40,11 @@ struct SettingsView: View {
     
     @AppStorage("oldWindowCode") var windowCode: Bool = false
     
+    @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
+    @State private var showControllerInfo = false
     @State private var searchText = ""
     
     var filteredMemoryModes: [(String, String)] {
@@ -270,6 +272,35 @@ struct SettingsView: View {
                     Text("Select input devices and on-screen controls to play with. ")
                 }
                 
+                // Language and Region Settings
+                Section {
+                    Picker(selection: $config.language) {
+                        ForEach(SystemLanguage.allCases, id: \.self) { ratio in
+                            Text(ratio.displayName).tag(ratio)
+                        }
+                    } label: {
+                        labelWithIcon("Language", iconName: "character.bubble")
+                    }
+                    
+                    Picker(selection: $config.regioncode) {
+                        ForEach(SystemRegionCode.allCases, id: \.self) { ratio in
+                            Text(ratio.displayName).tag(ratio)
+                        }
+                    } label: {
+                        labelWithIcon("Region", iconName: "globe")
+                    }
+                    
+                    
+                    // globe
+                } header: {
+                    Text("Language and Region Settings")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Configure the System Language and the Region.")
+                }
+                
                 // Input Settings
                 Section {
                     
@@ -283,6 +314,46 @@ struct SettingsView: View {
                     }
                     .tint(.blue)
                     .disabled(true)
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            labelWithIcon("On-Screen Controller Scale", iconName: "magnifyingglass")
+                                .font(.headline)
+                            Spacer()
+                            Button {
+                                showControllerInfo.toggle()
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .symbolRenderingMode(.hierarchical)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Learn more about On-Screen Controller Scale")
+                            .alert(isPresented: $showControllerInfo) {
+                                Alert(
+                                    title: Text("On-Screen Controller Scale"),
+                                    message: Text("Adjust the On-Screen Controller size."),
+                                    dismissButton: .default(Text("OK"))
+                                )
+                            }
+                        }
+                        
+                        Slider(value: $controllerScale, in: 0.1...3.0, step: 0.05) {
+                            Text("Resolution Scale")
+                        } minimumValueLabel: {
+                            Text("0.1x")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        } maximumValueLabel: {
+                            Text("3.0x")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(controllerScale, specifier: "%.2f")x")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
                 } header: {
                     Text("Input Settings")
                         .font(.title3.weight(.semibold))
