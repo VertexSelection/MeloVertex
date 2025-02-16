@@ -115,6 +115,7 @@ namespace Ryujinx.Headless.SDL2
         private static bool _enableMouse;
 
         private static readonly InputConfigJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
+        private static readonly TitleUpdateMetadataJsonSerializerContext _titleSerializerContext = new(JsonHelper.GetDefaultSerializerOptions());
 
         [UnmanagedCallersOnly(EntryPoint = "main_ryujinx_sdl")]
         public static unsafe int MainExternal(int argCount, IntPtr* pArgs)
@@ -139,6 +140,20 @@ namespace Ryujinx.Headless.SDL2
             }
 
             return 0;
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "set_title_update")]
+        public static unsafe void SetTitleUpdate(IntPtr titleIdPtr, IntPtr updatePathPtr) {
+            var titleId = Marshal.PtrToStringAnsi(titleIdPtr);
+            var updatePath = Marshal.PtrToStringAnsi(updatePathPtr);
+            string _updateJsonPath = System.IO.Path.Combine(AppDataManager.GamesDirPath, titleId, "updates.json");
+
+            TitleUpdateMetadata _titleUpdateWindowData = new TitleUpdateMetadata
+                {
+                    Selected = updatePath,
+                    Paths = new List<string>(),
+                };
+            JsonHelper.SerializeToFile(_updateJsonPath, _titleUpdateWindowData, _titleSerializerContext.TitleUpdateMetadata);
         }
 
 
@@ -321,6 +336,9 @@ namespace Ryujinx.Headless.SDL2
             var stream = OpenFile(descriptor);
 
             var gameInfo = GetGameInfo(stream, extension);
+            if (gameInfo == null) {
+                return new GameInfoNative(0, "", "", "", "", new byte[0]);
+            }
 
             return new GameInfoNative(
                 (ulong)gameInfo.FileSize, 
@@ -719,7 +737,7 @@ namespace Ryujinx.Headless.SDL2
 
                     if (File.Exists(titleUpdateMetadataPath))
                     {
-                        // updatePath = JsonHelper.DeserializeFromFile(titleUpdateMetadataPath).Selected;
+                        updatePath = JsonHelper.DeserializeFromFile(titleUpdateMetadataPath, _titleSerializerContext.TitleUpdateMetadata).Selected;
 
                         if (File.Exists(updatePath))
                         {
