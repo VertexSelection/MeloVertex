@@ -93,7 +93,6 @@ namespace Ryujinx.HLE.Loaders.Processes.Extensions
                     if (File.Exists(titleUpdateMetadataPath))
                     {
                         string updatePath = PlatformRelative(JsonHelper.DeserializeFromFile(titleUpdateMetadataPath, _titleSerializerContext.TitleUpdateMetadata).Selected);
-                        Logger.Info?.Print(LogClass.Application, $"Game Update Path: ${updatePath}.");
                         if (File.Exists(updatePath))
                         {
                             PartitionFileSystem updatePartitionFileSystem = new();

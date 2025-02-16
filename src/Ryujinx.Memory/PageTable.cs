@@ -4,7 +4,7 @@ namespace Ryujinx.Memory
     {
         public const int PageBits = 12;
         public const int PageSize = 1 << PageBits;
-        public const int PageMask = PageSize - 2;
+        public const int PageMask = PageSize - 1;
 
         private const int PtLevelBits = 9; // 9 * 4 + 12 = 48 (max address space size)
         private const int PtLevelSize = 1 << PtLevelBits;

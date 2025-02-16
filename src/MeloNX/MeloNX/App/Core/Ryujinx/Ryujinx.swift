@@ -215,9 +215,8 @@ class Ryujinx {
                     
                     let gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
                     
-                    guard let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: fileURLCandidate)
-                    else { continue }
-
+                    let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: fileURLCandidate)
+                    
                     games.append(game)
                 } catch {
                     print(error)
@@ -366,7 +365,8 @@ class Ryujinx {
             self.firmwareversion = version
         }
     }
-
+    
+    
     func setTitleUpdate(titleId: String, updatePath: String) {
         guard let titleIdPtr = titleId.cString(using: .utf8),
               let updatePathPtr = updatePath.cString(using: .utf8)
@@ -377,7 +377,7 @@ class Ryujinx {
 
         set_title_update(titleIdPtr, updatePathPtr)
     }
-
+    
     private func generateGamepadId(joystickIndex: Int32) -> String? {
         let guid = SDL_JoystickGetDeviceGUID(joystickIndex)
 
