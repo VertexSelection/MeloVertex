@@ -222,7 +222,7 @@ class Ryujinx {
                     print(error)
                 }
             }
-            
+
             return games
         } catch {
             print("Error loading games from roms folder: \(error)")
@@ -365,19 +365,30 @@ class Ryujinx {
             self.firmwareversion = version
         }
     }
-    
-    
-    func setTitleUpdate(titleId: String, updatePath: String) {
-        guard let titleIdPtr = titleId.cString(using: .utf8),
-              let updatePathPtr = updatePath.cString(using: .utf8)
+
+    func getDlcNcaList(titleId: String, path: String) -> [DownloadableContentNca] {
+        guard let titleIdCString = titleId.cString(using: .utf8),
+            let pathCString = path.cString(using: .utf8)
         else {
-            print("Invalid firmware path")
-            return
+            print("Invalid path")
+            return []
         }
 
-        set_title_update(titleIdPtr, updatePathPtr)
+        let listPointer = get_dlc_nca_list(titleIdCString, pathCString)
+        print("DLC parcing success: \(listPointer.success)")
+        guard listPointer.success else { return [] }
+
+        let list = Array(UnsafeBufferPointer(start: listPointer.items, count: Int(listPointer.size)))
+
+        return list.map { item in
+                .init(fullPath: withUnsafePointer(to: item.Path) {
+                    $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                        String(cString: $0)
+                    }
+                }, titleId: item.TitleId, enabled: true)
+        }
     }
-    
+
     private func generateGamepadId(joystickIndex: Int32) -> String? {
         let guid = SDL_JoystickGetDeviceGUID(joystickIndex)
 

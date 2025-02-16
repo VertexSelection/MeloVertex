@@ -142,34 +142,95 @@ namespace Ryujinx.Headless.SDL2
             return 0;
         }
 
-        [UnmanagedCallersOnly(EntryPoint = "set_title_update")]
-        public static unsafe void SetTitleUpdate(IntPtr titleIdPtr, IntPtr updatePathPtr) {
+        [UnmanagedCallersOnly(EntryPoint = "get_dlc_nca_list")]
+        public static unsafe DlcNcaList GetDlcNcaList(IntPtr titleIdPtr, IntPtr pathPtr) 
+        {
             var titleId = Marshal.PtrToStringAnsi(titleIdPtr);
-            var updatePath = Marshal.PtrToStringAnsi(updatePathPtr);
-            string _updateJsonPath = System.IO.Path.Combine(AppDataManager.GamesDirPath, titleId, "updates.json");
+            var containerPath = Marshal.PtrToStringAnsi(pathPtr);
 
-            TitleUpdateMetadata _titleUpdateWindowData;
-
-            if (File.Exists(_updateJsonPath)) {
-                _titleUpdateWindowData = JsonHelper.DeserializeFromFile<TitleUpdateMetadata>(_updateJsonPath, _titleSerializerContext.TitleUpdateMetadata);
-
-                _titleUpdateWindowData.Paths ??= new List<string>();
-                if (!_titleUpdateWindowData.Paths.Contains(updatePath)) {
-                    _titleUpdateWindowData.Paths.Add(updatePath);
-                }
-
-                _titleUpdateWindowData.Selected = updatePath;
-            } else {
-                _titleUpdateWindowData = new TitleUpdateMetadata {
-                    Selected = updatePath,
-                    Paths = new List<string> { updatePath },
-                };
+            if (!File.Exists(containerPath))
+            {
+                return new DlcNcaList { success = false };
             }
 
-            JsonHelper.SerializeToFile(_updateJsonPath, _titleUpdateWindowData, _titleSerializerContext.TitleUpdateMetadata);
+            using FileStream containerFile = File.OpenRead(containerPath);
+
+            PartitionFileSystem pfs = new();
+            pfs.Initialize(containerFile.AsStorage()).ThrowIfFailure();
+            bool containsDlc = false;
+
+            _virtualFileSystem.ImportTickets(pfs);
+
+            // TreeIter? parentIter = null;
+
+            List<DlcNcaListItem> listItems = new();
+            foreach (DirectoryEntryEx fileEntry in pfs.EnumerateEntries("/", "*.nca"))
+            {
+                using var ncaFile = new UniqueRef<IFile>();
+
+                pfs.OpenFile(ref ncaFile.Ref, fileEntry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
+
+                Nca nca = TryCreateNca(ncaFile.Get.AsStorage(), containerPath);
+
+                if (nca == null)
+                {
+                    continue;
+                }
+
+                if (nca.Header.ContentType == NcaContentType.PublicData)
+                {
+                    if ((nca.Header.TitleId & 0xFFFFFFFFFFFFE000).ToString("x16") != titleId)
+                    {
+                        break;
+                    }
+
+                    Logger.Warning?.Print(LogClass.Application, $"ContainerPath: {containerPath}");
+                    Logger.Warning?.Print(LogClass.Application, $"TitleId: {nca.Header.TitleId}");
+                    Logger.Warning?.Print(LogClass.Application, $"fileEntry.FullPath: {fileEntry.FullPath}");
+                    
+                    // parentIter ??= ((TreeStore)_dlcTreeView.Model).AppendValues(true, "", containerPath);
+                    // ((TreeStore)_dlcTreeView.Model).AppendValues(parentIter.Value, true, nca.Header.TitleId.ToString("X16"), fileEntry.FullPath);
+
+                    DlcNcaListItem item = new();
+                    CopyStringToFixedArray(fileEntry.FullPath, item.Path, 256);
+                    item.TitleId = nca.Header.TitleId;
+                    listItems.Add(item);
+                    
+                    containsDlc = true;
+                }
+            }
+
+            if (!containsDlc)
+            {
+                return new DlcNcaList { success = false };
+                // GtkDialog.CreateErrorDialog("The specified file does not contain DLC for the selected title!");
+            }
+            
+            var list = new DlcNcaList { success = true, size = (uint) listItems.Count };
+
+            DlcNcaListItem[] items = listItems.ToArray();
+
+            fixed (DlcNcaListItem* p = &items[0])
+            {
+                list.items = p;
+            }
+            
+            return list;
         }
+        
+        private static Nca TryCreateNca(IStorage ncaStorage, string containerPath)
+        {
+            try
+            {
+                return new Nca(_virtualFileSystem.KeySet, ncaStorage);
+            }
+            catch (Exception exception)
+            {
+                // ignored
+            }
 
-
+            return null;
+        }
 
         [UnmanagedCallersOnly(EntryPoint = "get_current_fps")]
         public static unsafe int GetFPS() 
@@ -1518,6 +1579,19 @@ namespace Ryujinx.Headless.SDL2
             public byte[]? Icon;
         }
 
+        public unsafe struct DlcNcaListItem 
+        {
+            public fixed byte Path[256];
+            public ulong TitleId;
+        }
+
+        public unsafe struct DlcNcaList
+        {
+            public bool success;
+            public uint size;
+            public unsafe DlcNcaListItem* items;
+        }
+
         public unsafe struct GameInfoNative
         {
             public ulong FileSize;
@@ -1565,14 +1639,13 @@ namespace Ryujinx.Headless.SDL2
                     ImageData = null;
                 }
             }
-
-            private static void CopyStringToFixedArray(string source, byte* destination, int length)
-            {
-                var span = new Span<byte>(destination, length);
-                span.Clear();
-                Encoding.UTF8.GetBytes(source, span);
-            }
         }
 
+        private static unsafe void CopyStringToFixedArray(string source, byte* destination, int length)
+        {
+            var span = new Span<byte>(destination, length);
+            span.Clear();
+            Encoding.UTF8.GetBytes(source, span);
+        }
     }
 }

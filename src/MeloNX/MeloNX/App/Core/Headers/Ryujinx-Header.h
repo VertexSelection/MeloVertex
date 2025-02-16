@@ -31,7 +31,20 @@ struct GameInfo {
     unsigned int ImageSize;
 };
 
+struct DlcNcaListItem {
+    char Path[256];
+    unsigned long TitleId;
+};
+
+struct DlcNcaList {
+    bool success;
+    unsigned int size;
+    struct DlcNcaListItem* items;
+};
+
 extern struct GameInfo get_game_info(int, char*);
+
+extern struct DlcNcaList get_dlc_nca_list(const char* titleIdPtr, const char* pathPtr);
 
 void install_firmware(const char* inputPtr);
 
@@ -42,8 +55,6 @@ void stop_emulation();
 int main_ryujinx_sdl(int argc, char **argv);
 
 int get_current_fps();
-
-void set_title_update(const char* titleIdPtr, const char* updatePathPtr);
 
 void initialize();
 
