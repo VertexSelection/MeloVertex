@@ -26,7 +26,7 @@ struct UpdateManagerSheet: View {
                         Text(item.lastPathComponent)
                             .foregroundStyle(Color(uiColor: .label))
                         Spacer()
-                        if selectedItem == "\(game!.titleId)/\(item.lastPathComponent)" {
+                        if selectedItem == "updates/\(game!.titleId)/\(item.lastPathComponent)" {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(Color.accentColor)
                                 .font(.system(size: 24))
@@ -86,7 +86,7 @@ struct UpdateManagerSheet: View {
                     let destinationURL = romUpdatedDirectory.appendingPathComponent(url.lastPathComponent)
                     try? fileManager.copyItem(at: url, to: destinationURL)
 
-                    items.append(gameInfo.titleId + "/" + url.lastPathComponent)
+                    items.append("updates/" + gameInfo.titleId + "/" + url.lastPathComponent)
                     selectItem(url.lastPathComponent)
                     Ryujinx.shared.games = Ryujinx.shared.loadGames()
                     loadJSON(jsonURL!)
@@ -100,7 +100,7 @@ struct UpdateManagerSheet: View {
     }
     
     func removeUpdate(_ game: URL) {
-        let gameString = "\(self.game!.titleId)/\(game.lastPathComponent)"
+        let gameString = "updates/\(self.game!.titleId)/\(game.lastPathComponent)"
         paths.removeAll { $0 == game }
         items.removeAll { $0 == gameString }
         
@@ -131,23 +131,25 @@ struct UpdateManagerSheet: View {
     
     func loadJSON(_ json: URL) {
         self.jsonURL = json
-        print("Failed to read JSO")
         
-        guard let jsonURL = jsonURL else { return }
-        print("Failed to read JSOK")
+        guard let jsonURL else { return }
         
         do {
             let data = try Data(contentsOf: jsonURL)
             if let jsonDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                let list = jsonDict["paths"] as? [String]
             {
-                var urls: [URL] = []
-                
-                for path in list {
-                    urls.append(URL.documentsDirectory.appendingPathComponent("updates").appendingPathComponent(path))
+
+                let filteredList = list.filter { relativePath in
+                    let path = URL.documentsDirectory.appendingPathComponent(relativePath)
+                    return FileManager.default.fileExists(atPath: path.path)
                 }
-                
-                items = list
+
+                let urls: [URL] = filteredList.map { relativePath in
+                    URL.documentsDirectory.appendingPathComponent(relativePath)
+                }
+
+                items = filteredList
                 paths = urls
                 selectedItem = jsonDict["selected"] as? String
             }
@@ -171,9 +173,9 @@ struct UpdateManagerSheet: View {
     }
     
     func selectItem(_ item: String) {
-        let newSelection = "\(game!.titleId)/\(item)"
-        
-        guard let jsonURL = jsonURL else { return }
+        let newSelection = "updates/\(game!.titleId)/\(item)"
+
+        guard let jsonURL else { return }
         
         do {
             let data = try Data(contentsOf: jsonURL)
@@ -183,12 +185,12 @@ struct UpdateManagerSheet: View {
                 jsonDict["selected"] = ""
                 selectedItem = ""
             } else {
-                jsonDict["selected"] = newSelection
+                jsonDict["selected"] = "\(newSelection)"
                 selectedItem = newSelection
             }
             
             jsonDict["paths"] = items
-            
+
             let newData = try JSONSerialization.data(withJSONObject: jsonDict, options: .prettyPrinted)
             try newData.write(to: jsonURL)
             Ryujinx.shared.games = Ryujinx.shared.loadGames()
