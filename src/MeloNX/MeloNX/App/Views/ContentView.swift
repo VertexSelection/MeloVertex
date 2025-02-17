@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var controllersList: [Controller] = []
     @State private var currentControllers: [Controller] = []
     @State var onscreencontroller: Controller = Controller(id: "", name: "")
+    @State var nativeControllers: [GCController: NativeController] = [:]
     @State private var isVirtualControllerActive: Bool = false
     @AppStorage("isVirtualController") var isVCA: Bool = true
     
@@ -50,7 +51,7 @@ struct ContentView: View {
     private let animationDuration: Double = 1.0
     @State private var isAnimating = false
     @State var isLoading = true
-    
+
     // MARK: - Initialization
     init() {
         let defaultConfig = loadSettings() ?? Ryujinx.Configuration(gamepath: "")
@@ -152,6 +153,7 @@ struct ContentView: View {
             queue: .main) { notification in
                 if let controller = notification.object as? GCController {
                     print("Controller connected: \(controller.productCategory)")
+                    nativeControllers[controller] = .init(controller)
                     refreshControllersList()
                 }
         }
@@ -163,6 +165,8 @@ struct ContentView: View {
             queue: .main) { notification in
                 if let controller = notification.object as? GCController {
                     print("Controller disconnected: \(controller.productCategory)")
+                    nativeControllers[controller]?.cleanup()
+                    nativeControllers[controller] = nil
                     refreshControllersList()
                 }
         }
@@ -306,8 +310,9 @@ struct ContentView: View {
             self.onscreencontroller = onscreen
         }
         
-        controllersList.removeAll(where: { $0.id == "0"})
-        
+        controllersList.removeAll(where: { $0.id == "0" || (!$0.name.starts(with: "GC - ") && $0 != onscreencontroller) })
+        controllersList.mutableForEach { $0.name = $0.name.replacingOccurrences(of: "GC - ", with: "") }
+
         currentControllers = []
         
         if controllersList.count == 1 {
@@ -397,3 +402,10 @@ func loadSettings() -> Ryujinx.Configuration? {
     }
 }
 
+extension Array {
+    @inlinable public mutating func mutableForEach(_ body: (inout Element) throws -> Void) rethrows {
+        for index in self.indices {
+            try body(&self[index])
+        }
+    }
+}

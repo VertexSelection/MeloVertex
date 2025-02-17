@@ -1,29 +1,37 @@
 //
-//  VirtualController.swift
+//  NativeController.swift
 //  MeloNX
 //
-//  Created by Stossy11 on 8/12/2024.
+//  Created by XITRIX on 15/02/2025.
 //
 
-import Foundation
 import CoreHaptics
-import UIKit
+import GameController
 
-class VirtualController {
+class NativeController: Hashable {
     private var instanceID: SDL_JoystickID = -1
     private var controller: OpaquePointer?
-    
-    public let controllername = "MeloNX Touch Controller"
-    
-    init() {
-        setupVirtualController()
+    private var nativeController: GCController
+    private let controllerHaptics: CHHapticEngine?
+
+    public var controllername: String { "GC - \(nativeController.vendorName ?? "Unknown")" }
+
+    init(_ controller: GCController) {
+        nativeController = controller
+        controllerHaptics = nativeController.haptics?.createEngine(withLocality: .default)
+        try? controllerHaptics?.start()
+        setupHandheldController()
     }
-    
-    private func setupVirtualController() {
+
+    deinit {
+        cleanup()
+    }
+
+    private func setupHandheldController() {
         if SDL_WasInit(Uint32(SDL_INIT_GAMECONTROLLER)) == 0 {
             SDL_InitSubSystem(Uint32(SDL_INIT_GAMECONTROLLER))
         }
-        
+
         var joystickDesc = SDL_VirtualJoystickDesc(
             version: UInt16(SDL_VIRTUAL_JOYSTICK_DESC_VERSION),
             type: Uint16(SDL_JOYSTICK_TYPE_GAMECONTROLLER.rawValue),
@@ -35,8 +43,8 @@ class VirtualController {
                 padding: 0,
                 button_mask: 0,
                 axis_mask: 0,
-                name: controllername.withCString { $0 },
-                userdata: nil,
+                name: (controllername as NSString).utf8String,
+                userdata: Unmanaged.passUnretained(self).toOpaque(),
                 Update: { userdata in
                     // Update joystick state here
                 },
@@ -45,7 +53,9 @@ class VirtualController {
                 },
                 Rumble: { userdata, lowFreq, highFreq in
                     print("Rumble with \(lowFreq), \(highFreq)")
-                    VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq))
+                    guard let userdata else { return 0 }
+                    let _self = Unmanaged<NativeController>.fromOpaque(userdata).takeUnretainedValue()
+                    VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq), engine: _self.controllerHaptics)
                     return 0
                 },
                 RumbleTriggers: { userdata, leftRumble, rightRumble in
@@ -61,24 +71,84 @@ class VirtualController {
                     return 0
                 }
             )
-        
+
         instanceID = SDL_JoystickAttachVirtualEx(&joystickDesc)// SDL_JoystickAttachVirtual(SDL_JoystickType(SDL_JOYSTICK_TYPE_GAMECONTROLLER.rawValue), 6, 15, 1)
         if instanceID < 0 {
             print("Failed to create virtual joystick: \(String(cString: SDL_GetError()))")
             return
         }
-        
+
         // Open a game controller for the virtual joystick
         let joystick = SDL_JoystickFromInstanceID(instanceID)
         controller = SDL_GameControllerOpen(Int32(instanceID))
-        
+
         if controller == nil {
             print("Failed to create virtual controller: \(String(cString: SDL_GetError()))")
             return
         }
+
+        if #available(iOS 16, *) {
+            guard let gamepad = nativeController.extendedGamepad
+            else { return }
+
+            setupButtonChangeListener(gamepad.buttonA, for: .B)
+            setupButtonChangeListener(gamepad.buttonB, for: .A)
+            setupButtonChangeListener(gamepad.buttonX, for: .Y)
+            setupButtonChangeListener(gamepad.buttonY, for: .X)
+
+            setupButtonChangeListener(gamepad.dpad.up, for: .dPadUp)
+            setupButtonChangeListener(gamepad.dpad.down, for: .dPadDown)
+            setupButtonChangeListener(gamepad.dpad.left, for: .dPadLeft)
+            setupButtonChangeListener(gamepad.dpad.right, for: .dPadRight)
+
+            setupButtonChangeListener(gamepad.leftShoulder, for: .leftShoulder)
+            setupButtonChangeListener(gamepad.rightShoulder, for: .rightShoulder)
+            gamepad.leftThumbstickButton.map { setupButtonChangeListener($0, for: .leftStick) }
+            gamepad.rightThumbstickButton.map { setupButtonChangeListener($0, for: .rightStick) }
+
+            setupButtonChangeListener(gamepad.buttonMenu, for: .start)
+            gamepad.buttonOptions.map { setupButtonChangeListener($0, for: .back) }
+
+            setupStickChangeListener(gamepad.leftThumbstick, for: .left)
+            setupStickChangeListener(gamepad.rightThumbstick, for: .right)
+
+            setupTriggerChangeListener(gamepad.leftTrigger, for: .left)
+            setupTriggerChangeListener(gamepad.rightTrigger, for: .right)
+        }
     }
-    
-    static func rumble(lowFreq: Float, highFreq: Float, engine: CHHapticEngine? = nil) {
+
+    func setupButtonChangeListener(_ button: GCControllerButtonInput, for key: VirtualControllerButton) {
+        button.valueChangedHandler = { [unowned self] _, _, pressed in
+            setButtonState(pressed ? 1 : 0, for: key)
+        }
+    }
+
+    func setupStickChangeListener(_ button: GCControllerDirectionPad, for key: ThumbstickType) {
+        button.valueChangedHandler = { [unowned self] _, xValue, yValue in
+            let scaledX = Sint16(xValue * 32767.0)
+            let scaledY = -Sint16(yValue * 32767.0)
+
+            switch key {
+            case .left:
+                updateAxisValue(value: scaledX, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_LEFTX.rawValue))
+                updateAxisValue(value: scaledY, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_LEFTY.rawValue))
+            case .right:
+                updateAxisValue(value: scaledX, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_RIGHTX.rawValue))
+                updateAxisValue(value: scaledY, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_RIGHTY.rawValue))
+            }
+        }
+    }
+
+    func setupTriggerChangeListener(_ button: GCControllerButtonInput, for key: ThumbstickType) {
+        button.valueChangedHandler = { [unowned self] _, value, pressed in
+//            print("Value: \(value), Is pressed: \(pressed)")
+            let axis: SDL_GameControllerAxis = (key == .left) ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT
+            let scaledValue = Sint16(value * 32767.0)
+            updateAxisValue(value: scaledValue, forAxis: axis)
+        }
+    }
+
+    static func rumble(lowFreq: Float, highFreq: Float) {
         do {
             // Low-frequency haptic pattern
             let lowFreqPattern = try CHHapticPattern(events: [
@@ -96,23 +166,9 @@ class VirtualController {
                 ], relativeTime: 0.2, duration: 0.2)
             ], parameters: [])
 
-            // Mutable engine
-            var engine = engine
-
-            // If no engine passed, use device engine
-            if engine == nil {
-                // Create and start the haptic engine
-                if hapticEngine == nil {
-                    hapticEngine = try CHHapticEngine()
-                    try hapticEngine?.start()
-                }
-
-                engine = hapticEngine
-            }
-
-            guard let engine else {
-                return print("Error creating haptic patterns: hapticEngine is nil")
-            }
+            // Create and start the haptic engine
+            let engine = try CHHapticEngine()
+            try engine.start()
 
             // Create and play the low-frequency player
             let lowFreqPlayer = try engine.makePlayer(with: lowFreqPattern)
@@ -127,21 +183,19 @@ class VirtualController {
         }
     }
 
-    private static var hapticEngine: CHHapticEngine?
 
-    
     func updateAxisValue(value: Sint16, forAxis axis: SDL_GameControllerAxis) {
         guard controller != nil else { return }
         let joystick = SDL_JoystickFromInstanceID(instanceID)
         SDL_JoystickSetVirtualAxis(joystick, axis.rawValue, value)
     }
-    
+
     func thumbstickMoved(_ stick: ThumbstickType, x: Double, y: Double) {
         let scaleFactor = 32767.0 / 160
 
         let scaledX = Int16(min(32767.0, max(-32768.0, x * scaleFactor)))
         let scaledY = Int16(min(32767.0, max(-32768.0, y * scaleFactor)))
-        
+
         if stick == .right {
             updateAxisValue(value: scaledX, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_RIGHTX.rawValue))
             updateAxisValue(value: scaledY, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_RIGHTY.rawValue))
@@ -150,11 +204,11 @@ class VirtualController {
             updateAxisValue(value: scaledY, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_LEFTY.rawValue))
         }
     }
-    
+
     func setButtonState(_ state: Uint8, for button: VirtualControllerButton) {
         guard controller != nil else { return }
-        
-        print("Button: \(button.rawValue) {state: \(state)}")
+
+//        print("Button: \(button.rawValue) {state: \(state)}")
         if (button == .leftTrigger || button == .rightTrigger) && (state == 1 || state == 0) {
             let axis: SDL_GameControllerAxis = (button == .leftTrigger) ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT
             let value: Int = (state == 1) ? 32767 : 0
@@ -164,40 +218,20 @@ class VirtualController {
             SDL_JoystickSetVirtualButton(joystick, Int32(button.rawValue), state)
         }
     }
-    
+
     func cleanup() {
-        if let controller = controller {
+        if let controller {
+            SDL_JoystickDetachVirtual(instanceID)
             SDL_GameControllerClose(controller)
             self.controller = nil
         }
     }
-    
-    deinit {
-        cleanup()
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(nativeController)
     }
-}
 
-enum VirtualControllerButton: Int {
-    case B
-    case A
-    case Y
-    case X
-    case back
-    case guide
-    case start
-    case leftStick
-    case rightStick
-    case leftShoulder
-    case rightShoulder
-    case dPadUp
-    case dPadDown
-    case dPadLeft
-    case dPadRight
-    case leftTrigger
-    case rightTrigger
-}
-
-enum ThumbstickType: Int {
-    case left
-    case right
+    static func == (lhs: NativeController, rhs: NativeController) -> Bool {
+        lhs.nativeController == rhs.nativeController
+    }
 }
