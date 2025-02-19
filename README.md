@@ -60,6 +60,8 @@ If having Issues installing firmware (Make sure your Keys are installed first)
 
 ### Xcode
 
+**NOTE: These Xcode builds are nightly and may have unfinished features.**
+
 1. **Compile Guide**
    - Visit the [guide here](https://git.743378673.xyz/MeloNX/MeloNX/src/branch/XC-ios-ht/Compile.md).
 
