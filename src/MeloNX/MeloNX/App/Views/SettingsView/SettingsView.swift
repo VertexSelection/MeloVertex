@@ -272,42 +272,12 @@ struct SettingsView: View {
                     Text("Select input devices and on-screen controls to play with. ")
                 }
                 
-                // Language and Region Settings
-                Section {
-                    Picker(selection: $config.language) {
-                        ForEach(SystemLanguage.allCases, id: \.self) { ratio in
-                            Text(ratio.displayName).tag(ratio)
-                        }
-                    } label: {
-                        labelWithIcon("Language", iconName: "character.bubble")
-                    }
-                    
-                    Picker(selection: $config.regioncode) {
-                        ForEach(SystemRegionCode.allCases, id: \.self) { ratio in
-                            Text(ratio.displayName).tag(ratio)
-                        }
-                    } label: {
-                        labelWithIcon("Region", iconName: "globe")
-                    }
-                    
-                    
-                    // globe
-                } header: {
-                    Text("Language and Region Settings")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Configure the System Language and the Region.")
-                }
-                
                 // Input Settings
                 Section {
-                    
-                    Toggle(isOn: $config.listinputids) {
-                        labelWithIcon("List Input IDs", iconName: "list.bullet")
-                    }
-                    .tint(.blue)
+                    Toggle(isOn: $config.macroHLE) {
+                        labelWithIcon("Player 1 to Handheld Input", iconName: "formfitting.gamecontroller")
+                    }.tint(.blue)
+                        
                     
                     Toggle(isOn: $ryuDemo) {
                         labelWithIcon("On-Screen Controller (Demo)", iconName: "hand.draw")
@@ -361,6 +331,35 @@ struct SettingsView: View {
                         .headerProminence(.increased)
                 } footer: {
                     Text("Configure input devices and on-screen controls for easier navigation and play.")
+                }
+                
+                // Language and Region Settings
+                Section {
+                    Picker(selection: $config.language) {
+                        ForEach(SystemLanguage.allCases, id: \.self) { ratio in
+                            Text(ratio.displayName).tag(ratio)
+                        }
+                    } label: {
+                        labelWithIcon("Language", iconName: "character.bubble")
+                    }
+                    
+                    Picker(selection: $config.regioncode) {
+                        ForEach(SystemRegionCode.allCases, id: \.self) { ratio in
+                            Text(ratio.displayName).tag(ratio)
+                        }
+                    } label: {
+                        labelWithIcon("Region", iconName: "globe")
+                    }
+                    
+                    
+                    // globe
+                } header: {
+                    Text("Language and Region Settings")
+                        .font(.title3.weight(.semibold))
+                        .textCase(nil)
+                        .headerProminence(.increased)
+                } footer: {
+                    Text("Configure the System Language and the Region.")
                 }
                 
                 // CPU Mode

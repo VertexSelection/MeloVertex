@@ -77,6 +77,7 @@ class Ryujinx {
         var disablevsync: Bool
         var language: SystemLanguage
         var regioncode: SystemRegionCode
+        var handHeldController: Bool
         
 
         init(gamepath: String,
@@ -102,7 +103,8 @@ class Ryujinx {
              disablePTC: Bool = false,
              disablevsync: Bool = false,
              language: SystemLanguage = .americanEnglish,
-             regioncode: SystemRegionCode = .usa
+             regioncode: SystemRegionCode = .usa,
+             handHeldController: Bool = false
         ) {
             self.gamepath = gamepath
             self.inputids = inputids
@@ -128,6 +130,7 @@ class Ryujinx {
             self.disablevsync = disablevsync
             self.language = language
             self.regioncode = regioncode
+            self.handHeldController = handHeldController
         }
     }
 
@@ -321,10 +324,14 @@ class Ryujinx {
             args.append("--list-inputs-ids")
         }
         
-        // Append the input ids (limit to 4 just in case)
+        // Append the input ids (limit to 8 (used to be 4) just in case)
         if !config.inputids.isEmpty {
-            config.inputids.prefix(4).enumerated().forEach { index, inputId in
-                args.append(contentsOf: ["--input-id-\(index + 1)", inputId])
+            config.inputids.prefix(8).enumerated().forEach { index, inputId in
+                if config.handHeldController {
+                    args.append(contentsOf: ["\(index == 0 ? "--input-id-handheld" : "--input-id-\(index + 1)")", inputId])
+                } else {
+                    args.append(contentsOf: ["--input-id-\(index + 1)", inputId])
+                }
             }
         }
 
