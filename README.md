@@ -24,7 +24,7 @@ MeloNX works on iPhone XS/XR and later and iPad 8th Gen and later. Check out the
 # Usage
 
 ## FAQ
-- MeloNX is made for iOS 17+, iOS 15 - 16 is supported but will have issues.
+- MeloNX is made for iOS 17+, on iOS 15 - 16 MeloNX can be installed but will have issues or may not work at all.
 - MeloNX needs Xcode or a Paid Apple Developer Account. SideStore support may come soon (SideStore Side Issue)
 - MeloNX needs JIT
 - Recommended Device: iPhone 15 Pro or newer.
