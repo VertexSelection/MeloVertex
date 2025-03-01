@@ -45,7 +45,7 @@ struct DLCManagerSheet: View {
                     Self.saveDlcs(game, dlc: dlcs)
                 }) {
                     HStack {
-                        Text(dlc.containerPath)
+                        Text((dlc.containerPath as NSString).lastPathComponent)
                             .foregroundStyle(Color(uiColor: .label))
                         Spacer()
                         if dlc.downloadableContentNcaList.first?.enabled == true {

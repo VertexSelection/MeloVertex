@@ -484,23 +484,26 @@ class Ryujinx {
     
     
     func repeatuntilfindLayer() {
-        DispatchQueue.global(qos: .background).async {
+        Task { @MainActor in
             while self.metalLayer == nil {
                 let layer = self.getMetalLayer(nil)
-
+                
                 if layer != nil {
                     DispatchQueue.main.async {
                         self.metalLayer = layer
                     }
+                    self.metalLayer = layer
                     break
                 }
-
+                
                 Thread.sleep(forTimeInterval: 0.1)
+                try await Task.sleep(nanoseconds: 100_000_000)
             }
         }
     }
 
-    
+
+    @MainActor
     func getMetalLayer(_ window: OpaquePointer?) -> CAMetalLayer? {
         var window = window
         if window == nil {

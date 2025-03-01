@@ -39,14 +39,23 @@ struct GameLibraryView: View {
     
     var filteredGames: [Game] {
         if searchText.isEmpty {
-            return Ryujinx.shared.games
+            return Ryujinx.shared.games.filter { game in
+                !realRecentGames.contains(where: { $0.fileURL == game.fileURL })
+            }
         }
         return Ryujinx.shared.games.filter {
             $0.titleName.localizedCaseInsensitiveContains(searchText) ||
-                $0.developer.localizedCaseInsensitiveContains(searchText)
+            $0.developer.localizedCaseInsensitiveContains(searchText)
         }
     }
-    
+
+    var realRecentGames: [Game] {
+        let games = Ryujinx.shared.games
+        return recentGames.compactMap { recentGame in
+            games.first(where: { $0.fileURL == recentGame.fileURL })
+        }
+    }
+
     var body: some View {
         iOSNav {
             List {
@@ -66,46 +75,32 @@ struct GameLibraryView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, 40)
                 } else {
-                    if !isSearching && !recentGames.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Recent")
-                                .font(.title2.bold())
-                                .padding(.horizontal)
-                                
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                LazyHStack(spacing: 16) {
-                                    ForEach(recentGames) { game in
-                                        RecentGameCard(game: game, startemu: $startemu)
-                                            .onTapGesture {
-                                                addToRecentGames(game)
-                                                startemu = game
-                                            }
-                                    }
-                                }
-                                .padding(.horizontal)
-                            }
-                        }
-                            
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("All Games")
-                                .font(.title2.bold())
-                                .padding(.horizontal)
-                                
-                            LazyVStack(spacing: 2) {
-                                ForEach(filteredGames) { game in
-                                    GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
-                                        .onTapGesture {
-                                            addToRecentGames(game)
+                    if !isSearching && !realRecentGames.isEmpty {
+                        Section {
+                            ForEach(realRecentGames) { game in
+                                GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button(role: .destructive) {
+                                            removeFromRecentGames(game)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
                                         }
-                                }
+                                    }
                             }
+                        } header: {
+                            Text("Recent")
+                        }
+
+                        Section {
+                            ForEach(filteredGames) { game in
+                                GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
+                            }
+                        } header: {
+                            Text("Others")
                         }
                     } else {
                         ForEach(filteredGames) { game in
                             GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
-                                .onTapGesture {
-                                    addToRecentGames(game)
-                                }
                         }
                     }
                 }
@@ -206,8 +201,13 @@ struct GameLibraryView: View {
                     }
                 }
             }
+            .onChange(of: startemu) { game in
+                guard let game else { return }
+                addToRecentGames(game)
+            }
         }
         .searchable(text: $searchText)
+        .animation(.easeInOut, value: searchText)
         .onChange(of: searchText) { _ in
             isSearching = !searchText.isEmpty
         }
@@ -291,8 +291,8 @@ struct GameLibraryView: View {
     }
     
     private func addToRecentGames(_ game: Game) {
-        recentGames.removeAll { $0.id == game.id }
-        
+        recentGames.removeAll { $0.titleId == game.titleId }
+
         recentGames.insert(game, at: 0)
         
         if recentGames.count > 5 {
@@ -301,7 +301,12 @@ struct GameLibraryView: View {
         
         saveRecentGames()
     }
-    
+
+    private func removeFromRecentGames(_ game: Game) {
+        recentGames.removeAll { $0.titleId == game.titleId }
+        saveRecentGames()
+    }
+
     private func saveRecentGames() {
         do {
             let encoder = JSONEncoder()
@@ -364,53 +369,6 @@ extension Game: Codable {
     }
 }
 
-// MARK: - Recent Game Card
-struct RecentGameCard: View {
-    let game: Game
-    @Binding var startemu: Game?
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        Button(action: {
-            startemu = game
-        }) {
-            VStack(alignment: .leading, spacing: 8) {
-                if let icon = game.icon {
-                    Image(uiImage: icon)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 140, height: 140)
-                        .cornerRadius(12)
-                } else {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ?
-                                Color(.systemGray5) : Color(.systemGray6))
-                            .frame(width: 140, height: 140)
-                        
-                        Image(systemName: "gamecontroller.fill")
-                            .font(.system(size: 40))
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(game.titleName)
-                        .font(.subheadline.bold())
-                        .lineLimit(1)
-                    
-                    Text(game.developer)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-                .padding(.horizontal, 4)
-            }
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 // MARK: - Game List Item
 struct GameListRow: View {
     let game: Game
@@ -469,56 +427,54 @@ struct GameListRow: View {
                     .foregroundColor(.accentColor)
                     .opacity(0.8)
             }
-            .contextMenu {
-                Section {
-                    Button {
-                        startemu = game
-                    } label: {
-                        Label("Play Now", systemImage: "play.fill")
-                    }
+        }
+        .contextMenu {
+            Section {
+                Button {
+                    startemu = game
+                } label: {
+                    Label("Play Now", systemImage: "play.fill")
+                }
+
+                Button {
+                    gameInfo = game
+                    isViewingGameInfo.toggle()
                     
-                    Button {
-                        gameInfo = game
-                        isViewingGameInfo.toggle()
-                        
-                        if game.titleName.lowercased() == "portal" {
-                            gamepo = true
-                        } else if game.titleName.lowercased() == "portal 2" {
-                            gamepo = true
-                        }
-                    } label: {
-                        Label("Game Info", systemImage: "info.circle")
+                    if game.titleName.lowercased() == "portal" {
+                        gamepo = true
+                    } else if game.titleName.lowercased() == "portal 2" {
+                        gamepo = true
                     }
+                } label: {
+                    Label("Game Info", systemImage: "info.circle")
+                }
+            }
+
+            Section {
+                Button {
+                    gameInfo = game
+                    isSelectingGameUpdate.toggle()
+                } label: {
+                    Label("Game Update Manager", systemImage: "chevron.up.circle")
                 }
 
-                Section {
-                    Button {
-                        gameInfo = game
-                        isSelectingGameUpdate.toggle()
-                    } label: {
-                        Label("Game Update Manager", systemImage: "chevron.up.circle")
-                    }
-
-                    Button {
-                        gameInfo = game
-                        isSelectingGameDLC.toggle()
-                    } label: {
-                        Label("Game DLC Manager", systemImage: "plus.viewfinder")
-                    }
+                Button {
+                    gameInfo = game
+                    isSelectingGameDLC.toggle()
+                } label: {
+                    Label("Game DLC Manager", systemImage: "plus.viewfinder")
                 }
-                
-                
-                Section {
-                    Button(role: .destructive) {
-                        gametoDelete = game
-                        showGameDeleteConfirmation.toggle()
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
+            }
+
+            Section {
+                Button(role: .destructive) {
+                    gametoDelete = game
+                    showGameDeleteConfirmation.toggle()
+                } label: {
+                    Label("Delete", systemImage: "trash")
                 }
             }
         }
-        .buttonStyle(.plain)
         .confirmationDialog("Are you sure you want to delete this game?", isPresented: $showGameDeleteConfirmation) {
             Button("Delete", role: .destructive) {
                 if let game = gametoDelete {
