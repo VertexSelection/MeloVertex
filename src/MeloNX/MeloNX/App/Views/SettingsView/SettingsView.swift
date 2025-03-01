@@ -514,12 +514,25 @@ struct SettingsView: View {
                 // Info
                 Section {
                     let totalMemory = ProcessInfo.processInfo.physicalMemory
+                    let model = getDeviceModel()
+                    let deviceType = model.hasPrefix("iPad") ? "iPadOS" :
+                    model.hasPrefix("iPhone") ? "iOS" :
+                    "macOS"
+                    
+                    let iconName = model.hasPrefix("iPad") ? "ipad.landscape" :
+                    model.hasPrefix("iPhone") ? "iphone" :
+                    "macwindow"
                     
                     labelWithIcon("JIT Acquisition: \(isJITEnabled() ? "Acquired" : "Not Acquired" )", iconName: "bolt.fill")
                     
                     labelWithIcon("Increased Memory Limit Entitlement: \(checkAppEntitlement("com.apple.developer.kernel.increased-memory-limit") ? "Enabled" : "Disabled")", iconName: "memorychip")
                     
+                    labelWithIcon("Device: \(getDeviceModel())", iconName: iconName)
+                    
                     labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000))", iconName: "memorychip.fill")
+                    
+                    labelWithIcon("\(deviceType) \(UIDevice.current.systemVersion)", iconName: "applelogo")
+                    
                 } header: {
                     Text("Information")
                         .font(.title3.weight(.semibold))
@@ -531,10 +544,12 @@ struct SettingsView: View {
                 
                 // Advanced
                 Section {
+                    /*
                     Toggle(isOn: $windowCode) {
                         labelWithIcon("SDL Window", iconName: "macwindow.on.rectangle")
                     }
                     .tint(.blue)
+                     */
                     
                     DisclosureGroup {
                         
@@ -602,6 +617,8 @@ struct SettingsView: View {
                 if let configs = loadSettings() {
                     self.config = configs
                 }
+                
+                windowCode = false
             }
             .onChange(of: config) { _ in
                 saveSettings()
@@ -617,6 +634,18 @@ struct SettingsView: View {
             currentControllers.append(controller)
         }
     }
+    
+    func getDeviceModel() -> String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        let identifier = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8, value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+        return identifier
+    }
+
     
     func saveSettings() {
 #if targetEnvironment(simulator)

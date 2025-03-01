@@ -95,7 +95,6 @@ struct ContentView: View {
                         }
                 } else {
                     EmulationView()
-                        .persistentSystemOverlays(.hidden)
                         .onAppear() {
                             isAnimating = false
                         }

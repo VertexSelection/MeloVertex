@@ -157,3 +157,12 @@ private extension DLCManagerSheet {
         URL.documentsDirectory.appendingPathComponent("games").appendingPathComponent(game.titleId).appendingPathComponent("dlc.json")
     }
 }
+
+
+extension URL {
+    @available(iOS, introduced: 15.0, deprecated: 16.0, message: "Use URL.documentsDirectory on iOS 16 and above")
+    static var documentsDirectory: URL {
+        let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return documentDirectory
+    }
+}
