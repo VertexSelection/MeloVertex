@@ -544,12 +544,10 @@ struct SettingsView: View {
                 
                 // Advanced
                 Section {
-                    /*
                     Toggle(isOn: $windowCode) {
                         labelWithIcon("SDL Window", iconName: "macwindow.on.rectangle")
                     }
                     .tint(.blue)
-                     */
                     
                     DisclosureGroup {
                         
@@ -617,8 +615,6 @@ struct SettingsView: View {
                 if let configs = loadSettings() {
                     self.config = configs
                 }
-                
-                windowCode = false
             }
             .onChange(of: config) { _ in
                 saveSettings()
