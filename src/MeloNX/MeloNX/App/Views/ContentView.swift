@@ -57,24 +57,16 @@ struct ContentView: View {
         let defaultConfig = loadSettings() ?? Ryujinx.Configuration(gamepath: "")
         _config = State(initialValue: defaultConfig)
         
-        let defaultSettings: [MoltenVKSettings] = [
-            // MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "1"),
-            // MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "2"),
-            // Metal Private API isn't needed and causes more stutters
+        let defaultSettings: [MoltenVKSettings] = [ // Default MoltenVK Settings.
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_DEBUG", value: "0"),
             MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"),
-            // MoltenVKSettings(string: "MVK_CONFIG_LOG_LEVEL", value: "0"),
-            // MVK_CONFIG_LOG_LEVEL
-            //MVK_DEBUG
-            // Uses more ram but makes performance higher, may add an option in settings to change or enable / disable this value (default 64 or 192 depending on what i decide)
-            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "1024"),
+            // Uses more ram but makes performance higher, may add an option in settings to change or enable / disable this value (default 64)
+            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "128"),
         ]
         
         _settings = State(initialValue: defaultSettings)
-        
-        print("JIT Enabled: \(isJITEnabled())")
         
         initializeSDL()
     }
@@ -91,20 +83,6 @@ struct ContentView: View {
                 } else {
                     ZStack {
                         emulationView
-                            .onAppear() {
-                                // This is fro the old exiting game feature that didn't work properly. will look into it and figure out a better alternative
-                                /*
-                                 Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-                                 timer.invalidate()
-                                 quits = quit
-                                 
-                                 if quits {
-                                 quit = false
-                                 timer.invalidate()
-                                 }
-                                 }
-                                 */
-                            }
                     }
                 }
             } else {
@@ -116,10 +94,11 @@ struct ContentView: View {
                             isAnimating = false
                         }
                 } else {
-                    VStack {
-                        
-                    }
-                    
+                    EmulationView()
+                        .persistentSystemOverlays(.hidden)
+                        .onAppear() {
+                            isAnimating = false
+                        }
                 }
             }
         } else {
@@ -197,14 +176,12 @@ struct ContentView: View {
                             let containerWidth = min(screenGeometry.size.width * 0.35, 350)
                             
                             ZStack(alignment: .leading) {
-                                // Background track
                                 Rectangle()
                                     .cornerRadius(10)
                                     .frame(width: containerWidth, height: min(screenGeometry.size.height * 0.015, 12))
                                     .foregroundColor(.gray.opacity(0.3))
                                     .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                                 
-                                // Animated loading bar
                                 Rectangle()
                                     .cornerRadius(10)
                                     .frame(width: clumpWidth, height: min(screenGeometry.size.height * 0.015, 12))
@@ -272,15 +249,9 @@ struct ContentView: View {
                 ))
                 
                 let isJIT = isJITEnabled()
-                
-                if !isJIT, useTrollStore {
-                    askForJIT()
+                if !isJIT {
+                    useTrollStore ? askForJIT() : enableJITEB()
                 }
-                
-                if !isJIT, jitStreamerEB {
-                    enableJITEB()
-                }
-                
             }
     }
     
@@ -289,7 +260,7 @@ struct ContentView: View {
     private func initializeSDL() {
         setMoltenVKSettings()
         SDL_SetMainReady() // Sets SDL Ready
-        SDL_iPhoneSetEventPump(SDL_TRUE) // Set iOS Event Pump to true (Check out SDL2 Documentation here)
+        SDL_iPhoneSetEventPump(SDL_TRUE) // Set iOS Event Pump to true
         SDL_Init(SdlInitFlags) // Initialises SDL2
         initialize()
     }
@@ -327,27 +298,6 @@ struct ContentView: View {
         }
     }
     
-    
-
-    func showAlert(title: String, message: String, showOk: Bool, completion: @escaping (Bool) -> Void) {
-        DispatchQueue.main.async {
-            if let mainWindow = UIApplication.shared.windows.last {
-                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-                
-                if showOk {
-                    let okAction = UIAlertAction(title: "OK", style: .default) { _ in
-                        completion(true)
-                    }
-
-                    alert.addAction(okAction)
-                } else {
-                    completion(false)
-                }
-                
-                mainWindow.rootViewController?.present(alert, animated: true, completion: nil)
-            }
-        }
-    }
 
     
     private func start(displayid: UInt32) {

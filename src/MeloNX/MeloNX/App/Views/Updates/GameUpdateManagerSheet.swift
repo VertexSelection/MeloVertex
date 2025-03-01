@@ -118,10 +118,10 @@ struct UpdateManagerSheet: View {
         Ryujinx.shared.games = Ryujinx.shared.loadGames()
     }
     
-    func saveJSON(selectedItem: String) {
+    func saveJSON(selectedItem: String?) {
         guard let jsonURL = jsonURL else { return }
         do {
-            let jsonDict = ["paths": items, "selected": selectedItem] as [String: Any]
+            let jsonDict = ["paths": items, "selected": selectedItem ?? self.selectedItem ?? ""] as [String: Any]
             let newData = try JSONSerialization.data(withJSONObject: jsonDict, options: .prettyPrinted)
             try newData.write(to: jsonURL)
         } catch {

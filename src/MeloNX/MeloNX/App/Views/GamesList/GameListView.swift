@@ -424,6 +424,8 @@ struct GameListRow: View {
     @State var showGameDeleteConfirmation: Bool = false
     @Environment(\.colorScheme) var colorScheme
     
+    @AppStorage("portal") var gamepo = false
+    
     var body: some View {
         Button(action: {
             startemu = game
@@ -478,6 +480,12 @@ struct GameListRow: View {
                     Button {
                         gameInfo = game
                         isViewingGameInfo.toggle()
+                        
+                        if game.titleName.lowercased() == "portal" {
+                            gamepo = true
+                        } else if game.titleName.lowercased() == "portal 2" {
+                            gamepo = true
+                        }
                     } label: {
                         Label("Game Info", systemImage: "info.circle")
                     }
@@ -498,6 +506,7 @@ struct GameListRow: View {
                         Label("Game DLC Manager", systemImage: "plus.viewfinder")
                     }
                 }
+                
                 
                 Section {
                     Button(role: .destructive) {

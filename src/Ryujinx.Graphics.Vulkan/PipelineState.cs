@@ -601,7 +601,7 @@ namespace Ryujinx.Graphics.Vulkan
 
                 if (supportsExtDynamicState)
                 {
-                    dynamicStates[8] = DynamicState.VertexInputBindingStrideExt;
+                    // dynamicStates[8] = DynamicState.VertexInputBindingStrideExt;
                 }
 
                 var pipelineDynamicStateCreateInfo = new PipelineDynamicStateCreateInfo

@@ -26,9 +26,15 @@ namespace Ryujinx.Graphics.Nvdec.FFmpeg.Native
             {
                 return $"lib{libraryName}.so.{version}";
             }
-            else if (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS()) // TODO: ffmpeg on ios
+            else if (OperatingSystem.IsMacOS())
             {
                 return $"lib{libraryName}.{version}.dylib";
+            }
+            else if (OperatingSystem.IsIOS()) 
+            {
+                string libName = $"lib{libraryName}.{version}.dylib";
+                Console.WriteLine($"[iOS] Required firmware library: {libName}");
+                return libName;
             }
             else
             {

@@ -9,10 +9,10 @@ namespace Ryujinx.Graphics.Vulkan.MoltenVK
     [SupportedOSPlatform("ios")]
     public static partial class MVKInitialization
     {
-        [LibraryImport("MoltenVK.framework/MoltenVK")]
+        [LibraryImport("libMoltenVK.dylib")]
         private static partial Result vkGetMoltenVKConfigurationMVK(IntPtr unusedInstance, out MVKConfiguration config, in IntPtr configSize);
 
-        [LibraryImport("MoltenVK.framework/MoltenVK")]
+        [LibraryImport("libMoltenVK.dylib")]
         private static partial Result vkSetMoltenVKConfigurationMVK(IntPtr unusedInstance, in MVKConfiguration config, in IntPtr configSize);
 
         public static void Initialize()

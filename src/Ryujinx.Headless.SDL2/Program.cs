@@ -319,7 +319,7 @@ namespace Ryujinx.Headless.SDL2
             var result = Parser.Default.ParseArguments<Options>(args)
              .WithParsed(options =>
              {
-                  Load(options);  // Load is called with the parsed options
+                  Load(options); 
              })
               .WithNotParsed(errors => errors.Output());
 

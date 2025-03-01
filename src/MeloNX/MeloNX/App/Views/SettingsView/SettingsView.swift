@@ -46,6 +46,7 @@ struct SettingsView: View {
     @State private var showAnisotropicInfo = false
     @State private var showControllerInfo = false
     @State private var searchText = ""
+    @AppStorage("portal") var gamepo = false
     
     var filteredMemoryModes: [(String, String)] {
         guard !searchText.isEmpty else { return memoryManagerModes }
@@ -391,7 +392,7 @@ struct SettingsView: View {
                             .onAppear() {
                                 print("CPU Info: \(cpuInfo)")
                             }
-                        } else if getEntitlementValue("com.apple.private.hypervisor") {
+                        } else if checkAppEntitlement("com.apple.private.hypervisor") {
                             Toggle(isOn: $config.hypervisor) {
                                 labelWithIcon("Hypervisor", iconName: "bolt")
                             }
@@ -530,12 +531,10 @@ struct SettingsView: View {
                 
                 // Advanced
                 Section {
-                    if #unavailable(iOS 17) {
-                        Toggle(isOn: $windowCode) {
-                            labelWithIcon("SDL Window", iconName: "macwindow.on.rectangle")
-                        }
-                        .tint(.blue)
+                    Toggle(isOn: $windowCode) {
+                        labelWithIcon("SDL Window", iconName: "macwindow.on.rectangle")
                     }
+                    .tint(.blue)
                     
                     DisclosureGroup {
                         
@@ -588,9 +587,9 @@ struct SettingsView: View {
                         .headerProminence(.increased)
                 } footer: {
                     if #available(iOS 17, *) {
-                        Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing).")
+                        Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing). \n \n\(gamepo ? "the cake is a lie" : "")")
                     } else {
-                        Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing). If the emulation is not showing (you may hear audio in some games), try enabling \"SDL Window\"")
+                        Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing). If the emulation is not showing (you may hear audio in some games), try enabling \"SDL Window\" \n \n\(gamepo ? "the cake is a lie" : "")")
                     }
                 }
                 
