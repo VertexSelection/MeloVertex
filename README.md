@@ -101,7 +101,7 @@ If having Issues installing firmware (Make sure your Keys are installed first)
 
 - **DLC & Modifications**
 
-  MeloNX does not support add-on content/downloadable content.
+  MeloNX supports DLC + Game Update Add-ons.
   Mods (romfs, exefs, and runtime mods such as cheats) are supported;
 
 - **Configuration**
