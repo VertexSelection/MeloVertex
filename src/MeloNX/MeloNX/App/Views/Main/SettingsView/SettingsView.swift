@@ -544,9 +544,9 @@ struct SettingsView: View {
                     labelWithIcon("Device: \(getDeviceModel())", iconName: iconName)
                     
                     if ProcessInfo.processInfo.isiOSAppOnMac {
-                        labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024)))", iconName: "memorychip.fill")
+                        labelWithIcon("Memory: \(String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024)))", iconName: "memorychip.fill")
                     } else {
-                        labelWithIcon("Device Memory: \(String(format: "%.0f GB", (Double(totalMemory) / (1024 * 1024 * 1024) + 1)))", iconName: "memorychip.fill")
+                        labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024)))", iconName: "memorychip.fill")
                     }
                     
                     labelWithIcon("\(deviceType) \(UIDevice.current.systemVersion)", iconName: "applelogo")
