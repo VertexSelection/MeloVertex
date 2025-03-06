@@ -42,6 +42,12 @@ struct SettingsView: View {
     
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
+    @AppStorage("hasbeenfinished") var finishedStorage: Bool = false
+    
+    @AppStorage("showlogsloading") var showlogsloading: Bool = true
+    
+    @AppStorage("showlogsgame") var showlogsgame: Bool = false
+    
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
     @State private var showControllerInfo = false
@@ -275,7 +281,7 @@ struct SettingsView: View {
                 
                 // Input Settings
                 Section {
-                    Toggle(isOn: $config.macroHLE) {
+                    Toggle(isOn: $config.handHeldController) {
                         labelWithIcon("Player 1 to Handheld Input", iconName: "formfitting.gamecontroller")
                     }.tint(.blue)
                         
@@ -382,7 +388,7 @@ struct SettingsView: View {
                         labelWithIcon("Disable PTC", iconName: "cpu")
                     }.tint(.blue)
                     
-                    if let cpuInfo = getCPUInfo(), cpuInfo.hasPrefix("Apple M") {
+                    if let gpuInfo = getGPUInfo(), gpuInfo.hasPrefix("Apple M") {
                         if #available (iOS 16.4, *) {
                             Toggle(isOn: .constant(false)) {
                                 labelWithIcon("Hypervisor", iconName: "bolt")
@@ -390,7 +396,7 @@ struct SettingsView: View {
                             .tint(.blue)
                             .disabled(true)
                             .onAppear() {
-                                print("CPU Info: \(cpuInfo)")
+                                print("CPU Info: \(gpuInfo)")
                             }
                         } else if checkAppEntitlement("com.apple.private.hypervisor") {
                             Toggle(isOn: $config.hypervisor) {
@@ -398,7 +404,7 @@ struct SettingsView: View {
                             }
                             .tint(.blue)
                             .onAppear() {
-                                print("CPU Info: \(cpuInfo)")
+                                print("CPU Info: \(gpuInfo)")
                             }
                         }
                     }
@@ -489,6 +495,14 @@ struct SettingsView: View {
                         }
                     
                     DisclosureGroup {
+                        Toggle(isOn: $showlogsloading) {
+                            labelWithIcon("Show logs while loading", iconName: "text.alignleft")
+                        }.tint(.blue)
+                        
+                        Toggle(isOn: $showlogsgame) {
+                            labelWithIcon("Show logs in-game", iconName: "text.line.magnify")
+                        }.tint(.blue)
+                        
                         Toggle(isOn: $config.debuglogs) {
                             labelWithIcon("Debug Logs", iconName: "exclamationmark.bubble")
                         }
@@ -529,7 +543,11 @@ struct SettingsView: View {
                     
                     labelWithIcon("Device: \(getDeviceModel())", iconName: iconName)
                     
-                    labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000))", iconName: "memorychip.fill")
+                    if ProcessInfo.processInfo.isiOSAppOnMac {
+                        labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024)))", iconName: "memorychip.fill")
+                    } else {
+                        labelWithIcon("Device Memory: \(String(format: "%.0f GB", (Double(totalMemory) / (1024 * 1024 * 1024) + 1)))", iconName: "memorychip.fill")
+                    }
                     
                     labelWithIcon("\(deviceType) \(UIDevice.current.systemVersion)", iconName: "applelogo")
                     
@@ -544,11 +562,6 @@ struct SettingsView: View {
                 
                 // Advanced
                 Section {
-                    Toggle(isOn: $windowCode) {
-                        labelWithIcon("SDL Window", iconName: "macwindow.on.rectangle")
-                    }
-                    .tint(.blue)
-                    
                     DisclosureGroup {
                         
                         Toggle(isOn: $mVKPreFillBuffer) {
@@ -567,6 +580,10 @@ struct SettingsView: View {
                             
                         }
                         
+                        Toggle(isOn: $ignoreJIT) {
+                            labelWithIcon("Ignore JIT Popup", iconName: "cpu")
+                        }.tint(.blue)
+                        
                         TextField("Additional Arguments", text: Binding(
                             get: {
                                 config.additionalArgs.joined(separator: " ")
@@ -580,12 +597,13 @@ struct SettingsView: View {
                         .textInputAutocapitalization(.none)
                         .disableAutocorrection(true)
                         
+                            
                         
                         Button {
-                            Ryujinx.shared.removeFirmware()
+                            finishedStorage = false
                             
                         } label: {
-                            Text("Remove Firmware")
+                            Text("Show Setup")
                                 .font(.body)
                         }
                         
@@ -599,11 +617,7 @@ struct SettingsView: View {
                         .textCase(nil)
                         .headerProminence(.increased)
                 } footer: {
-                    if #available(iOS 17, *) {
-                        Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing). \n \n\(gamepo ? "the cake is a lie" : "")")
-                    } else {
-                        Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing). If the emulation is not showing (you may hear audio in some games), try enabling \"SDL Window\" \n \n\(gamepo ? "the cake is a lie" : "")")
-                    }
+                    Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing). \n \n\(gamepo ? "the cake is a lie" : "")")
                 }
                 
             }
@@ -614,6 +628,8 @@ struct SettingsView: View {
             .onAppear {
                 if let configs = loadSettings() {
                     self.config = configs
+                } else {
+                    saveSettings()
                 }
             }
             .onChange(of: config) { _ in
@@ -631,6 +647,10 @@ struct SettingsView: View {
         }
     }
     
+    func saveSettings() {
+        MeloNX.saveSettings(config: config)
+    }
+    
     func getDeviceModel() -> String {
         var systemInfo = utsname()
         uname(&systemInfo)
@@ -641,26 +661,9 @@ struct SettingsView: View {
         }
         return identifier
     }
-
     
-    func saveSettings() {
-#if targetEnvironment(simulator)
-        
-        print("Saving Settings")
-#else
-        do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            let data = try encoder.encode(config)
-            let jsonString = String(data: data, encoding: .utf8)
-            UserDefaults.standard.set(jsonString, forKey: "config")
-        } catch {
-            print("Failed to save settings: \(error)")
-        }
-#endif
-    }
     
-    func getCPUInfo() -> String? {
+    func getGPUInfo() -> String? {
         let device = MTLCreateSystemDefaultDevice()
         
         let gpu = device?.name
@@ -668,29 +671,6 @@ struct SettingsView: View {
         return gpu
     }
 
-    
-    // Original loadSettings function assumed to exist
-    func loadSettings() -> Ryujinx.Configuration? {
-        
-#if targetEnvironment(simulator)
-        print("Running on Simulator")
-        
-        return Ryujinx.Configuration(gamepath: "")
-#else
-        guard let jsonString = UserDefaults.standard.string(forKey: "config"),
-              let data = jsonString.data(using: .utf8) else {
-            return nil
-        }
-        do {
-            let decoder = JSONDecoder()
-            let configs = try decoder.decode(Ryujinx.Configuration.self, from: data)
-            return configs
-        } catch {
-            print("Failed to load settings: \(error)")
-            return nil
-        }
-#endif
-    }
     
     @ViewBuilder
     private func labelWithIcon(_ text: String, iconName: String, flipimage: Bool? = nil) -> some View {
@@ -724,7 +704,7 @@ struct SVGView: UIViewRepresentable {
     
     func makeUIView(context: Context) -> UIView {
         var svgName = svgName
-        var hammock = UIView()
+        let hammock = UIView()
         
         if svgName.hasSuffix(".svg") {
             svgName.removeLast(4)
@@ -732,7 +712,7 @@ struct SVGView: UIViewRepresentable {
         
         
         
-        let svgLayer = UIView(SVGNamed: svgName) { svgLayer in
+        _ = UIView(svgNamed: svgName) { svgLayer in
             svgLayer.fillColor = UIColor(color).cgColor // Apply the provided color
             svgLayer.resizeToFit(hammock.frame)
             hammock.layer.addSublayer(svgLayer)
@@ -746,5 +726,40 @@ struct SVGView: UIViewRepresentable {
         if let svgLayer = uiView.layer.sublayers?.first as? CAShapeLayer {
             svgLayer.fillColor = UIColor(color).cgColor
         }
+    }
+}
+
+func saveSettings(config: Ryujinx.Configuration) {
+    do {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let data = try encoder.encode(config)
+        
+        let fileURL = URL.documentsDirectory.appendingPathComponent("config.json")
+        
+        try data.write(to: fileURL)
+        print("Settings saved to: \(fileURL.path)")
+    } catch {
+        print("Failed to save settings: \(error)")
+    }
+}
+
+func loadSettings() -> Ryujinx.Configuration? {
+    do {
+        let fileURL = URL.documentsDirectory.appendingPathComponent("config.json")
+        
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            print("Config file does not exist at: \(fileURL.path)")
+            return nil
+        }
+        
+        let data = try Data(contentsOf: fileURL)
+        
+        let decoder = JSONDecoder()
+        let configs = try decoder.decode(Ryujinx.Configuration.self, from: data)
+        return configs
+    } catch {
+        print("Failed to load settings: \(error)")
+        return nil
     }
 }

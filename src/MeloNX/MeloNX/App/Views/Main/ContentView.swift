@@ -44,26 +44,37 @@ struct ContentView: View {
     @State var quits: Bool = false
     @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = true
     @AppStorage("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS") var syncqsubmits: Bool = true
+    @AppStorage("ignoreJIT") var ignoreJIT: Bool = false
     
     // Loading Animation
+    @AppStorage("showlogsloading") var showlogsloading: Bool = true
     @State private var clumpOffset: CGFloat = -100
     private let clumpWidth: CGFloat = 100
     private let animationDuration: Double = 1.0
     @State private var isAnimating = false
     @State var isLoading = true
+    @State var jitNotEnabled = false
 
     // MARK: - Initialization
     init() {
-        let defaultConfig = loadSettings() ?? Ryujinx.Configuration(gamepath: "")
-        _config = State(initialValue: defaultConfig)
+        var defaultConfig = loadSettings()
+        if defaultConfig == nil {
+            saveSettings(config: .init(gamepath: ""))
+            
+            defaultConfig = loadSettings()
+        }
+        
+        
+        _config = State(initialValue: defaultConfig!)
         
         let defaultSettings: [MoltenVKSettings] = [ // Default MoltenVK Settings.
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_DEBUG", value: "0"),
             MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"),
+            MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "0"),
             // Uses more ram but makes performance higher, may add an option in settings to change or enable / disable this value (default 64)
-            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "128"),
+            MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "512"),
         ]
         
         _settings = State(initialValue: defaultSettings)
@@ -73,38 +84,64 @@ struct ContentView: View {
     
     // MARK: - Body
     var body: some View {
-        if game != nil, quits == false {
-            if isLoading {
-                if Air.shared.connected {
-                    Text("")
-                        .onAppear() {
-                            Air.play(AnyView(emulationView))
-                        }
-                } else {
-                    ZStack {
-                        emulationView
-                    }
-                }
-            } else {
-                // This is when the game starts to stop the animation
+        if game != nil, !jitNotEnabled {
+            // This is when the game starts to stop the animation
+            ZStack {
                 if #available(iOS 16, *) {
-                    EmulationView()
+                    EmulationView(startgame: $game)
                         .persistentSystemOverlays(.hidden)
-                        .onAppear() {
-                            isAnimating = false
-                        }
                 } else {
-                    EmulationView()
-                        .onAppear() {
-                            isAnimating = false
-                        }
+                    EmulationView(startgame: $game)
+                }
+                
+                if isLoading {
+                    ZStack {
+                        Color.black
+                            .opacity(0.8)
+                        emulationView
+                            .ignoresSafeArea(.all)
+                    }
+                    .edgesIgnoringSafeArea(.all)
+                    .ignoresSafeArea(.all)
                 }
             }
+        } else if game != nil, ignoreJIT {
+            ZStack {
+                if #available(iOS 16, *) {
+                    EmulationView(startgame: $game)
+                        .persistentSystemOverlays(.hidden)
+                } else {
+                    EmulationView(startgame: $game)
+                }
+                
+                if isLoading {
+                    ZStack {
+                        Color.black
+                            .opacity(0.8)
+                        emulationView
+                            .ignoresSafeArea(.all)
+                    }
+                    .edgesIgnoringSafeArea(.all)
+                    .ignoresSafeArea(.all)
+                }
+            }
+        } else if game != nil {
+            Text("")
+                .sheet(isPresented: $jitNotEnabled) {
+                    JITPopover() {
+                        jitNotEnabled = false
+                    }
+                    .interactiveDismissDisabled()
+                }
         } else {
             // This is the main menu view that includes the Settings and the Game Selector
             mainMenuView
                 .onAppear() {
                     quits = false
+                    
+                    loadSettings()
+                    
+                    isLoading = true
 
                     initControllerObservers() // This initializes the Controller Observers that refreshes the controller list when a new controller connecvts.
                 }
@@ -204,12 +241,14 @@ struct ContentView: View {
                                     if get_current_fps() != 0 {
                                         withAnimation {
                                             isLoading = false
+                                            
+                                            isAnimating = false
                                         }
                                         
-                                        isAnimating = false
+                                        
+                                        
                                         timer.invalidate()
                                     }
-                                    print(get_current_fps())
                                 }
                             }
                         }
@@ -223,6 +262,11 @@ struct ContentView: View {
                     x: screenGeometry.size.width / 2,
                     y: screenGeometry.size.height * 0.5
                 )
+            }
+            
+            if showlogsloading {
+                LogFileView(isfps: true)
+                    .frame(alignment: .topLeading)
             }
         }
     }
@@ -247,9 +291,9 @@ struct ContentView: View {
                     }
                 ))
                 
-                let isJIT = isJITEnabled()
-                if !isJIT {
-                    useTrollStore ? askForJIT() : enableJITEB()
+                jitNotEnabled = !isJITEnabled()
+                if jitNotEnabled {
+                    useTrollStore ? askForJIT() : jitStreamerEB ? enableJITEB() : print("no JIT")
                 }
             }
     }
@@ -265,7 +309,6 @@ struct ContentView: View {
     }
     
     private func setupEmulation() {
-        patchMakeKeyAndVisible()
         isVCA = (currentControllers.first(where: { $0 == onscreencontroller }) != nil)
         
         DispatchQueue.main.async {
@@ -319,6 +362,7 @@ struct ContentView: View {
             config.inputids.append("0")
         }
         
+        
         do {
             try Ryujinx.shared.start(with: config)
         } catch {
@@ -333,21 +377,6 @@ struct ContentView: View {
         settings.forEach { setting in
             setenv(setting.string, setting.value, 1)
         }
-    }
-}
-
-// MARK: - Helper Functions
-func loadSettings() -> Ryujinx.Configuration? {
-    guard let jsonString = UserDefaults.standard.string(forKey: "config"),
-          let data = jsonString.data(using: .utf8) else {
-        return nil
-    }
-    
-    do {
-        return try JSONDecoder().decode(Ryujinx.Configuration.self, from: data)
-    } catch {
-        print("Failed to load settings: \(error)")
-        return nil
     }
 }
 

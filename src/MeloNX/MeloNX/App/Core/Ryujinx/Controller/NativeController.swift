@@ -91,10 +91,10 @@ class NativeController: Hashable {
             guard let gamepad = nativeController.extendedGamepad
             else { return }
 
-            setupButtonChangeListener(gamepad.buttonA, for: .B)
-            setupButtonChangeListener(gamepad.buttonB, for: .A)
-            setupButtonChangeListener(gamepad.buttonX, for: .Y)
-            setupButtonChangeListener(gamepad.buttonY, for: .X)
+            setupButtonChangeListener(gamepad.buttonA, for: .A)
+            setupButtonChangeListener(gamepad.buttonB, for: .B)
+            setupButtonChangeListener(gamepad.buttonX, for: .X)
+            setupButtonChangeListener(gamepad.buttonY, for: .Y)
 
             setupButtonChangeListener(gamepad.dpad.up, for: .dPadUp)
             setupButtonChangeListener(gamepad.dpad.down, for: .dPadDown)

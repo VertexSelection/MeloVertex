@@ -9,15 +9,22 @@ import SwiftUI
 
 // Emulation View
 struct EmulationView: View {
+    @AppStorage("performacehud") var performacehud: Bool = false
     @AppStorage("isVirtualController") var isVCA: Bool = true
     @AppStorage("showScreenShotButton") var ssb: Bool = false
+    @AppStorage("showlogsgame") var showlogsgame: Bool = false
+    
     @State var isPresentedThree: Bool = false
     @State var isAirplaying = Air.shared.connected
+    @Binding var startgame: Game?
+    
     @Environment(\.scenePhase) var scenePhase
     var body: some View {
         ZStack {
             if isAirplaying {
-                Text("")
+                TouchView()
+                    .ignoresSafeArea()
+                    .edgesIgnoringSafeArea(.all)
                     .onAppear {
                         Air.play(AnyView(MetalView().ignoresSafeArea()))
                     }
@@ -33,16 +40,35 @@ struct EmulationView: View {
                 ControllerView() // Virtual Controller
             }
             
-            
-            if ssb {
-                Group {
-                    VStack {
+            Group {
+                VStack {
+                    HStack {
+                        if performacehud, !showlogsgame {
+                            PerformanceOverlayView()
+                        }
+                        
                         Spacer()
                         
+                        if performacehud, showlogsgame {
+                            PerformanceOverlayView()
+                        }
+                    }
+                    
+                    HStack {
+                        if showlogsgame, get_current_fps() != 0 {
+                            LogFileView(isfps: false)
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                    Spacer()
+                    
+                    if ssb {
                         HStack {
                             
                             Button {
-                                if let screenshot = Ryujinx.shared.emulationUIView.screenshot() {
+                                if let screenshot = Ryujinx.shared.emulationUIView?.screenshot() {
                                     UIImageWriteToSavedPhotosAlbum(screenshot, nil, nil, nil)
                                 }
                             } label: {
@@ -52,9 +78,12 @@ struct EmulationView: View {
                             .padding()
                             
                             Spacer()
+                            
+                            
+                            
                         }
-                        
                     }
+                    
                 }
             }
         }

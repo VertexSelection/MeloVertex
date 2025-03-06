@@ -8,6 +8,8 @@
 import Foundation
 import SwiftUI
 import GameController
+import MetalKit
+import Metal
 
 struct Controller: Identifiable, Hashable {
     var id: String
@@ -37,7 +39,8 @@ class Ryujinx {
     @Published var controllerMap: [Controller] = []
     @Published var metalLayer: CAMetalLayer? = nil
     @Published var firmwareversion = "0"
-    @Published var emulationUIView = UIView()
+    @Published var emulationUIView: MeloMTKView? = nil
+    @Published var config: Ryujinx.Configuration? = nil
     @Published var games: [Game] = []
     
     @Published var defMLContentSize: CGFloat?
@@ -140,9 +143,11 @@ class Ryujinx {
             throw RyujinxError.alreadyRunning
         }
         
-        isRunning = true
+        self.config = config
         
-        RunLoop.current.perform {
+        RunLoop.current.perform { [self] in
+            
+            isRunning = true
             
             let url = URL(string: config.gamepath)
             
@@ -156,15 +161,17 @@ class Ryujinx {
                 var argvPtrs = cArgs
                 
                 // Start the emulation
-                let result = main_ryujinx_sdl(Int32(args.count), &argvPtrs)
-                
-                if result != 0 {
-                    self.isRunning = false
-                    if let accessing, accessing {
-                        url!.stopAccessingSecurityScopedResource()
-                    }
+                if isRunning {
+                    let result = main_ryujinx_sdl(Int32(args.count), &argvPtrs)
                     
-                    throw RyujinxError.executionError(code: result)
+                    if result != 0 {
+                        self.isRunning = false
+                        if let accessing, accessing {
+                            url!.stopAccessingSecurityScopedResource()
+                        }
+                        
+                        throw RyujinxError.executionError(code: result)
+                    }
                 }
             } catch {
                 self.isRunning = false
@@ -180,6 +187,11 @@ class Ryujinx {
         }
 
         isRunning = false
+        
+        self.emulationUIView = nil
+        self.metalLayer = nil
+        
+        stop_emulation()
     }
 
     var running: Bool {
@@ -334,11 +346,17 @@ class Ryujinx {
                 }
             }
         }
-
-        // Apped any additional arguments
+        
         args.append(contentsOf: config.additionalArgs)
 
         return args
+    }
+    
+    func checkIfKeysImported() -> Bool {
+        let keysDirectory = URL.documentsDirectory.appendingPathComponent("system")
+        let keysFile = keysDirectory.appendingPathComponent("prod.keys")
+
+        return FileManager.default.fileExists(atPath: keysFile.path)
     }
     
     func fetchFirmwareVersion() -> String {
@@ -489,15 +507,11 @@ class Ryujinx {
                 let layer = self.getMetalLayer(nil)
                 
                 if layer != nil {
-                    DispatchQueue.main.async {
-                        self.metalLayer = layer
-                    }
                     self.metalLayer = layer
                     break
                 }
                 
                 Thread.sleep(forTimeInterval: 0.1)
-                try await Task.sleep(nanoseconds: 100_000_000)
             }
         }
     }

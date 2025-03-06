@@ -122,7 +122,8 @@ namespace Ryujinx.HLE.HOS.Services
                 if (serviceExists)
                 {
                     Logger.Trace?.Print(LogClass.KernelIpc, $"{service.GetType().Name}: {processRequest.Name}");
-
+                    
+                        
                     result = (ResultCode)processRequest.Invoke(service, new object[] { context });
                 }
                 else

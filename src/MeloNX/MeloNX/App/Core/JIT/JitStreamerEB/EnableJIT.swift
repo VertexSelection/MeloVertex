@@ -11,6 +11,7 @@ func enableJITEB()  {
     guard let bundleID = Bundle.main.bundleIdentifier else {
         return
     }
+    
     let address = URL(string: "http://[fd00::]:9172/launch_app/\(bundleID)")!
     
     let task = URLSession.shared.dataTask(with: address) { data, response, error in

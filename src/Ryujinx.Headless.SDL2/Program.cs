@@ -113,6 +113,8 @@ namespace Ryujinx.Headless.SDL2
         private static List<InputConfig> _inputConfiguration;
         private static bool _enableKeyboard;
         private static bool _enableMouse;
+        private static IntPtr nativeMetalLayer = IntPtr.Zero;
+        private static readonly object metalLayerLock = new object();
 
         private static readonly InputConfigJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
         private static readonly TitleUpdateMetadataJsonSerializerContext _titleSerializerContext = new(JsonHelper.GetDefaultSerializerOptions());
@@ -140,6 +142,19 @@ namespace Ryujinx.Headless.SDL2
             }
 
             return 0;
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "set_native_window")]
+        public static unsafe void SetNativeWindow(IntPtr layer) {
+            lock (metalLayerLock) {
+                nativeMetalLayer = layer;
+                Logger.Info?.Print(LogClass.Application, $"SetNativeWindow called with layer: {layer}");
+            }
+        }
+
+        public static IntPtr GetNativeMetalLayer()
+        {
+            return nativeMetalLayer;
         }
 
         [UnmanagedCallersOnly(EntryPoint = "get_dlc_nca_list")]
@@ -391,12 +406,13 @@ namespace Ryujinx.Headless.SDL2
         [UnmanagedCallersOnly(EntryPoint = "stop_emulation")]
         public static void StopEmulation()
         {
-
             if (_window != null)
             {
-                _window.Exit();
-                _emulationContext.Dispose();
-                _emulationContext = null;
+                if (_window._isPaused) {
+                    _window._isPaused = false;
+                } else {
+                    _window._isPaused = true;
+                }
             }
         }
 
@@ -977,8 +993,7 @@ namespace Ryujinx.Headless.SDL2
                 }
                 else
                 {   
-                    bool isAppleController = gamepadName.Contains("Apple") ? option.OnScreenCorrespond : false;
-                    bool isNintendoStyle = gamepadName.Contains("Nintendo") || isAppleController;
+                    bool isNintendoStyle = gamepadName.Contains("Nintendo") || gamepadName.Contains("Joycons");
 
                     config = new StandardControllerInputConfig
                     {
@@ -1190,7 +1205,7 @@ namespace Ryujinx.Headless.SDL2
             }
 
             if (option.InputPath == "MiiMaker") {
-                string contentPath = _contentManager.GetInstalledContentPath(0x0100000000001009, StorageId.BuiltInSystem, NcaContentType.Program);
+                string contentPath = _contentManager.GetInstalledContentPath(0x0100000000001000, StorageId.BuiltInSystem, NcaContentType.Program);
 
                 option.InputPath = contentPath;
             }
@@ -1292,18 +1307,25 @@ namespace Ryujinx.Headless.SDL2
 
         private static WindowBase CreateWindow(Options options)
         {
-            return options.GraphicsBackend == GraphicsBackend.Vulkan
-                ? new VulkanWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio, options.EnableMouse, options.HideCursorMode)
-                : new OpenGLWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio, options.EnableMouse, options.HideCursorMode);
+            if (OperatingSystem.IsIOS()) {
+                return new MoltenVKWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio, options.EnableMouse, options.HideCursorMode);
+            }
+            else 
+            {
+                return options.GraphicsBackend == GraphicsBackend.Vulkan
+                    ? new VulkanWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio, options.EnableMouse, options.HideCursorMode)
+                    : new OpenGLWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio, options.EnableMouse, options.HideCursorMode);
+            }
         }
 
         private static IRenderer CreateRenderer(Options options, WindowBase window)
         {
-            if (options.GraphicsBackend == GraphicsBackend.Vulkan && window is VulkanWindow vulkanWindow)
+            if (options.GraphicsBackend == GraphicsBackend.Vulkan)
             {
                 string preferredGpuId = string.Empty;
                 Vk api = Vk.GetApi();
 
+                // Handle GPU preference selection
                 if (!string.IsNullOrEmpty(options.PreferredGPUVendor))
                 {
                     string preferredGpuVendor = options.PreferredGPUVendor.ToLowerInvariant();
@@ -1319,13 +1341,25 @@ namespace Ryujinx.Headless.SDL2
                     }
                 }
 
-                return new VulkanRenderer(
-                    api,
-                    (instance, vk) => new SurfaceKHR((ulong)(vulkanWindow.CreateWindowSurface(instance.Handle))),
-                    vulkanWindow.GetRequiredInstanceExtensions,
-                    preferredGpuId);
+                if (window is VulkanWindow vulkanWindow)
+                {
+                    return new VulkanRenderer(
+                        api,
+                        (instance, vk) => new SurfaceKHR((ulong)(vulkanWindow.CreateWindowSurface(instance.Handle))),
+                        vulkanWindow.GetRequiredInstanceExtensions,
+                        preferredGpuId);
+                }
+                else if (window is MoltenVKWindow mvulkanWindow)
+                {
+                    return new VulkanRenderer(
+                        api,
+                        (instance, vk) => new SurfaceKHR((ulong)(mvulkanWindow.CreateWindowSurface(instance.Handle))),
+                        mvulkanWindow.GetRequiredInstanceExtensions,
+                        preferredGpuId);
+                }
             }
 
+            // Fallback to OpenGL renderer if Vulkan is not used
             return new OpenGLRenderer();
         }
 
@@ -1333,12 +1367,7 @@ namespace Ryujinx.Headless.SDL2
         {
             BackendThreading threadingMode = options.BackendThreading;
 
-            bool threadedGAL = threadingMode == BackendThreading.On || (threadingMode == BackendThreading.Auto && renderer.PreferThreading);
-
-            if (threadedGAL)
-            {
-                renderer = new ThreadedRenderer(renderer);
-            }
+            renderer = new ThreadedRenderer(renderer);
 
             bool AppleHV = false;
 
@@ -1413,6 +1442,11 @@ namespace Ryujinx.Headless.SDL2
             Logger.RestartTime();
 
             WindowBase window = CreateWindow(options);
+
+            if (window is MoltenVKWindow mvulkanWindow) {
+                mvulkanWindow.SetNativeWindow(nativeMetalLayer);
+            }
+
             IRenderer renderer = CreateRenderer(options, window);
 
             _window = window;

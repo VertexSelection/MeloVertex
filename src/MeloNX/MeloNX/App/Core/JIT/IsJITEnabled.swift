@@ -7,6 +7,19 @@
 
 import Foundation
 
+@_silgen_name("csops")
+func csops(pid: Int32, ops: Int32, useraddr: UnsafeMutableRawPointer?, usersize: Int32) -> Int32
+
+func isJITEnabled() -> Bool {
+    var flags: Int = 0
+    
+    if checkAppEntitlement("dynamic-codesigning") {
+        return allocateTest()
+    }
+    
+    return csops(pid: getpid(), ops: 0, useraddr: &flags, usersize: Int32(MemoryLayout.size(ofValue: flags))) == 0 && (flags & Int(CS_DEBUGGED)) != 0 ? allocateTest() : false
+}
+
 func checkMemoryPermissions(at address: UnsafeRawPointer) -> Bool {
     var region: vm_address_t = vm_address_t(UInt(bitPattern: address))
     var regionSize: vm_size_t = 0
@@ -27,8 +40,7 @@ func checkMemoryPermissions(at address: UnsafeRawPointer) -> Bool {
     
     return info.protection & VM_PROT_EXECUTE != 0
 }
-
-func isJITEnabled() -> Bool {
+func allocateTest() -> Bool {
     let pageSize = sysconf(_SC_PAGESIZE)
     let code: [UInt32] = [0x52800540, 0xD65F03C0]
     
@@ -39,7 +51,6 @@ func isJITEnabled() -> Bool {
     defer {
         munmap(jitMemory, pageSize)
     }
-    
     
     memcpy(jitMemory, code, code.count)
     

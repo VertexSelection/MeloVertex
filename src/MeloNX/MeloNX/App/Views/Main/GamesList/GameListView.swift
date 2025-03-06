@@ -134,7 +134,9 @@ struct GameLibraryView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        isSelectingGameFile.toggle()
+                        isSelectingGameFile = true
+                        
+                        isImporting = true
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -171,14 +173,15 @@ struct GameLibraryView: View {
                                 } label: {
                                     Text("Mii Maker")
                                 }
-                                Button {
-                                    DispatchQueue.main.async {
-                                        isImporting.toggle()
-                                    }
-                                } label: {
-                                    Text("Open game from system")
-                                }
                             }
+                        }
+                        
+                        Button {
+                            isSelectingGameFile = false
+                            
+                            isImporting = true
+                        } label: {
+                            Text("Open Game")
                         }
                         
                         Button {
@@ -211,62 +214,64 @@ struct GameLibraryView: View {
         .onChange(of: searchText) { _ in
             isSearching = !searchText.isEmpty
         }
-        .fileImporter(isPresented: $isImporting, allowedContentTypes: [.zip, .folder, .nsp, .xci]) { result in
-            switch result {
-            case .success(let url):
-                guard url.startAccessingSecurityScopedResource() else {
-                    print("Failed to access security-scoped resource")
-                    return
-                }
-                defer { url.stopAccessingSecurityScopedResource() }
-                
-                do {
-                    let handle = try FileHandle(forReadingFrom: url)
-                    let fileExtension = (url.pathExtension as NSString).utf8String
-                    let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
-                    
-                    var gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
-                    
-                    let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: url)
-            
-                    DispatchQueue.main.async {
-                        startemu = game
+        .fileImporter(isPresented: $isImporting, allowedContentTypes: [.folder, .nsp, .xci, .zip, .item]) { result in
+            if isSelectingGameFile {
+                switch result {
+                case .success(let url):
+                    guard url.startAccessingSecurityScopedResource() else {
+                        print("Failed to access security-scoped resource")
+                        return
                     }
-                } catch {
-                    print(error)
-                }
-
-            case .failure(let err):
-                print("File import failed: \(err.localizedDescription)")
-            }
-        }
-        .fileImporter(isPresented: $isSelectingGameFile, allowedContentTypes: [.nsp, .xci, .zip, .folder]) { result in
-            switch result {
-            case .success(let url):
-                guard url.startAccessingSecurityScopedResource() else {
-                    print("Failed to access security-scoped resource")
-                    return
-                }
-                defer { url.stopAccessingSecurityScopedResource() }
-                
-                do {
-                    let fileManager = FileManager.default
-                    let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-                    let romsDirectory = documentsDirectory.appendingPathComponent("roms")
+                    defer { url.stopAccessingSecurityScopedResource() }
                     
-                    if !fileManager.fileExists(atPath: romsDirectory.path) {
-                        try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
+                    do {
+                        let fileManager = FileManager.default
+                        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+                        let romsDirectory = documentsDirectory.appendingPathComponent("roms")
+                        
+                        if !fileManager.fileExists(atPath: romsDirectory.path) {
+                            try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
+                        }
+                        
+                        let destinationURL = romsDirectory.appendingPathComponent(url.lastPathComponent)
+                        try fileManager.copyItem(at: url, to: destinationURL)
+                        
+                        Ryujinx.shared.games = Ryujinx.shared.loadGames()
+                    } catch {
+                        print("Error copying game file: \(error)")
+                    }
+                case .failure(let err):
+                    print("File import failed: \(err.localizedDescription)")
+                }
+                
+            } else {
+                
+                switch result {
+                case .success(let url):
+                    guard url.startAccessingSecurityScopedResource() else {
+                        print("Failed to access security-scoped resource")
+                        return
                     }
                     
-                    let destinationURL = romsDirectory.appendingPathComponent(url.lastPathComponent)
-                    try fileManager.copyItem(at: url, to: destinationURL)
+                    do {
+                        let handle = try FileHandle(forReadingFrom: url)
+                        let fileExtension = (url.pathExtension as NSString).utf8String
+                        let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
+                        
+                        var gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
+                        
+                        let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: url)
+                        
+                        DispatchQueue.main.async {
+                            startemu = game
+                        }
+                    } catch {
+                        print(error)
+                    }
                     
-                    Ryujinx.shared.games = Ryujinx.shared.loadGames()
-                } catch {
-                    print("Error copying game file: \(error)")
+                case .failure(let err):
+                    print("File import failed: \(err.localizedDescription)")
                 }
-            case .failure(let err):
-                print("File import failed: \(err.localizedDescription)")
             }
         }
         .sheet(isPresented: $isSelectingGameUpdate) {

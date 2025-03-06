@@ -45,7 +45,9 @@ class VirtualController {
                 },
                 Rumble: { userdata, lowFreq, highFreq in
                     print("Rumble with \(lowFreq), \(highFreq)")
-                    VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq))
+                    if UIDevice.current.userInterfaceIdiom == .phone {
+                        VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq))
+                    }
                     return 0
                 },
                 RumbleTriggers: { userdata, leftRumble, rightRumble in
@@ -80,7 +82,6 @@ class VirtualController {
     
     static func rumble(lowFreq: Float, highFreq: Float, engine: CHHapticEngine? = nil) {
         do {
-            // Low-frequency haptic pattern
             let lowFreqPattern = try CHHapticPattern(events: [
                 CHHapticEvent(eventType: .hapticTransient, parameters: [
                     CHHapticEventParameter(parameterID: .hapticIntensity, value: lowFreq),
@@ -88,7 +89,7 @@ class VirtualController {
                 ], relativeTime: 0, duration: 0.2)
             ], parameters: [])
 
-            // High-frequency haptic pattern
+            
             let highFreqPattern = try CHHapticPattern(events: [
                 CHHapticEvent(eventType: .hapticTransient, parameters: [
                     CHHapticEventParameter(parameterID: .hapticIntensity, value: highFreq),
@@ -96,12 +97,9 @@ class VirtualController {
                 ], relativeTime: 0.2, duration: 0.2)
             ], parameters: [])
 
-            // Mutable engine
             var engine = engine
 
-            // If no engine passed, use device engine
             if engine == nil {
-                // Create and start the haptic engine
                 if hapticEngine == nil {
                     hapticEngine = try CHHapticEngine()
                     try hapticEngine?.start()
@@ -114,13 +112,11 @@ class VirtualController {
                 return print("Error creating haptic patterns: hapticEngine is nil")
             }
 
-            // Create and play the low-frequency player
             let lowFreqPlayer = try engine.makePlayer(with: lowFreqPattern)
             try lowFreqPlayer.start(atTime: 0)
-
-            // Create and play the high-frequency player after a short delay
+            
             let highFreqPlayer = try engine.makePlayer(with: highFreqPattern)
-            try highFreqPlayer.start(atTime: 0.2)
+            try highFreqPlayer.start(atTime: 0)
 
         } catch {
             print("Error creating haptic patterns: \(error)")

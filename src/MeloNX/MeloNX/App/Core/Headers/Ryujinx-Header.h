@@ -48,13 +48,21 @@ void install_firmware(const char* inputPtr);
 
 char* installed_firmware_version();
 
+void set_native_window(void *layerPtr);
+
 void stop_emulation();
+
+void initialize();
 
 int main_ryujinx_sdl(int argc, char **argv);
 
 int get_current_fps();
 
-void initialize();
+void touch_began(float x, float y, int index);
+
+void touch_moved(float x, float y, int index);
+
+void touch_ended(int index);
 
 #ifdef __cplusplus
 }

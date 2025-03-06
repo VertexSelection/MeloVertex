@@ -22,7 +22,7 @@ namespace Ryujinx.Graphics.Vulkan
 
         private static readonly string[] _desirableExtensions = {
             ExtConditionalRendering.ExtensionName,
-            ExtExtendedDynamicState.ExtensionName,
+            ExtExtendedDynamicState.ExtensionName, // This is unsupported on iOS 16 and below.
             ExtTransformFeedback.ExtensionName,
             KhrDrawIndirectCount.ExtensionName,
             KhrPushDescriptor.ExtensionName,

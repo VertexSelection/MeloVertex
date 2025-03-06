@@ -18,11 +18,26 @@ struct MeloNXApp: App {
     @Environment(\.scenePhase) var scenePhase
     @State var alert: UIAlertController? = nil
     
+    @State var finished = false
+    @AppStorage("hasbeenfinished") var finishedStorage: Bool = false
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
                 if showed || DRM != 1 {
-                    ContentView()
+                    
+                    if finishedStorage {
+                        ContentView()
+                    } else {
+                        SetupView(finished: $finished)
+                            .onChange(of: finished) { newValue in
+                                withAnimation {
+                                    withAnimation {
+                                        finishedStorage = newValue
+                                    }
+                                }
+                            }
+                    }
                 } else {
                     Group {
                         VStack {
