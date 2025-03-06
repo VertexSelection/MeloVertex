@@ -1205,7 +1205,7 @@ namespace Ryujinx.Headless.SDL2
             }
 
             if (option.InputPath == "MiiMaker") {
-                string contentPath = _contentManager.GetInstalledContentPath(0x0100000000001000, StorageId.BuiltInSystem, NcaContentType.Program);
+                string contentPath = _contentManager.GetInstalledContentPath(0x0100000000001009, StorageId.BuiltInSystem, NcaContentType.Program);
 
                 option.InputPath = contentPath;
             }
