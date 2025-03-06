@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Define the destination directory (hardcoded)
 DESTINATION_DIR="src/MeloNX/Dependencies/Dynamic\ Libraries/Ryujinx.Headless.SDL2.dylib"
 

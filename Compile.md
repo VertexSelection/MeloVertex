@@ -16,19 +16,11 @@ Open a terminal and run:
 
 ```sh
 git clone https://git.743378673.xyz/MeloNX/MeloNX.git
-cd MeloNX
-./compile.sh
-```
-You may need to run this command if compilation fails, then run the `./compile.sh` command again (You will need to put in your user password. Your password will not be shown at all.)
-```
-sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 ```
 
-
-However, if you only need to update MeloNX, make sure you have cd into the directory then run this then skip to step 5 
+However, if you only need to update MeloNX, make sure you have cd into the directory then run this 
 ```
 git pull
-./compile.sh
 ```
 
 ### 2. Open the Xcode Project
@@ -66,7 +58,7 @@ Ensure your **iPhone/iPad** is **connected** and **selected** (Next to MeloNX wi
 - You will be need to press GET and wait for it to finish downloading and installing
 - Then you will be able to select your device and Build and Run.
 
-Make Sure you do **NOT** select the Simulator. (Which is the Generic names and the ones with the non-coloured icons, e.g. "iPhone 16 Pro")
+### Make Sure you do **NOT** select the Simulator. (Which is the Generic names and the ones with the non-coloured icons, e.g. "iPhone 16 Pro")
 
 ### 6. Build and Run
 
@@ -78,4 +70,3 @@ Click the **Run (▶️) button** in Xcode to compile and launch MeloNX.
 ---
 
 Now you're all set! 🚀 If you encounter issues, please join the discord at https://melonx.org
-```

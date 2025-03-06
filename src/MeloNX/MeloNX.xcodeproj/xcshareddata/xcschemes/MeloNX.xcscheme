@@ -100,5 +100,15 @@
    <ArchiveAction
       buildConfiguration = "Release"
       revealArchiveInOrganizer = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "REPO_DIR=&quot;$(cd &quot;${SRCROOT}/../../&quot; &amp;&amp; pwd)&quot;&#10;SCRIPT_PATH=&quot;$REPO_DIR/distribution/ios/set_current_version.sh&quot;&#10;&#10;sh &quot;${SCRIPT_PATH}&quot;&#10;"
+               shellToInvoke = "/bin/bash">
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
    </ArchiveAction>
 </Scheme>

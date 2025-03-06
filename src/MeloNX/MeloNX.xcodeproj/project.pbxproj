@@ -25,12 +25,20 @@
 
 /* Begin PBXBuildFile section */
 		4E0DED342D05695D00FEF007 /* SwiftUIJoystick in Frameworks */ = {isa = PBXBuildFile; productRef = 4E0DED332D05695D00FEF007 /* SwiftUIJoystick */; };
+		4E12B23C2D797CFA00FB2271 /* MeloNX.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */; };
 		4E8A80772D5FDD2D0041B48F /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E80AA622CD7122800029585 /* GameController.framework */; };
 		4EA5AE822D16807500AD0B9F /* SwiftSVG in Frameworks */ = {isa = PBXBuildFile; productRef = 4EA5AE812D16807500AD0B9F /* SwiftSVG */; };
 		CA8F9C322D3F5AB200D7E586 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E80AA622CD7122800029585 /* GameController.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		4E12B3A12D798BD100FB2271 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4E80A9852CD6F54500029585 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD43C6212D1B248D003BBC42;
+			remoteInfo = com.Stossy11.MeloNX.RyujinxAg;
+		};
 		4E80A99E2CD6F54700029585 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4E80A9852CD6F54500029585 /* Project object */;
@@ -78,12 +86,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = MeloNX.xcconfig; sourceTree = "<group>"; };
 		4E7023A52D5A98E2002C7183 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		4E80A98D2CD6F54500029585 /* MeloNX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeloNX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80A99D2CD6F54700029585 /* MeloNXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80A9A72CD6F54700029585 /* MeloNXUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeloNXUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E80AA622CD7122800029585 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
-		5650564A2D2A758600C8BB1E /* dotnet.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = dotnet.xcconfig; sourceTree = "<group>"; };
 		BD43C6282D1B2514003BBC42 /* Ryujinx.Headless.SDL2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Ryujinx.Headless.SDL2.dylib; path = "MeloNX/Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -222,7 +230,7 @@
 		4E80A9842CD6F54500029585 = {
 			isa = PBXGroup;
 			children = (
-				5650564A2D2A758600C8BB1E /* dotnet.xcconfig */,
+				4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */,
 				BD43C6282D1B2514003BBC42 /* Ryujinx.Headless.SDL2.dylib */,
 				4E80A98F2CD6F54500029585 /* MeloNX */,
 				4E80A9A02CD6F54700029585 /* MeloNXTests */,
@@ -260,7 +268,7 @@
 			buildConfigurationList = BD43C61E2D1B23AB003BBC42 /* Build configuration list for PBXLegacyTarget "Ryujinx" */;
 			buildPhases = (
 			);
-			buildToolPath = /usr/local/share/dotnet/dotnet;
+			buildToolPath = "$(DOTNET)";
 			buildWorkingDirectory = "$(SRCROOT)/../..";
 			dependencies = (
 			);
@@ -286,6 +294,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				4E12B3A22D798BD100FB2271 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				4E80A98F2CD6F54500029585 /* MeloNX */,
@@ -406,6 +415,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E12B23C2D797CFA00FB2271 /* MeloNX.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,6 +482,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		4E12B3A22D798BD100FB2271 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD43C6212D1B248D003BBC42 /* com.Stossy11.MeloNX.RyujinxAg */;
+			targetProxy = 4E12B3A12D798BD100FB2271 /* PBXContainerItemProxy */;
+		};
 		4E80A99F2CD6F54700029585 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4E80A98C2CD6F54500029585 /* MeloNX */;
@@ -492,6 +507,7 @@
 /* Begin XCBuildConfiguration section */
 		4E80A9AF2CD6F54700029585 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -561,6 +577,7 @@
 		};
 		4E80A9B02CD6F54700029585 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -626,6 +643,7 @@
 		};
 		4E80A9B22CD6F54700029585 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -680,6 +698,12 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -779,8 +803,20 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = "$(VERSION)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -792,6 +828,7 @@
 		};
 		4E80A9B32CD6F54700029585 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -846,6 +883,12 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -945,8 +988,20 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = "$(VERSION)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -958,6 +1013,7 @@
 		};
 		4E80A9B52CD6F54700029585 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -977,6 +1033,7 @@
 		};
 		4E80A9B62CD6F54700029585 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -996,6 +1053,7 @@
 		};
 		4E80A9B82CD6F54700029585 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -1013,6 +1071,7 @@
 		};
 		4E80A9B92CD6F54700029585 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -1030,7 +1089,9 @@
 		};
 		BD43C61F2D1B23AB003BBC42 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				DEBUGGING_SYMBOLS = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -1046,7 +1107,9 @@
 		};
 		BD43C6202D1B23AB003BBC42 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 95J8WZ4TN8;
@@ -1058,6 +1121,7 @@
 		};
 		BD43C6232D1B248D003BBC42 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 95J8WZ4TN8;
@@ -1067,6 +1131,7 @@
 		};
 		BD43C6242D1B248D003BBC42 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E12B23B2D797CFA00FB2271 /* MeloNX.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 95J8WZ4TN8;
