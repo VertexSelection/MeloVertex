@@ -12,10 +12,11 @@ Before you begin, ensure you have the following installed:
 
 ### 1. Clone the Repository and Build Ryujinx
 
-Open a terminal and run:
+Open a terminal and run (your password will not be shown in the 2nd command):
 
 ```sh
 git clone https://git.743378673.xyz/MeloNX/MeloNX.git
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 ```
 
 However, if you only need to update MeloNX, make sure you have cd into the directory then run this 
