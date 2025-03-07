@@ -56,7 +56,7 @@ Ensure your **iPhone/iPad** is **connected** and **selected** (Next to MeloNX wi
 
 ### 6. Configure the Project Settings
 
-Click the **Run (▶️) button** in Xcode to compile MeloNX and wait it will fail to compile the first time, Thats normal.
+Click the **Run (▶️) button** in Xcode to compile MeloNX and wait it will fail with Undefined Symbol(s) the first time, Thats normal.
 - When it fails the first time, do this:
 - In **Xcode**, select the **MeloNX** project.
 - Under the **General** tab, find `Ryujinx.Headless.SDL2.dylib`.
