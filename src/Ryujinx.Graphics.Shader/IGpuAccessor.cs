@@ -27,45 +27,42 @@ namespace Ryujinx.Graphics.Shader
         ReadOnlySpan<ulong> GetCode(ulong address, int minimumSize);
 
         /// <summary>
-        /// Queries the binding number of a constant buffer.
+        /// Gets the binding number of a constant buffer.
         /// </summary>
         /// <param name="index">Constant buffer index</param>
         /// <returns>Binding number</returns>
-        int QueryBindingConstantBuffer(int index)
-        {
-            return index + 1;
-        }
+        SetBindingPair CreateConstantBufferBinding(int index);
 
         /// <summary>
-        /// Queries the binding number of a storage buffer.
+        /// Gets the binding number of an image.
+        /// </summary>
+        /// <param name="count">For array of images, the number of elements of the array, otherwise it should be 1</param>
+        /// <param name="isBuffer">Indicates if the image is a buffer image</param>
+        /// <returns>Binding number</returns>
+        SetBindingPair CreateImageBinding(int count, bool isBuffer);
+
+        /// <summary>
+        /// Gets the binding number of a storage buffer.
         /// </summary>
         /// <param name="index">Storage buffer index</param>
         /// <returns>Binding number</returns>
-        int QueryBindingStorageBuffer(int index)
-        {
-            return index;
-        }
+        SetBindingPair CreateStorageBufferBinding(int index);
 
         /// <summary>
-        /// Queries the binding number of a texture.
+        /// Gets the binding number of a texture.
         /// </summary>
-        /// <param name="index">Texture index</param>
+        /// <param name="count">For array of textures, the number of elements of the array, otherwise it should be 1</param>
         /// <param name="isBuffer">Indicates if the texture is a buffer texture</param>
         /// <returns>Binding number</returns>
-        int QueryBindingTexture(int index, bool isBuffer)
-        {
-            return index;
-        }
+        SetBindingPair CreateTextureBinding(int count, bool isBuffer);
 
         /// <summary>
-        /// Queries the binding number of an image.
+        /// Gets the set index for an additional set, or -1 if there's no extra set available.
         /// </summary>
-        /// <param name="index">Image index</param>
-        /// <param name="isBuffer">Indicates if the image is a buffer image</param>
-        /// <returns>Binding number</returns>
-        int QueryBindingImage(int index, bool isBuffer)
+        /// <returns>Extra set index, or -1 if not available</returns>
+        int CreateExtraSet()
         {
-            return index;
+            return -1;
         }
 
         /// <summary>
@@ -145,6 +142,7 @@ namespace Ryujinx.Graphics.Shader
                 default,
                 true,
                 default,
+                false,
                 false,
                 false,
                 false);
@@ -304,6 +302,15 @@ namespace Ryujinx.Graphics.Shader
         }
 
         /// <summary>
+        /// Queries host API support for separate textures and samplers.
+        /// </summary>
+        /// <returns>True if the API supports samplers and textures to be combined on the shader, false otherwise</returns>
+        bool QueryHostSupportsSeparateSampler()
+        {
+            return true;
+        }
+
+        /// <summary>
         /// Queries host GPU shader ballot support.
         /// </summary>
         /// <returns>True if the GPU and driver supports shader ballot, false otherwise</returns>
@@ -394,6 +401,12 @@ namespace Ryujinx.Graphics.Shader
         }
 
         /// <summary>
+        /// Gets the maximum number of samplers that the bound texture pool may have.
+        /// </summary>
+        /// <returns>Maximum amount of samplers that the pool may have</returns>
+        int QuerySamplerArrayLengthFromPool();
+
+        /// <summary>
         /// Queries sampler type information.
         /// </summary>
         /// <param name="handle">Texture handle</param>
@@ -403,6 +416,19 @@ namespace Ryujinx.Graphics.Shader
         {
             return SamplerType.Texture2D;
         }
+
+        /// <summary>
+        /// Gets the size in bytes of a bound constant buffer for the current shader stage.
+        /// </summary>
+        /// <param name="slot">The number of the constant buffer to get the size from</param>
+        /// <returns>Size in bytes</returns>
+        int QueryTextureArrayLengthFromBuffer(int slot);
+
+        /// <summary>
+        /// Gets the maximum number of textures that the bound texture pool may have.
+        /// </summary>
+        /// <returns>Maximum amount of textures that the pool may have</returns>
+        int QueryTextureArrayLengthFromPool();
 
         /// <summary>
         /// Queries texture coordinate normalization information.

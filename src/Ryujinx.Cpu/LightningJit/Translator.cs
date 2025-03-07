@@ -1,10 +1,11 @@
 using ARMeilleure.Common;
 using ARMeilleure.Memory;
-using ARMeilleure.Signal;
 using Ryujinx.Cpu.Jit;
 using Ryujinx.Cpu.LightningJit.Cache;
 using Ryujinx.Cpu.LightningJit.CodeGen.Arm64;
 using Ryujinx.Cpu.LightningJit.State;
+using Ryujinx.Cpu.Signal;
+using Ryujinx.Memory;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -46,7 +47,7 @@ namespace Ryujinx.Cpu.LightningJit
         internal TranslatorStubs Stubs { get; }
         internal IMemoryManager Memory { get; }
 
-        public Translator(IJitMemoryAllocator allocator, IMemoryManager memory, bool for64Bits)
+        public Translator(IMemoryManager memory, bool for64Bits)
         {
             Memory = memory;
 
@@ -58,10 +59,8 @@ namespace Ryujinx.Cpu.LightningJit
             }
             else
             {
-                JitCache.Initialize(allocator);
+                JitCache.Initialize(new JitMemoryAllocator(forJit: true));
             }
-
-            NativeSignalHandler.Initialize(allocator);
 
             Functions = new TranslatorCache<TranslatedFunction>();
             FunctionTable = new AddressTable<ulong>(for64Bits ? _levels64Bit : _levels32Bit);
@@ -69,11 +68,9 @@ namespace Ryujinx.Cpu.LightningJit
 
             FunctionTable.Fill = (ulong)Stubs.SlowDispatchStub;
 
-            if (memory.Type == MemoryManagerType.HostTracked ||
-                memory.Type == MemoryManagerType.HostMapped ||
-                memory.Type == MemoryManagerType.HostMappedUnsafe)
+            if (memory.Type.IsHostMappedOrTracked())
             {
-                NativeSignalHandler.InitializeSignalHandler(allocator.GetPageSize());
+                NativeSignalHandler.InitializeSignalHandler();
             }
         }
 
@@ -141,7 +138,7 @@ namespace Ryujinx.Cpu.LightningJit
             }
         }
 
-        internal TranslatedFunction Translate(ulong address, ExecutionMode mode)
+        private TranslatedFunction Translate(ulong address, ExecutionMode mode)
         {
             CompiledFunction func = Compile(address, mode);
             IntPtr funcPointer = JitCache.Map(func.Code);
@@ -149,7 +146,7 @@ namespace Ryujinx.Cpu.LightningJit
             return new TranslatedFunction(funcPointer, (ulong)func.GuestCodeLength);
         }
 
-        internal CompiledFunction Compile(ulong address, ExecutionMode mode)
+        private CompiledFunction Compile(ulong address, ExecutionMode mode)
         {
             return AarchCompiler.Compile(CpuPresets.CortexA57, Memory, address, FunctionTable, Stubs.DispatchStub, mode, RuntimeInformation.ProcessArchitecture);
         }

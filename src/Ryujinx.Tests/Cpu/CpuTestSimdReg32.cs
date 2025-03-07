@@ -908,6 +908,77 @@ namespace Ryujinx.Tests.Cpu
 
             CompareAgainstUnicorn();
         }
+
+        [Test, Pairwise, Description("VQRDMULH.<S16, S32> <Qd>, <Qn>, <Qm>")]
+        public void Vqrdmulh_I([Range(0u, 5u)] uint rd,
+                               [Range(0u, 5u)] uint rn,
+                               [Range(0u, 5u)] uint rm,
+                               [ValueSource(nameof(_8B4H2S1D_))] ulong z,
+                               [ValueSource(nameof(_8B4H2S1D_))] ulong a,
+                               [ValueSource(nameof(_8B4H2S1D_))] ulong b,
+                               [Values(1u, 2u)] uint size) // <S16, S32>
+        {
+            rd >>= 1;
+            rd <<= 1;
+            rn >>= 1;
+            rn <<= 1;
+            rm >>= 1;
+            rm <<= 1;
+
+            uint opcode = 0xf3100b40u & ~(3u << 20); // VQRDMULH.S16 Q0, Q0, Q0
+
+            opcode |= ((rd & 0xf) << 12) | ((rd & 0x10) << 18);
+            opcode |= ((rn & 0xf) << 16) | ((rn & 0x10) << 3);
+            opcode |= ((rm & 0xf) << 0) | ((rm & 0x10) << 1);
+
+            opcode |= (size & 0x3) << 20;
+
+            V128 v0 = MakeVectorE0E1(z, ~z);
+            V128 v1 = MakeVectorE0E1(a, ~a);
+            V128 v2 = MakeVectorE0E1(b, ~b);
+
+            SingleOpcode(opcode, v0: v0, v1: v1, v2: v2);
+
+            CompareAgainstUnicorn();
+        }
+
+        [Test, Pairwise]
+        public void Vp_Add_Long_Accumulate([Values(0u, 2u, 4u, 8u)] uint rd,
+                                           [Values(0u, 2u, 4u, 8u)] uint rm,
+                                           [Values(0u, 1u, 2u)] uint size,
+                                           [Random(RndCnt)] ulong z,
+                                           [Random(RndCnt)] ulong a,
+                                           [Random(RndCnt)] ulong b,
+                                           [Values] bool q,
+                                           [Values] bool unsigned)
+        {
+            uint opcode = 0xF3B00600; // VPADAL.S8 D0, Q0
+
+            if (q)
+            {
+                opcode |= 1 << 6;
+                rm <<= 1;
+                rd <<= 1;
+            }
+
+            if (unsigned)
+            {
+                opcode |= 1 << 7;
+            }
+
+            opcode |= ((rm & 0xf) << 0) | ((rm & 0x10) << 1);
+            opcode |= ((rd & 0xf) << 12) | ((rd & 0x10) << 18);
+
+            opcode |= size << 18;
+
+            V128 v0 = MakeVectorE0E1(z, z);
+            V128 v1 = MakeVectorE0E1(a, z);
+            V128 v2 = MakeVectorE0E1(b, z);
+
+            SingleOpcode(opcode, v0: v0, v1: v1, v2: v2);
+
+            CompareAgainstUnicorn();
+        }
 #endif
     }
 }

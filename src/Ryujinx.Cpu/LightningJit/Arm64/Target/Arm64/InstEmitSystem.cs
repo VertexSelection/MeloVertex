@@ -69,7 +69,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
                     asm.LdrRiUn(Register((int)rd), Register(regAlloc.FixedContextRegister), NativeContextOffsets.TpidrEl0Offset);
                 }
             }
-            else if ((encoding & ~0x1f) == 0xd53b0020 && (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())) // mrs x0, ctr_el0
+            else if ((encoding & ~0x1f) == 0xd53b0020 && IsCtrEl0AccessForbidden()) // mrs x0, ctr_el0
             {
                 uint rd = encoding & 0x1f;
 
@@ -115,7 +115,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
             {
                 return true;
             }
-            else if ((encoding & ~0x1f) == 0xd53b0020 && (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())) // mrs x0, ctr_el0
+            else if ((encoding & ~0x1f) == 0xd53b0020 && IsCtrEl0AccessForbidden()) // mrs x0, ctr_el0
             {
                 return true;
             }
@@ -125,6 +125,18 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
             }
 
             return false;
+        }
+
+        private static bool IsCtrEl0AccessForbidden()
+        {
+            // Only Linux allows accessing CTR_EL0 from user mode.
+            return OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsIOS();
+        }
+
+        public static bool IsCacheInstForbidden(uint encoding)
+        {
+            // Windows does not allow the cache maintenance instructions to be used from user mode.
+            return OperatingSystem.IsWindows() && SysUtils.IsCacheInstUciTrapped(encoding);
         }
 
         public static bool NeedsContextStoreLoad(InstName name)

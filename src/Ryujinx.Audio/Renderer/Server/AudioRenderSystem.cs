@@ -1,6 +1,7 @@
 using Ryujinx.Audio.Integration;
 using Ryujinx.Audio.Renderer.Common;
 using Ryujinx.Audio.Renderer.Dsp.Command;
+using Ryujinx.Audio.Renderer.Dsp.State;
 using Ryujinx.Audio.Renderer.Parameter;
 using Ryujinx.Audio.Renderer.Server.Effect;
 using Ryujinx.Audio.Renderer.Server.MemoryPool;
@@ -173,6 +174,22 @@ namespace Ryujinx.Audio.Renderer.Server
                 return ResultCode.WorkBufferTooSmall;
             }
 
+            Memory<BiquadFilterState> splitterBqfStates = Memory<BiquadFilterState>.Empty;
+
+            if (_behaviourContext.IsBiquadFilterParameterForSplitterEnabled() &&
+                parameter.SplitterCount > 0 &&
+                parameter.SplitterDestinationCount > 0)
+            {
+                splitterBqfStates = workBufferAllocator.Allocate<BiquadFilterState>(parameter.SplitterDestinationCount * SplitterContext.BqfStatesPerDestination, 0x10);
+
+                if (splitterBqfStates.IsEmpty)
+                {
+                    return ResultCode.WorkBufferTooSmall;
+                }
+
+                splitterBqfStates.Span.Clear();
+            }
+
             // Invalidate DSP cache on what was currently allocated with workBuffer.
             AudioProcessorMemoryManager.InvalidateDspCache(_dspMemoryPoolState.Translate(workBuffer, workBufferAllocator.Offset), workBufferAllocator.Offset);
 
@@ -292,7 +309,7 @@ namespace Ryujinx.Audio.Renderer.Server
                 state = MemoryPoolState.Create(MemoryPoolState.LocationType.Cpu);
             }
 
-            if (!_splitterContext.Initialize(ref _behaviourContext, ref parameter, workBufferAllocator))
+            if (!_splitterContext.Initialize(ref _behaviourContext, ref parameter, workBufferAllocator, splitterBqfStates))
             {
                 return ResultCode.WorkBufferTooSmall;
             }
@@ -386,7 +403,7 @@ namespace Ryujinx.Audio.Renderer.Server
             }
         }
 
-        public ResultCode Update(Memory<byte> output, Memory<byte> performanceOutput, ReadOnlyMemory<byte> input)
+        public ResultCode Update(Memory<byte> output, Memory<byte> performanceOutput, ReadOnlySequence<byte> input)
         {
             lock (_lock)
             {
@@ -419,14 +436,16 @@ namespace Ryujinx.Audio.Renderer.Server
                     return result;
                 }
 
-                result = stateUpdater.UpdateVoices(_voiceContext, _memoryPools);
+                PoolMapper poolMapper = new PoolMapper(_processHandle, _memoryPools, _behaviourContext.IsMemoryPoolForceMappingEnabled());
+
+                result = stateUpdater.UpdateVoices(_voiceContext, poolMapper);
 
                 if (result != ResultCode.Success)
                 {
                     return result;
                 }
 
-                result = stateUpdater.UpdateEffects(_effectContext, _isActive, _memoryPools);
+                result = stateUpdater.UpdateEffects(_effectContext, _isActive, poolMapper);
 
                 if (result != ResultCode.Success)
                 {
@@ -450,7 +469,7 @@ namespace Ryujinx.Audio.Renderer.Server
                     return result;
                 }
 
-                result = stateUpdater.UpdateSinks(_sinkContext, _memoryPools);
+                result = stateUpdater.UpdateSinks(_sinkContext, poolMapper);
 
                 if (result != ResultCode.Success)
                 {
@@ -772,6 +791,13 @@ namespace Ryujinx.Audio.Renderer.Server
 
             // Splitter
             size = SplitterContext.GetWorkBufferSize(size, ref behaviourContext, ref parameter);
+
+            if (behaviourContext.IsBiquadFilterParameterForSplitterEnabled() &&
+                parameter.SplitterCount > 0 &&
+                parameter.SplitterDestinationCount > 0)
+            {
+                size = WorkBufferAllocator.GetTargetSize<BiquadFilterState>(size, parameter.SplitterDestinationCount * SplitterContext.BqfStatesPerDestination, 0x10);
+            }
 
             // DSP Voice
             size = WorkBufferAllocator.GetTargetSize<VoiceUpdateState>(size, parameter.VoiceCount, VoiceUpdateState.Align);

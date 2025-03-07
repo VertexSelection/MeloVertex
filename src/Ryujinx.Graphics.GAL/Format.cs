@@ -147,6 +147,8 @@ namespace Ryujinx.Graphics.GAL
         A1B5G5R5Unorm,
         B8G8R8A8Unorm,
         B8G8R8A8Srgb,
+        B10G10R10A2Unorm,
+        X8UintD24Unorm,
     }
 
     public static class FormatExtensions
@@ -260,6 +262,7 @@ namespace Ryujinx.Graphics.GAL
                 case Format.R10G10B10A2Sint:
                 case Format.R10G10B10A2Uscaled:
                 case Format.R10G10B10A2Sscaled:
+                case Format.B10G10R10A2Unorm:
                     return 4;
 
                 case Format.S8Uint:
@@ -267,6 +270,7 @@ namespace Ryujinx.Graphics.GAL
                 case Format.D16Unorm:
                     return 2;
                 case Format.S8UintD24Unorm:
+                case Format.X8UintD24Unorm:
                 case Format.D32Float:
                 case Format.D24UnormS8Uint:
                     return 4;
@@ -347,6 +351,7 @@ namespace Ryujinx.Graphics.GAL
                 case Format.D16Unorm:
                 case Format.D24UnormS8Uint:
                 case Format.S8UintD24Unorm:
+                case Format.X8UintD24Unorm:
                 case Format.D32Float:
                 case Format.D32FloatS8Uint:
                     return true;
@@ -451,6 +456,7 @@ namespace Ryujinx.Graphics.GAL
                 case Format.R32G32Uint:
                 case Format.B8G8R8A8Unorm:
                 case Format.B8G8R8A8Srgb:
+                case Format.B10G10R10A2Unorm:
                 case Format.R10G10B10A2Unorm:
                 case Format.R10G10B10A2Uint:
                 case Format.R8G8B8A8Unorm:
@@ -611,6 +617,7 @@ namespace Ryujinx.Graphics.GAL
                 case Format.B5G5R5A1Unorm:
                 case Format.B8G8R8A8Unorm:
                 case Format.B8G8R8A8Srgb:
+                case Format.B10G10R10A2Unorm:
                     return true;
             }
 
@@ -629,6 +636,7 @@ namespace Ryujinx.Graphics.GAL
                 case Format.D16Unorm:
                 case Format.D24UnormS8Uint:
                 case Format.S8UintD24Unorm:
+                case Format.X8UintD24Unorm:
                 case Format.D32Float:
                 case Format.D32FloatS8Uint:
                 case Format.S8Uint:
@@ -702,6 +710,37 @@ namespace Ryujinx.Graphics.GAL
         public static bool IsInteger(this Format format)
         {
             return format.IsUint() || format.IsSint();
+        }
+
+        /// <summary>
+        /// Checks if the texture format is a float or sRGB color format.
+        /// </summary>
+        /// <remarks>
+        /// Does not include normalized, compressed or depth formats.
+        /// Float and sRGB formats do not participate in logical operations.
+        /// </remarks>
+        /// <param name="format">Texture format</param>
+        /// <returns>True if the format is a float or sRGB color format, false otherwise</returns>
+        public static bool IsFloatOrSrgb(this Format format)
+        {
+            switch (format)
+            {
+                case Format.R8G8B8A8Srgb:
+                case Format.B8G8R8A8Srgb:
+                case Format.R16Float:
+                case Format.R16G16Float:
+                case Format.R16G16B16Float:
+                case Format.R16G16B16A16Float:
+                case Format.R32Float:
+                case Format.R32G32Float:
+                case Format.R32G32B32Float:
+                case Format.R32G32B32A32Float:
+                case Format.R11G11B10Float:
+                case Format.R9G9B9E5Float:
+                    return true;
+            }
+
+            return false;
         }
     }
 }

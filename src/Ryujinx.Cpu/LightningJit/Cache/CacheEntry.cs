@@ -8,7 +8,6 @@ namespace Ryujinx.Cpu.LightningJit.Cache
         public int Offset { get; }
         public int Size { get; }
 
-
         public CacheEntry(int offset, int size)
         {
             Offset = offset;

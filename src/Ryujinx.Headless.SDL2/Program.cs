@@ -1,4 +1,3 @@
-using ARMeilleure.Translation;
 using CommandLine;
 using LibHac.Tools.FsSystem;
 using Ryujinx.Audio.Backends.SDL2;
@@ -8,6 +7,7 @@ using Ryujinx.Common.Configuration.Hid;
 using Ryujinx.Common.Configuration.Hid.Controller;
 using Ryujinx.Common.Configuration.Hid.Controller.Motion;
 using Ryujinx.Common.Configuration.Hid.Keyboard;
+using Ryujinx.Common.GraphicsDriver;
 using Ryujinx.Common.Logging;
 using Ryujinx.Common.Logging.Targets;
 using Ryujinx.Common.SystemInterop;
@@ -19,6 +19,7 @@ using Ryujinx.Graphics.Gpu;
 using Ryujinx.Graphics.Gpu.Shader;
 using Ryujinx.Graphics.OpenGL;
 using Ryujinx.Graphics.Vulkan;
+using Ryujinx.Graphics.Vulkan.MoltenVK;
 using Ryujinx.Headless.SDL2.OpenGL;
 using Ryujinx.Headless.SDL2.Vulkan;
 using Ryujinx.HLE;
@@ -29,9 +30,9 @@ using Ryujinx.Input;
 using Ryujinx.Input.HLE;
 using Ryujinx.Input.SDL2;
 using Ryujinx.SDL2.Common;
-using Ryujinx.Ui.Common.Configuration;
-using Ryujinx.Ui.Common.Configuration.System;
-using Ryujinx.Ui.Common;
+using Ryujinx.UI.Common.Configuration;
+using Ryujinx.UI.Common.Configuration.System;
+using Ryujinx.UI.Common;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
@@ -55,7 +56,7 @@ using LibHac.Tools.FsSystem;
 using Ryujinx.Graphics.GAL.Multithreading;
 using Ryujinx.Audio.Backends.Dummy;
 using Ryujinx.HLE.HOS.SystemState;
-using Ryujinx.Ui.Common.Configuration;
+using Ryujinx.UI.Common.Configuration;
 using Ryujinx.Common.Logging;
 using Ryujinx.Audio.Integration;
 using Ryujinx.Audio.Backends.SDL2;
@@ -74,13 +75,13 @@ using Ryujinx.Common.Configuration.Multiplayer;
 using Ryujinx.HLE.Loaders.Npdm;
 using Ryujinx.Common.Utilities;
 using System.Globalization;
-using Ryujinx.Ui.Common.Configuration.System;
+using Ryujinx.UI.Common.Configuration.System;
 using Ryujinx.Common.Logging.Targets;
 using System.Collections.Generic;
 using LibHac.Bcat;
-using Ryujinx.Ui.App.Common;
+using Ryujinx.UI.App.Common;
 using System.Text;
-using Ryujinx.HLE.Ui;
+using Ryujinx.HLE.UI;
 using ARMeilleure.Translation;
 using LibHac.Ncm;
 using LibHac.Tools.FsSystem.NcaUtils;
@@ -304,11 +305,9 @@ namespace Ryujinx.Headless.SDL2
 
             Silk.NET.Core.Loader.SearchPathContainer.Platform = Silk.NET.Core.Loader.UnderlyingPlatform.MacOS;
 
-            Version = ReleaseInformation.GetVersion();
-
             if (!OperatingSystem.IsIOS())
             {
-                Console.Title = $"Ryujinx Console {Version} (Headless SDL2)";
+                // Console.Title = $"Ryujinx Console {Version} (Headless SDL2)";
             }
 
             if (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS() || OperatingSystem.IsLinux())
@@ -331,14 +330,14 @@ namespace Ryujinx.Headless.SDL2
                 };
             }
 
-            var result = Parser.Default.ParseArguments<Options>(args)
-             .WithParsed(options =>
-             {
-                  Load(options); 
-             })
-              .WithNotParsed(errors => errors.Output());
+            if (OperatingSystem.IsMacOS())
+            {
+                MVKInitialization.InitializeResolver();
+            }
 
-
+            Parser.Default.ParseArguments<Options>(args)
+            .WithParsed(Load)
+            .WithNotParsed(errors => errors.Output());
         }
 
         [UnmanagedCallersOnly(EntryPoint = "install_firmware")]
@@ -408,11 +407,6 @@ namespace Ryujinx.Headless.SDL2
         {
             if (_window != null)
             {
-                if (_window._isPaused) {
-                    _window._isPaused = false;
-                } else {
-                    _window._isPaused = true;
-                }
             }
         }
 
@@ -1251,11 +1245,26 @@ namespace Ryujinx.Headless.SDL2
 
             if (!option.DisableFileLog)
             {
-                Logger.AddTarget(new AsyncLogTargetWrapper(
-                    new FileLogTarget(ReleaseInformation.GetBaseApplicationDirectory(), "file"),
-                    1000,
-                    AsyncLogTargetOverflowAction.Block
-                ));
+                string logDir = AppDataManager.LogsDirPath;
+                FileStream logFile = null;
+
+                if (!string.IsNullOrEmpty(logDir))
+                {
+                    logFile = FileLogTarget.PrepareLogFile(logDir);
+                }
+
+                if (logFile != null)
+                {
+                    Logger.AddTarget(new AsyncLogTargetWrapper(
+                        new FileLogTarget("file", logFile),
+                        1000,
+                        AsyncLogTargetOverflowAction.Block
+                    ));
+                }
+                else
+                {
+                    Logger.Error?.Print(LogClass.Application, "No writable log directory available. Make sure either the Logs directory, Application Data, or the Ryujinx directory is writable.");
+                }
             }
 
             // Setup graphics configuration
@@ -1265,6 +1274,8 @@ namespace Ryujinx.Headless.SDL2
             GraphicsConfig.MaxAnisotropy = option.MaxAnisotropy;
             GraphicsConfig.ShadersDumpPath = option.GraphicsShadersDumpPath;
             GraphicsConfig.EnableMacroHLE = !option.DisableMacroHLE;
+
+            DriverUtilities.InitDriverConfig(option.BackendThreading == BackendThreading.Off);
 
             while (true)
             {
@@ -1389,7 +1400,7 @@ namespace Ryujinx.Headless.SDL2
                 _userChannelPersistence,
                 renderer,
                 new SDL2HardwareDeviceDriver(),
-                options.ExpandRAM ? MemoryConfiguration.MemoryConfiguration6GiB : MemoryConfiguration.MemoryConfiguration4GiB,
+                options.ExpandRAM ? MemoryConfiguration.MemoryConfiguration8GiB : MemoryConfiguration.MemoryConfiguration4GiB,
                 window,
                 options.SystemLanguage,
                 options.SystemRegion,
@@ -1588,9 +1599,6 @@ namespace Ryujinx.Headless.SDL2
             }
 
             SetupProgressHandler();
-
-            Translator.IsReadyForTranslation.Reset();
-
             ExecutionEntrypoint();
 
             return true;

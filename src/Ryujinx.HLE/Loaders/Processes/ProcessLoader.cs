@@ -32,7 +32,7 @@ namespace Ryujinx.HLE.Loaders.Processes
             _processesByPid = new ConcurrentDictionary<ulong, ProcessResult>();
         }
 
-        public bool LoadXci(string path)
+        public bool LoadXci(string path, ulong applicationId)
         {
             FileStream stream = new(path, FileMode.Open, FileAccess.Read);
             Xci xci = new(_device.Configuration.VirtualFileSystem.KeySet, stream.AsStorage());
@@ -44,7 +44,7 @@ namespace Ryujinx.HLE.Loaders.Processes
                 return false;
             }
 
-            (bool success, ProcessResult processResult) = xci.OpenPartition(XciPartitionType.Secure).TryLoad(_device, path, out string errorMessage);
+            (bool success, ProcessResult processResult) = xci.OpenPartition(XciPartitionType.Secure).TryLoad(_device, path, applicationId, out string errorMessage);
 
             if (!success)
             {
@@ -66,18 +66,18 @@ namespace Ryujinx.HLE.Loaders.Processes
             return false;
         }
 
-        public bool LoadNsp(string path)
+        public bool LoadNsp(string path, ulong applicationId)
         {
             FileStream file = new(path, FileMode.Open, FileAccess.Read);
             PartitionFileSystem partitionFileSystem = new();
             partitionFileSystem.Initialize(file.AsStorage()).ThrowIfFailure();
 
-            (bool success, ProcessResult processResult) = partitionFileSystem.TryLoad(_device, path, out string errorMessage);
+            (bool success, ProcessResult processResult) = partitionFileSystem.TryLoad(_device, path, applicationId, out string errorMessage);
 
             if (processResult.ProcessId == 0)
             {
                 // This is not a normal NSP, it's actually a ExeFS as a NSP
-                processResult = partitionFileSystem.Load(_device, new BlitStruct<ApplicationControlProperty>(1), partitionFileSystem.GetNpdm(), true);
+                processResult = partitionFileSystem.Load(_device, new BlitStruct<ApplicationControlProperty>(1), partitionFileSystem.GetNpdm(), 0, true);
             }
 
             if (processResult.ProcessId != 0 && _processesByPid.TryAdd(processResult.ProcessId, processResult))
@@ -198,7 +198,7 @@ namespace Ryujinx.HLE.Loaders.Processes
             }
             else
             {
-                programName = System.IO.Path.GetFileNameWithoutExtension(path);
+                programName = Path.GetFileNameWithoutExtension(path);
 
                 executable = new NsoExecutable(new LocalStorage(path, FileAccess.Read), programName);
             }
@@ -215,6 +215,7 @@ namespace Ryujinx.HLE.Loaders.Processes
                                                                        allowCodeMemoryForJit: true,
                                                                        programName,
                                                                        programId,
+                                                                       0,
                                                                        null,
                                                                        executable);
 

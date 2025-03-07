@@ -15,6 +15,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
         private readonly TextureBindingsManager _cpBindingsManager;
         private readonly TextureBindingsManager _gpBindingsManager;
+        private readonly TextureBindingsArrayCache _bindingsArrayCache;
         private readonly TexturePoolCache _texturePoolCache;
         private readonly SamplerPoolCache _samplerPoolCache;
 
@@ -46,8 +47,9 @@ namespace Ryujinx.Graphics.Gpu.Image
             TexturePoolCache texturePoolCache = new(context);
             SamplerPoolCache samplerPoolCache = new(context);
 
-            _cpBindingsManager = new TextureBindingsManager(context, channel, texturePoolCache, samplerPoolCache, isCompute: true);
-            _gpBindingsManager = new TextureBindingsManager(context, channel, texturePoolCache, samplerPoolCache, isCompute: false);
+            _bindingsArrayCache = new TextureBindingsArrayCache(context, channel);
+            _cpBindingsManager = new TextureBindingsManager(context, channel, _bindingsArrayCache, texturePoolCache, samplerPoolCache, isCompute: true);
+            _gpBindingsManager = new TextureBindingsManager(context, channel, _bindingsArrayCache, texturePoolCache, samplerPoolCache, isCompute: false);
             _texturePoolCache = texturePoolCache;
             _samplerPoolCache = samplerPoolCache;
 
@@ -360,15 +362,16 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// Commits bindings on the graphics pipeline.
         /// </summary>
         /// <param name="specState">Specialization state for the bound shader</param>
+        /// <param name="scaleMismatch">True if there is a scale mismatch in the render targets, indicating they must be re-evaluated</param>
         /// <returns>True if all bound textures match the current shader specialization state, false otherwise</returns>
-        public bool CommitGraphicsBindings(ShaderSpecializationState specState)
+        public bool CommitGraphicsBindings(ShaderSpecializationState specState, out bool scaleMismatch)
         {
             _texturePoolCache.Tick();
             _samplerPoolCache.Tick();
 
             bool result = _gpBindingsManager.CommitBindings(specState);
 
-            UpdateRenderTargets();
+            scaleMismatch = UpdateRenderTargets();
 
             return result;
         }
@@ -383,7 +386,7 @@ namespace Ryujinx.Graphics.Gpu.Image
         {
             ulong poolAddress = _channel.MemoryManager.Translate(poolGpuVa);
 
-            TexturePool texturePool = _texturePoolCache.FindOrCreate(_channel, poolAddress, maximumId);
+            TexturePool texturePool = _texturePoolCache.FindOrCreate(_channel, poolAddress, maximumId, _bindingsArrayCache);
 
             return texturePool;
         }
@@ -426,9 +429,12 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <summary>
         /// Update host framebuffer attachments based on currently bound render target buffers.
         /// </summary>
-        public void UpdateRenderTargets()
+        /// <returns>True if there is a scale mismatch in the render targets, indicating they must be re-evaluated</returns>
+        public bool UpdateRenderTargets()
         {
             bool anyChanged = false;
+            float expectedScale = RenderTargetScale;
+            bool scaleMismatch = false;
 
             Texture dsTexture = _rtDepthStencil;
             ITexture hostDsTexture = null;
@@ -448,6 +454,11 @@ namespace Ryujinx.Graphics.Gpu.Image
             {
                 _rtHostDs = hostDsTexture;
                 anyChanged = true;
+
+                if (dsTexture != null && dsTexture.ScaleFactor != expectedScale)
+                {
+                    scaleMismatch = true;
+                }
             }
 
             for (int index = 0; index < _rtColors.Length; index++)
@@ -470,6 +481,11 @@ namespace Ryujinx.Graphics.Gpu.Image
                 {
                     _rtHostColors[index] = hostTexture;
                     anyChanged = true;
+
+                    if (texture != null && texture.ScaleFactor != expectedScale)
+                    {
+                        scaleMismatch = true;
+                    }
                 }
             }
 
@@ -477,6 +493,8 @@ namespace Ryujinx.Graphics.Gpu.Image
             {
                 _context.Renderer.Pipeline.SetRenderTargets(_rtHostColors, _rtHostDs);
             }
+
+            return scaleMismatch;
         }
 
         /// <summary>

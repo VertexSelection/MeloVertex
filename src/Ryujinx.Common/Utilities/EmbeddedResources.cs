@@ -1,3 +1,4 @@
+using Ryujinx.Common.Memory;
 using Ryujinx.Common.Utilities;
 using System;
 using System.IO;
@@ -39,6 +40,22 @@ namespace Ryujinx.Common
             }
 
             return StreamUtils.StreamToBytes(stream);
+        }
+
+        public static MemoryOwner<byte> ReadFileToRentedMemory(string filename)
+        {
+            var (assembly, path) = ResolveManifestPath(filename);
+
+            return ReadFileToRentedMemory(assembly, path);
+        }
+
+        public static MemoryOwner<byte> ReadFileToRentedMemory(Assembly assembly, string filename)
+        {
+            using var stream = GetStream(assembly, filename);
+
+            return stream is null
+                ? null
+                : StreamUtils.StreamToRentedMemory(stream);
         }
 
         public async static Task<byte[]> ReadAsync(Assembly assembly, string filename)

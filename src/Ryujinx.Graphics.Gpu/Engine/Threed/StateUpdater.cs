@@ -26,6 +26,9 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
         public const int PrimitiveRestartStateIndex = 12;
         public const int RenderTargetStateIndex = 27;
 
+        // Vertex buffers larger than this size will be clamped to the mapped size.
+        private const ulong VertexBufferSizeToMappedSizeThreshold = 256 * 1024 * 1024; // 256 MB
+
         private readonly GpuContext _context;
         private readonly GpuChannel _channel;
         private readonly DeviceStateWithShadow<ThreedClassState> _state;
@@ -47,7 +50,8 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
         private uint _vbEnableMask;
 
         private bool _prevDrawIndexed;
-        private readonly bool _prevDrawIndirect;
+        private bool _prevDrawIndirect;
+        private bool _prevDrawUsesEngineState;
         private IndexType _prevIndexType;
         private uint _prevFirstVertex;
         private bool _prevTfEnable;
@@ -236,7 +240,9 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
             // method when doing indexed draws, so we need to make sure
             // to update the vertex buffers if we are doing a regular
             // draw after a indexed one and vice-versa.
-            if (_drawState.DrawIndexed != _prevDrawIndexed)
+            // Some draws also do not update the engine state, so it is possible for it
+            // to not be dirty even if the vertex counts or other state changed. We need to force it to be dirty in this case.
+            if (_drawState.DrawIndexed != _prevDrawIndexed || _drawState.DrawUsesEngineState != _prevDrawUsesEngineState)
             {
                 _updateTracker.ForceDirty(VertexBufferStateIndex);
 
@@ -251,6 +257,7 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
                 }
 
                 _prevDrawIndexed = _drawState.DrawIndexed;
+                _prevDrawUsesEngineState = _drawState.DrawUsesEngineState;
             }
 
             // Some draw parameters are used to restrict the vertex buffer size,
@@ -260,6 +267,8 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
             if (_drawState.DrawIndirect != _prevDrawIndirect)
             {
                 _updateTracker.ForceDirty(VertexBufferStateIndex);
+
+                _prevDrawIndirect = _drawState.DrawIndirect;
             }
 
             // In some cases, the index type is also used to guess the
@@ -334,11 +343,22 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
 
             bool unalignedChanged = _currentSpecState.SetHasUnalignedStorageBuffer(_channel.BufferManager.HasUnalignedStorageBuffers);
 
-            if (!_channel.TextureManager.CommitGraphicsBindings(_shaderSpecState) || unalignedChanged)
+            bool scaleMismatch;
+            do
             {
-                // Shader must be reloaded. _vtgWritesRtLayer should not change.
-                UpdateShaderState();
+                if (!_channel.TextureManager.CommitGraphicsBindings(_shaderSpecState, out scaleMismatch) || unalignedChanged)
+                {
+                    // Shader must be reloaded. _vtgWritesRtLayer should not change.
+                    UpdateShaderState();
+                }
+
+                if (scaleMismatch)
+                {
+                    // Binding textures changed scale of the bound render targets, correct the render target scale and rebind.
+                    UpdateRenderTargetState();
+                }
             }
+            while (scaleMismatch);
 
             _channel.BufferManager.CommitGraphicsBindings(_drawState.DrawIndexed);
         }
@@ -1138,6 +1158,14 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
 
                         size = Math.Min(size, maxVertexBufferSize);
                     }
+                    else if (size > VertexBufferSizeToMappedSizeThreshold)
+                    {
+                        // Make sure we have a sane vertex buffer size, since in some cases applications
+                        // might set the "end address" of the vertex buffer to the end of the GPU address space,
+                        // which would result in a several GBs large buffer.
+
+                        size = _channel.MemoryManager.GetMappedSize(address, size);
+                    }
                 }
                 else
                 {
@@ -1401,7 +1429,18 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
                 addressesSpan[index] = baseAddress + shader.Offset;
             }
 
-            CachedShaderProgram gs = shaderCache.GetGraphicsShader(ref _state.State, ref _pipeline, _channel, ref _currentSpecState.GetPoolState(), ref _currentSpecState.GetGraphicsState(), addresses);
+            int samplerPoolMaximumId = _state.State.SamplerIndex == SamplerIndex.ViaHeaderIndex
+                ? _state.State.TexturePoolState.MaximumId
+                : _state.State.SamplerPoolState.MaximumId;
+
+            CachedShaderProgram gs = shaderCache.GetGraphicsShader(
+                ref _state.State,
+                ref _pipeline,
+                _channel,
+                samplerPoolMaximumId,
+                ref _currentSpecState.GetPoolState(),
+                ref _currentSpecState.GetGraphicsState(),
+                addresses);
 
             // Consume the modified flag for spec state so that it isn't checked again.
             _currentSpecState.SetShader(gs);

@@ -2,6 +2,7 @@ using Ryujinx.Horizon.Common;
 using Ryujinx.Memory;
 using Ryujinx.Memory.Range;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -11,7 +12,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
     {
         private readonly IVirtualMemoryManager _cpuMemory;
 
-        protected override bool Supports4KBPages => _cpuMemory.Supports4KBPages;
+        protected override bool UsesPrivateAllocations => _cpuMemory.UsesPrivateAllocations;
 
         public KPageTable(KernelContext context, IVirtualMemoryManager cpuMemory, ulong reservedAddressSpaceSize) : base(context, reservedAddressSpaceSize)
         {
@@ -32,6 +33,12 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
             {
                 pageList.AddRange(range.Address + DramMemoryMap.DramBase, range.Size / PageSize);
             }
+        }
+
+        /// <inheritdoc/>
+        protected override ReadOnlySequence<byte> GetReadOnlySequence(ulong va, int size)
+        {
+            return _cpuMemory.GetReadOnlySequence(va, size);
         }
 
         /// <inheritdoc/>
@@ -119,7 +126,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                 Context.MemoryManager.IncrementPagesReferenceCount(srcPa, pagesCount);
             }
 
-            if (shouldFillPages && (Supports4KBPages || !flags.HasFlag(MemoryMapFlags.Private) || fillValue != 0))
+            if (shouldFillPages && (!OperatingSystem.IsIOS() || !flags.HasFlag(MemoryMapFlags.Private) || fillValue != 0))
             {
                 _cpuMemory.Fill(dstVa, size, fillValue);
             }
@@ -149,7 +156,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
 
                 _cpuMemory.Map(currentVa, addr, size, flags);
 
-                if (shouldFillPages && (Supports4KBPages || !flags.HasFlag(MemoryMapFlags.Private) || fillValue != 0))
+                if (shouldFillPages && (!OperatingSystem.IsIOS() || !flags.HasFlag(MemoryMapFlags.Private) || fillValue != 0))
                 {
                     _cpuMemory.Fill(currentVa, size, fillValue);
                 }
@@ -245,6 +252,12 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         protected override void SignalMemoryTracking(ulong va, ulong size, bool write)
         {
             _cpuMemory.SignalMemoryTracking(va, size, write);
+        }
+
+        /// <inheritdoc/>
+        protected override void Write(ulong va, ReadOnlySequence<byte> data)
+        {
+            _cpuMemory.Write(va, data);
         }
 
         /// <inheritdoc/>

@@ -1,4 +1,4 @@
-using Ryujinx.Common;
+using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -12,8 +12,6 @@ namespace Ryujinx.SDL2.Common
     public class SDL2Driver : IDisposable
     {
         private static SDL2Driver _instance;
-
-        public static bool IsInitialized => _instance != null;
 
         public static SDL2Driver Instance
         {
@@ -55,6 +53,7 @@ namespace Ryujinx.SDL2.Common
                     return;
                 }
 
+                SDL_SetHint(SDL_HINT_APP_NAME, "Ryujinx");
                 SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
                 SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "1");
                 SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");

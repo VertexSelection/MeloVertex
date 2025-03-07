@@ -1106,6 +1106,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64
                 case InstName.Mrs:
                 case InstName.MsrImm:
                 case InstName.MsrReg:
+                case InstName.Sysl:
                     return true;
             }
 
@@ -1125,6 +1126,38 @@ namespace Ryujinx.Cpu.LightningJit.Arm64
                 case InstName.Hvc:
                 case InstName.MsrImm:
                 case InstName.Smc:
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static bool IsPartialRegisterUpdateMemory(this InstName name)
+        {
+            switch (name)
+            {
+                case InstName.Ld1AdvsimdSnglAsNoPostIndex:
+                case InstName.Ld1AdvsimdSnglAsPostIndex:
+                case InstName.Ld2AdvsimdSnglAsNoPostIndex:
+                case InstName.Ld2AdvsimdSnglAsPostIndex:
+                case InstName.Ld3AdvsimdSnglAsNoPostIndex:
+                case InstName.Ld3AdvsimdSnglAsPostIndex:
+                case InstName.Ld4AdvsimdSnglAsNoPostIndex:
+                case InstName.Ld4AdvsimdSnglAsPostIndex:
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static bool IsPrefetchMemory(this InstName name)
+        {
+            switch (name)
+            {
+                case InstName.PrfmImm:
+                case InstName.PrfmLit:
+                case InstName.PrfmReg:
+                case InstName.Prfum:
                     return true;
             }
 

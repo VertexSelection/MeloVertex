@@ -1,6 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
-using Ryujinx.Ui.Common.Helper;
+using Ryujinx.UI.Common.Helper;
 using System.Threading;
 
 namespace Ryujinx.Headless.SDL2

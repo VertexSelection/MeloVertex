@@ -1,5 +1,7 @@
 using ARMeilleure.Memory;
 using ARMeilleure.Translation;
+using Ryujinx.Cpu.Signal;
+using Ryujinx.Memory;
 
 namespace Ryujinx.Cpu.Jit
 {
@@ -12,6 +14,12 @@ namespace Ryujinx.Cpu.Jit
         {
             _tickSource = tickSource;
             _translator = new Translator(new JitMemoryAllocator(forJit: true), memory, for64Bit);
+
+            if (memory.Type.IsHostMappedOrTracked())
+            {
+                NativeSignalHandler.InitializeSignalHandler();
+            }
+
             memory.UnmapEvent += UnmapHandler;
         }
 

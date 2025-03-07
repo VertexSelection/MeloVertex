@@ -1,4 +1,4 @@
-using Ryujinx.HLE.Ui;
+using Ryujinx.HLE.UI;
 using Ryujinx.Memory;
 using System;
 using System.Threading;
@@ -15,13 +15,13 @@ namespace Ryujinx.HLE.HOS.Applets.SoftwareKeyboard
 
         private readonly object _stateLock = new();
 
-        private readonly SoftwareKeyboardUiState _state = new();
+        private readonly SoftwareKeyboardUIState _state = new();
         private readonly SoftwareKeyboardRendererBase _renderer;
 
         private readonly TimedAction _textBoxBlinkTimedAction = new();
         private readonly TimedAction _renderAction = new();
 
-        public SoftwareKeyboardRenderer(IHostUiTheme uiTheme)
+        public SoftwareKeyboardRenderer(IHostUITheme uiTheme)
         {
             _renderer = new SoftwareKeyboardRendererBase(uiTheme);
 
@@ -29,7 +29,7 @@ namespace Ryujinx.HLE.HOS.Applets.SoftwareKeyboard
             StartRenderer(_renderAction, _renderer, _state, _stateLock);
         }
 
-        private static void StartTextBoxBlinker(TimedAction timedAction, SoftwareKeyboardUiState state, object stateLock)
+        private static void StartTextBoxBlinker(TimedAction timedAction, SoftwareKeyboardUIState state, object stateLock)
         {
             timedAction.Reset(() =>
             {
@@ -45,9 +45,9 @@ namespace Ryujinx.HLE.HOS.Applets.SoftwareKeyboard
             }, TextBoxBlinkSleepMilliseconds);
         }
 
-        private static void StartRenderer(TimedAction timedAction, SoftwareKeyboardRendererBase renderer, SoftwareKeyboardUiState state, object stateLock)
+        private static void StartRenderer(TimedAction timedAction, SoftwareKeyboardRendererBase renderer, SoftwareKeyboardUIState state, object stateLock)
         {
-            SoftwareKeyboardUiState internalState = new();
+            SoftwareKeyboardUIState internalState = new();
 
             bool canCreateSurface = false;
             bool needsUpdate = true;
@@ -112,10 +112,15 @@ namespace Ryujinx.HLE.HOS.Applets.SoftwareKeyboard
             {
                 // Update the parameters that were provided.
                 _state.InputText = inputText ?? _state.InputText;
-                _state.CursorBegin = cursorBegin.GetValueOrDefault(_state.CursorBegin);
-                _state.CursorEnd = cursorEnd.GetValueOrDefault(_state.CursorEnd);
+                _state.CursorBegin = Math.Max(0, cursorBegin.GetValueOrDefault(_state.CursorBegin));
+                _state.CursorEnd = Math.Min(cursorEnd.GetValueOrDefault(_state.CursorEnd), _state.InputText.Length);
                 _state.OverwriteMode = overwriteMode.GetValueOrDefault(_state.OverwriteMode);
                 _state.TypingEnabled = typingEnabled.GetValueOrDefault(_state.TypingEnabled);
+
+                var begin = _state.CursorBegin;
+                var end = _state.CursorEnd;
+                _state.CursorBegin = Math.Min(begin, end);
+                _state.CursorEnd = Math.Max(begin, end);
 
                 // Reset the cursor blink.
                 _state.TextBoxBlinkCounter = 0;

@@ -8,7 +8,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
 {
     static class Decoder
     {
-        private const int MaxInstructionsPerBlock = 1000;
+        private const int MaxInstructionsPerFunction = 10000;
 
         private const uint NzcvFlags = 0xfu << 28;
         private const uint CFlag = 0x1u << 29;
@@ -22,10 +22,11 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
 
             bool hasHostCall = false;
             bool hasMemoryInstruction = false;
+            int totalInsts = 0;
 
             while (true)
             {
-                Block block = Decode(cpuPreset, memoryManager, address, ref useMask, ref hasHostCall, ref hasMemoryInstruction);
+                Block block = Decode(cpuPreset, memoryManager, address, ref totalInsts, ref useMask, ref hasHostCall, ref hasMemoryInstruction);
 
                 if (!block.IsTruncated && TryGetBranchTarget(block, out ulong targetAddress))
                 {
@@ -230,6 +231,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
             CpuPreset cpuPreset,
             IMemoryManager memoryManager,
             ulong address,
+            ref int totalInsts,
             ref RegisterMask useMask,
             ref bool hasHostCall,
             ref bool hasMemoryInstruction)
@@ -255,7 +257,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
 
                 (name, flags, AddressForm addressForm) = InstTable.GetInstNameAndFlags(encoding, cpuPreset.Version, cpuPreset.Features);
 
-                if (name.IsPrivileged())
+                if (name.IsPrivileged() || (name == InstName.Sys && IsPrivilegedSys(encoding)))
                 {
                     name = InstName.UdfPermUndef;
                     flags = InstFlags.None;
@@ -272,7 +274,8 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
 
                 uint tempGprUseMask = gprUseMask | instGprReadMask | instGprWriteMask;
 
-                if (CalculateAvailableTemps(tempGprUseMask) < CalculateRequiredGprTemps(tempGprUseMask) || insts.Count >= MaxInstructionsPerBlock)
+                if (CalculateAvailableTemps(tempGprUseMask) < CalculateRequiredGprTemps(memoryManager.Type, tempGprUseMask) ||
+                    totalInsts++ >= MaxInstructionsPerFunction)
                 {
                     isTruncated = true;
                     address -= 4UL;
@@ -339,6 +342,11 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
             return new(startAddress, address, insts, !isTruncated && !name.IsException(), isTruncated, isLoopEnd);
         }
 
+        private static bool IsPrivilegedSys(uint encoding)
+        {
+            return !SysUtils.IsCacheInstEl0(encoding);
+        }
+
         private static bool IsMrsNzcv(uint encoding)
         {
             return (encoding & ~0x1fu) == 0xd53b4200u;
@@ -371,9 +379,9 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
             return false;
         }
 
-        private static int CalculateRequiredGprTemps(uint gprUseMask)
+        private static int CalculateRequiredGprTemps(MemoryManagerType mmType, uint gprUseMask)
         {
-            return BitOperations.PopCount(gprUseMask & RegisterUtils.ReservedRegsMask) + RegisterAllocator.MaxTempsInclFixed;
+            return BitOperations.PopCount(gprUseMask & RegisterUtils.ReservedRegsMask) + RegisterAllocator.CalculateMaxTempsInclFixed(mmType);
         }
 
         private static int CalculateAvailableTemps(uint gprUseMask)

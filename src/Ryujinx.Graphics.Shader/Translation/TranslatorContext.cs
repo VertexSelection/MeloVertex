@@ -294,6 +294,7 @@ namespace Ryujinx.Graphics.Shader.Translation
                         Definitions,
                         resourceManager,
                         GpuAccessor,
+                        Options.TargetApi,
                         Options.TargetLanguage,
                         Definitions.Stage,
                         ref usedFeatures);
@@ -362,6 +363,7 @@ namespace Ryujinx.Graphics.Shader.Translation
                 GpuAccessor.QueryHostSupportsGeometryShaderPassthrough(),
                 GpuAccessor.QueryHostSupportsShaderBallot(),
                 GpuAccessor.QueryHostSupportsShaderBarrierDivergence(),
+                GpuAccessor.QueryHostSupportsShaderFloat64(),
                 GpuAccessor.QueryHostSupportsTextureShadowLod(),
                 GpuAccessor.QueryHostSupportsViewportMask());
 
@@ -411,8 +413,8 @@ namespace Ryujinx.Graphics.Shader.Translation
 
                 if (Stage == ShaderStage.Vertex)
                 {
-                    int ibBinding = resourceManager.Reservations.IndexBufferTextureBinding;
-                    TextureDefinition indexBuffer = new(2, ibBinding, "ib_data", SamplerType.TextureBuffer, TextureFormat.Unknown, TextureUsageFlags.None);
+                    SetBindingPair ibSetAndBinding = resourceManager.Reservations.GetIndexBufferTextureSetAndBinding();
+                    TextureDefinition indexBuffer = new(ibSetAndBinding.SetIndex, ibSetAndBinding.Binding, "ib_data", SamplerType.TextureBuffer);
                     resourceManager.Properties.AddOrUpdateTexture(indexBuffer);
 
                     int inputMap = _program.AttributeUsage.UsedInputAttributes;
@@ -420,8 +422,8 @@ namespace Ryujinx.Graphics.Shader.Translation
                     while (inputMap != 0)
                     {
                         int location = BitOperations.TrailingZeroCount(inputMap);
-                        int binding = resourceManager.Reservations.GetVertexBufferTextureBinding(location);
-                        TextureDefinition vaBuffer = new(2, binding, $"vb_data{location}", SamplerType.TextureBuffer, TextureFormat.Unknown, TextureUsageFlags.None);
+                        SetBindingPair setAndBinding = resourceManager.Reservations.GetVertexBufferTextureSetAndBinding(location);
+                        TextureDefinition vaBuffer = new(setAndBinding.SetIndex, setAndBinding.Binding, $"vb_data{location}", SamplerType.TextureBuffer);
                         resourceManager.Properties.AddOrUpdateTexture(vaBuffer);
 
                         inputMap &= ~(1 << location);
@@ -429,8 +431,8 @@ namespace Ryujinx.Graphics.Shader.Translation
                 }
                 else if (Stage == ShaderStage.Geometry)
                 {
-                    int trbBinding = resourceManager.Reservations.TopologyRemapBufferTextureBinding;
-                    TextureDefinition remapBuffer = new(2, trbBinding, "trb_data", SamplerType.TextureBuffer, TextureFormat.Unknown, TextureUsageFlags.None);
+                    SetBindingPair trbSetAndBinding = resourceManager.Reservations.GetTopologyRemapBufferTextureSetAndBinding();
+                    TextureDefinition remapBuffer = new(trbSetAndBinding.SetIndex, trbSetAndBinding.Binding, "trb_data", SamplerType.TextureBuffer);
                     resourceManager.Properties.AddOrUpdateTexture(remapBuffer);
 
                     int geometryVbOutputSbBinding = resourceManager.Reservations.GeometryVertexOutputStorageBufferBinding;

@@ -242,7 +242,12 @@ namespace Ryujinx.Graphics.Gpu.Image
                     return TextureMatchQuality.FormatAlias;
                 }
                 else if ((lhs.FormatInfo.Format == Format.D24UnormS8Uint ||
-                          lhs.FormatInfo.Format == Format.S8UintD24Unorm) && rhs.FormatInfo.Format == Format.B8G8R8A8Unorm)
+                          lhs.FormatInfo.Format == Format.S8UintD24Unorm ||
+                          lhs.FormatInfo.Format == Format.X8UintD24Unorm) && rhs.FormatInfo.Format == Format.B8G8R8A8Unorm)
+                {
+                    return TextureMatchQuality.FormatAlias;
+                }
+                else if (lhs.FormatInfo.Format == Format.D32FloatS8Uint && rhs.FormatInfo.Format == Format.R32G32Float)
                 {
                     return TextureMatchQuality.FormatAlias;
                 }
@@ -734,7 +739,8 @@ namespace Ryujinx.Graphics.Gpu.Image
             }
 
             return (lhsFormat.Format == Format.R8G8B8A8Unorm && rhsFormat.Format == Format.R32G32B32A32Float) ||
-                   (lhsFormat.Format == Format.R8Unorm && rhsFormat.Format == Format.R8G8B8A8Unorm);
+                   (lhsFormat.Format == Format.R8Unorm && rhsFormat.Format == Format.R8G8B8A8Unorm) ||
+                   (lhsFormat.Format == Format.R8Unorm && rhsFormat.Format == Format.R32Uint);
         }
 
         /// <summary>

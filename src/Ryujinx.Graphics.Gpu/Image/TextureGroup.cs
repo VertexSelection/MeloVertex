@@ -89,9 +89,9 @@ namespace Ryujinx.Graphics.Gpu.Image
         private MultiRange TextureRange => Storage.Range;
 
         /// <summary>
-        /// The views list from the storage texture.
+        /// The views array from the storage texture.
         /// </summary>
-        private List<Texture> _views;
+        private Texture[] _views;
         private TextureGroupHandle[] _handles;
         private bool[] _loadNeeded;
 
@@ -283,7 +283,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
         /// <summary>
         /// Discards all data for a given texture.
-        /// This clears all dirty flags, modified flags, and pending copies from other textures.
+        /// This clears all dirty flags and pending copies from other textures.
         /// </summary>
         /// <param name="texture">The texture being discarded</param>
         public void DiscardData(Texture texture)
@@ -446,7 +446,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                             ReadOnlySpan<byte> data = dataSpan[(offset - spanBase)..];
 
-                            IMemoryOwner<byte> result = Storage.ConvertToHostCompatibleFormat(data, info.BaseLevel + level, true);
+                            MemoryOwner<byte> result = Storage.ConvertToHostCompatibleFormat(data, info.BaseLevel + level, true);
 
                             Storage.SetData(result, info.BaseLayer + layer, info.BaseLevel + level);
                         }
@@ -646,7 +646,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                 }
                 else
                 {
-                    _flushBuffer = _context.Renderer.CreateBuffer((int)Storage.Size, BufferAccess.FlushPersistent);
+                    _flushBuffer = _context.Renderer.CreateBuffer((int)Storage.Size, BufferAccess.HostMemory);
                     _flushBufferImported = false;
                 }
 
@@ -1075,7 +1075,7 @@ namespace Ryujinx.Graphics.Gpu.Image
         public void UpdateViews(List<Texture> views, Texture texture)
         {
             // This is saved to calculate overlapping views for each handle.
-            _views = views;
+            _views = views.ToArray();
 
             bool layerViews = _hasLayerViews;
             bool mipViews = _hasMipViews;
@@ -1137,9 +1137,13 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <summary>
         /// Removes a view from the group, removing it from all overlap lists.
         /// </summary>
+        /// <param name="views">The views list of the storage texture</param>
         /// <param name="view">View to remove from the group</param>
-        public void RemoveView(Texture view)
+        public void RemoveView(List<Texture> views, Texture view)
         {
+            // This is saved to calculate overlapping views for each handle.
+            _views = views.ToArray();
+
             int offset = FindOffset(view);
 
             foreach (TextureGroupHandle handle in _handles)
@@ -1606,9 +1610,11 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             Storage.SignalModifiedDirty();
 
-            if (_views != null)
+            Texture[] views = _views;
+
+            if (views != null)
             {
-                foreach (Texture texture in _views)
+                foreach (Texture texture in views)
                 {
                     texture.SignalModifiedDirty();
                 }
@@ -1623,20 +1629,6 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <param name="size">The size of the flushing memory access</param>
         public void FlushAction(TextureGroupHandle handle, ulong address, ulong size)
         {
-            // If the page size is larger than 4KB, we will have a lot of false positives for flushing.
-            // Let's avoid flushing textures that are unlikely to be read from CPU to improve performance
-            // on those platforms.
-            if (!_physicalMemory.Supports4KBPages && !Storage.Info.IsLinear && !_context.IsGpuThread())
-            {
-                //return;
-            }
-
-            // If size is zero, we have nothing to flush.
-            if (size == 0)
-            {
-                return;
-            }
-
             // There is a small gap here where the action is removed but _actionRegistered is still 1.
             // In this case it will skip registering the action, but here we are already handling it,
             // so there shouldn't be any issue as it's the same handler for all actions.

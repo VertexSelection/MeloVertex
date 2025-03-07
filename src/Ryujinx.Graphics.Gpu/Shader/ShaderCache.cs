@@ -161,7 +161,8 @@ namespace Ryujinx.Graphics.Gpu.Shader
                     _graphicsShaderCache,
                     _computeShaderCache,
                     _diskCacheHostStorage,
-                    ShaderCacheStateUpdate, cancellationToken);
+                    ShaderCacheStateUpdate,
+                    cancellationToken);
 
                 loader.LoadShaders();
 
@@ -191,12 +192,14 @@ namespace Ryujinx.Graphics.Gpu.Shader
         /// This automatically translates, compiles and adds the code to the cache if not present.
         /// </remarks>
         /// <param name="channel">GPU channel</param>
+        /// <param name="samplerPoolMaximumId">Maximum ID that an entry in the sampler pool may have</param>
         /// <param name="poolState">Texture pool state</param>
         /// <param name="computeState">Compute engine state</param>
         /// <param name="gpuVa">GPU virtual address of the binary shader code</param>
         /// <returns>Compiled compute shader code</returns>
         public CachedShaderProgram GetComputeShader(
             GpuChannel channel,
+            int samplerPoolMaximumId,
             GpuChannelPoolState poolState,
             GpuChannelComputeState computeState,
             ulong gpuVa)
@@ -213,7 +216,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
             }
 
             ShaderSpecializationState specState = new(ref computeState);
-            GpuAccessorState gpuAccessorState = new(poolState, computeState, default, specState);
+            GpuAccessorState gpuAccessorState = new(samplerPoolMaximumId, poolState, computeState, default, specState);
             GpuAccessor gpuAccessor = new(_context, channel, gpuAccessorState);
             gpuAccessor.InitializeReservedCounts(tfEnabled: false, vertexAsCompute: false);
 
@@ -290,6 +293,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
         /// <param name="state">GPU state</param>
         /// <param name="pipeline">Pipeline state</param>
         /// <param name="channel">GPU channel</param>
+        /// <param name="samplerPoolMaximumId">Maximum ID that an entry in the sampler pool may have</param>
         /// <param name="poolState">Texture pool state</param>
         /// <param name="graphicsState">3D engine state</param>
         /// <param name="addresses">Addresses of the shaders for each stage</param>
@@ -298,6 +302,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
             ref ThreedClassState state,
             ref ProgramPipelineState pipeline,
             GpuChannel channel,
+            int samplerPoolMaximumId,
             ref GpuChannelPoolState poolState,
             ref GpuChannelGraphicsState graphicsState,
             ShaderAddresses addresses)
@@ -318,7 +323,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
             UpdatePipelineInfo(ref state, ref pipeline, graphicsState, channel);
 
             ShaderSpecializationState specState = new(ref graphicsState, ref pipeline, transformFeedbackDescriptors);
-            GpuAccessorState gpuAccessorState = new(poolState, default, graphicsState, specState, transformFeedbackDescriptors);
+            GpuAccessorState gpuAccessorState = new(samplerPoolMaximumId, poolState, default, graphicsState, specState, transformFeedbackDescriptors);
 
             ReadOnlySpan<ulong> addressesSpan = addresses.AsSpan();
 
@@ -334,7 +339,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
 
                 if (gpuVa != 0)
                 {
-                    GpuAccessor gpuAccessor = new(_context, channel, gpuAccessorState, stageIndex);
+                    GpuAccessor gpuAccessor = new(_context, channel, gpuAccessorState, stageIndex, addresses.Geometry != 0);
                     TranslatorContext currentStage = DecodeGraphicsShader(gpuAccessor, api, DefaultFlags, gpuVa);
 
                     if (nextStage != null)

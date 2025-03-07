@@ -1,4 +1,5 @@
-﻿using ARMeilleure.Signal;
+using Ryujinx.Common;
+using Ryujinx.Cpu.Signal;
 using Ryujinx.Memory;
 using Ryujinx.Memory.Tracking;
 using System;
@@ -8,9 +9,12 @@ namespace Ryujinx.Cpu
 {
     public class MemoryEhMeilleure : IDisposable
     {
-        public delegate bool TrackingEventDelegate(ulong address, ulong size, bool write);
+        public delegate ulong TrackingEventDelegate(ulong address, ulong size, bool write);
 
+        private readonly MemoryTracking _tracking;
         private readonly TrackingEventDelegate _trackingEvent;
+
+        private readonly ulong _pageSize;
 
         private readonly ulong _baseAddress;
         private readonly ulong _mirrorAddress;
@@ -21,7 +25,10 @@ namespace Ryujinx.Cpu
 
             ulong endAddress = _baseAddress + addressSpace.Size;
 
-            _trackingEvent = trackingEvent ?? tracking.VirtualMemoryEvent;
+            _tracking = tracking;
+            _trackingEvent = trackingEvent ?? VirtualMemoryEvent;
+
+            _pageSize = MemoryBlock.GetPageSize();
 
             bool added = NativeSignalHandler.AddTrackedRegion((nuint)_baseAddress, (nuint)endAddress, Marshal.GetFunctionPointerForDelegate(_trackingEvent));
 
@@ -46,6 +53,21 @@ namespace Ryujinx.Cpu
                     throw new InvalidOperationException("Number of allowed tracked regions exceeded.");
                 }
             }
+        }
+
+        private ulong VirtualMemoryEvent(ulong address, ulong size, bool write)
+        {
+            ulong pageSize = _pageSize;
+            ulong addressAligned = BitUtils.AlignDown(address, pageSize);
+            ulong endAddressAligned = BitUtils.AlignUp(address + size, pageSize);
+            ulong sizeAligned = endAddressAligned - addressAligned;
+
+            if (_tracking.VirtualMemoryEvent(addressAligned, sizeAligned, write))
+            {
+                return _baseAddress + address;
+            }
+
+            return 0;
         }
 
         public void Dispose()
