@@ -23,15 +23,7 @@ However, if you only need to update MeloNX, make sure you have cd into the direc
 git pull
 ```
 
-### 2. Compile Ryujinx.Headless.SDL2.dylib
-
-In the MeloNX folder run:
-
-```
-bash distribution/ios/compile.sh
-```
-
-### 3. Open the Xcode Project
+### 2. Open the Xcode Project
 
 Navigate to the **Xcode project file** located at:
 
@@ -41,13 +33,13 @@ src/MeloNX/MeloNX.xcodeproj
 
 Double-click to open it in **Xcode**.
 
-### 4. Configure the Project Settings
+### 3. Configure the Project Settings
 
 - In **Xcode**, select the **MeloNX** project.
 - Under the **General** tab, find `Ryujinx.Headless.SDL2.dylib`.
 - Set its **Embed setting** to **"Embed & Sign"**.
 
-### 5. Configure Signing & Capabilities
+### 4. Configure Signing & Capabilities
 
 - In **Xcode**, go to **Signing & Capabilities**.
 - Set the **Team** to your **Apple Developer account** (free or paid).
@@ -59,7 +51,7 @@ Double-click to open it in **Xcode**.
 
   *(Replace `<your-name>` with your actual name or identifier.)*
 
-### 6. Connect Your Device
+### 5. Connect Your Device
 
 Ensure your **iPhone/iPad** is **connected** and **selected** (Next to MeloNX with the arrow) in Xcode.
 - You may need to install the iOS SDK. it will say next to MeloNX with the arrow saying "iOS XX Not Installed (GET)"
@@ -68,7 +60,7 @@ Ensure your **iPhone/iPad** is **connected** and **selected** (Next to MeloNX wi
 
 ### Make Sure you do **NOT** select the Simulator. (Which is the Generic names and the ones with the non-coloured icons, e.g. "iPhone 16 Pro")
 
-### 7. Build and Run
+### 6. Build and Run
 
 Click the **Run (▶️) button** in Xcode to compile and launch MeloNX.
 - When running on your device, Click the **Spray Can Button** below the Run button 
