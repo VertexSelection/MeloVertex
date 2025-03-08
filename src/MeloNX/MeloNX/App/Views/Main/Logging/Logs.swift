@@ -52,11 +52,11 @@ struct LogFileView: View {
             let logFiles = try fileManager.contentsOfDirectory(at: logsDirectory, includingPropertiesForKeys: [.creationDateKey])
                 .filter {
                     let filename = $0.lastPathComponent
-                    guard filename.hasPrefix("Ryujinx_ios_") && filename.hasSuffix(".log") else {
+                    guard filename.hasPrefix("MeloNX_") && filename.hasSuffix(".log") else {
                         return false
                     }
                     
-                    let dateString = filename.replacingOccurrences(of: "Ryujinx_ios_", with: "").replacingOccurrences(of: ".log", with: "")
+                    let dateString = filename.replacingOccurrences(of: "MeloNX_", with: "").replacingOccurrences(of: ".log", with: "")
                     guard let logDate = dateFormatter.date(from: dateString) else {
                         return false
                     }

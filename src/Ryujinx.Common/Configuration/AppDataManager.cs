@@ -157,6 +157,21 @@ namespace Ryujinx.Common.Configuration
             }
             else
             {
+                if (OperatingSystem.IsIOS())
+                {
+                    logDir = Path.Combine(BaseDirPath, "Logs");
+
+                    try
+                    {
+                        Directory.CreateDirectory(logDir);
+                    }
+                    catch
+                    {   
+                        Logger.Warning?.Print(LogClass.Application, $"Logging directory could not be created '{logDir}'");
+
+                        return null;
+                    }
+                }
                 if (OperatingSystem.IsMacOS())
                 {
                     // NOTE: Should evaluate to "~/Library/Logs/Ryujinx/".

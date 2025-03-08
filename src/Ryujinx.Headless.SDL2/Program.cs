@@ -1179,11 +1179,15 @@ namespace Ryujinx.Headless.SDL2
                     gamepad.Dispose();
                 }
 
-                foreach (string id in _inputManager.GamepadDriver.GamepadsIds)
+               string[] gamepadsIdsArray = _inputManager.GamepadDriver.GamepadsIds.ToArray();
+
+                foreach (string id in gamepadsIdsArray)
                 {
                     gamepad = _inputManager.GamepadDriver.GetGamepad(id);
 
-                    Logger.Info?.Print(LogClass.Application, $"- {id} (\"{gamepad.Name}\")");
+                    string gamepadsIdsString = $"- {id} (\"{gamepad.Name}\")";
+
+                    Logger.Info?.Print(LogClass.Application, gamepadsIdsString);
 
                     gamepad.Dispose();
                 }
