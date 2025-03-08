@@ -137,7 +137,7 @@ namespace Ryujinx.Graphics.Vulkan
             (IncoherentBufferWriteStages, IncoherentTextureWriteStages) = BuildIncoherentStages(resourceLayout.SetUsages);
 
             // Updating buffer texture bindings using template updates crashes the Adreno driver on Windows.
-            UpdateTexturesWithoutTemplate = gd.IsQualcommProprietary && usesBufferTextures;
+            UpdateTexturesWithoutTemplate = OperatingSystem.IsIOS(); // gd.IsQualcommProprietary && usesBufferTextures;
 
             _compileTask = Task.CompletedTask;
             _firstBackgroundUse = false;

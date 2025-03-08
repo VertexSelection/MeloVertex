@@ -48,38 +48,10 @@ namespace Ryujinx.Graphics.Vulkan
         }
 
         public unsafe void UpdateBuffers(int setIndex, int baseBinding, ReadOnlySpan<DescriptorBufferInfo> bufferInfo, DescriptorType type)
-{
-
-    /*
-
-    // DEBUG: Validate inputs
-    if (bufferInfo.Length == 0)
-    {
-        Console.WriteLine("bufferInfo is empty.");
-        return;
-    }
-
-    // DEBUG: Check if _descriptorSets and _holder.Device are properly initialized
-    if (_descriptorSets == null || _descriptorSets.Length <= setIndex)
-    {
-        throw new Exception("Descriptor set at the specified index is null or out of range.");
-    }
-
-    if (_holder?.Device == null)
-    {
-        throw new Exception("_holder.Device is null or uninitialized.");
-    }
-
-    // DEBUG: Check each DescriptorBufferInfo in the span
-    foreach (var info in bufferInfo)
-    {
-        if (info.Buffer.Handle == 0)
         {
-            if (bufferInfo.Length == 0)
-            {
-                return;
-            }
+    
 
+            // Proceed if all checks pass
             fixed (DescriptorBufferInfo* pBufferInfo = bufferInfo)
             {
                 var writeDescriptorSet = new WriteDescriptorSet
@@ -89,32 +61,13 @@ namespace Ryujinx.Graphics.Vulkan
                     DstBinding = (uint)baseBinding,
                     DescriptorType = type,
                     DescriptorCount = (uint)bufferInfo.Length,
-                    PBufferInfo = pBufferInfo,
+                    PBufferInfo = pBufferInfo
                 };
 
-                _holder.Api.UpdateDescriptorSets(_holder.Device, 1, in writeDescriptorSet, 0, null);
+            // Update descriptor sets
+                _holder.Api.UpdateDescriptorSets(_holder.Device, 1, writeDescriptorSet, 0, null);
             }
         }
-    }
-    */
-
-    // Proceed if all checks pass
-    fixed (DescriptorBufferInfo* pBufferInfo = bufferInfo)
-    {
-        var writeDescriptorSet = new WriteDescriptorSet
-        {
-            SType = StructureType.WriteDescriptorSet,
-            DstSet = _descriptorSets[setIndex],
-            DstBinding = (uint)baseBinding,
-            DescriptorType = type,
-            DescriptorCount = (uint)bufferInfo.Length,
-            PBufferInfo = pBufferInfo
-        };
-
-        // Update descriptor sets
-        _holder.Api.UpdateDescriptorSets(_holder.Device, 1, writeDescriptorSet, 0, null);
-    }
-}
 
         public unsafe void UpdateImage(int setIndex, int bindingIndex, DescriptorImageInfo imageInfo, DescriptorType type)
         {
@@ -137,25 +90,6 @@ namespace Ryujinx.Graphics.Vulkan
 
         public unsafe void UpdateImages(int setIndex, int baseBinding, ReadOnlySpan<DescriptorImageInfo> imageInfo, DescriptorType type)
         {
-            /*
-
-            // DEBUG: Check if imageInfo is Empty
-            if (imageInfo.Length == 0)
-            {
-                
-                Console.WriteLine("Error: imageInfo is empty.");
-                return;
-            }
-
-            // DEBUG: Check the values inside imageInfo
-            foreach (var info in imageInfo)
-            {
-                Console.WriteLine($"Buffer Handle: {info.ImageView.Handle}");
-            }
-            Console.WriteLine($"SetIndex: {setIndex}, BaseBinding: {baseBinding}, DescriptorType: {type}, ImageInfo Count: {imageInfo.Length}");
-            */
-
-
             fixed (DescriptorImageInfo* pImageInfo = imageInfo)
             {
                 var writeDescriptorSet = new WriteDescriptorSet

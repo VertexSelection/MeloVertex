@@ -71,8 +71,9 @@ struct ContentView: View {
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_DEBUG", value: "0"),
-            MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "0"),
-            MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "0"),
+            MoltenVKSettings(string: "MVK_CONFIG_LOG_LEVEL", value: "0"),
+            MoltenVKSettings(string: "MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", value: "1"),
+            // MoltenVKSettings(string: "MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", value: "0"),
             // Uses more ram but makes performance higher, may add an option in settings to change or enable / disable this value (default 64)
             MoltenVKSettings(string: "MVK_CONFIG_MAX_ACTIVE_METAL_COMMAND_BUFFERS_PER_QUEUE", value: "512"),
         ]
