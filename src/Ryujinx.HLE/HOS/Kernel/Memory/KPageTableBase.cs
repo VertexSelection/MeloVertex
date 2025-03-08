@@ -5,6 +5,7 @@ using Ryujinx.Horizon.Common;
 using Ryujinx.Memory;
 using Ryujinx.Memory.Range;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -32,7 +33,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         private const int MaxBlocksNeededForInsertion = 2;
 
         protected readonly KernelContext Context;
-        protected virtual bool Supports4KBPages => true;
+        protected virtual bool UsesPrivateAllocations => false;
 
         public ulong AddrSpaceStart { get; private set; }
         public ulong AddrSpaceEnd { get; private set; }
@@ -57,11 +58,10 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         public ulong AslrRegionStart { get; private set; }
         public ulong AslrRegionEnd { get; private set; }
 
-#pragma warning disable IDE0052 // Remove unread private member
         private ulong _heapCapacity;
-#pragma warning restore IDE0052
 
         public ulong PhysicalMemoryUsage { get; private set; }
+        public ulong AliasRegionExtraSize { get; private set; }
 
         private readonly KMemoryBlockManager _blockManager;
 
@@ -97,30 +97,21 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
             _reservedAddressSpaceSize = reservedAddressSpaceSize;
         }
 
-        private static readonly int[] _addrSpaceSizes = { 32, 36, 32, 39 };
-
         public Result InitializeForProcess(
-            AddressSpaceType addrSpaceType,
-            bool aslrEnabled,
+            ProcessCreationFlags flags,
             bool fromBack,
             MemoryRegion memRegion,
             ulong address,
             ulong size,
             KMemoryBlockSlabManager slabManager)
         {
-            if ((uint)addrSpaceType > (uint)AddressSpaceType.Addr39Bits)
-            {
-                throw new ArgumentException($"AddressSpaceType bigger than {(uint)AddressSpaceType.Addr39Bits}: {(uint)addrSpaceType}", nameof(addrSpaceType));
-            }
-
             _contextId = Context.ContextIdManager.GetId();
 
             ulong addrSpaceBase = 0;
-            ulong addrSpaceSize = 1UL << _addrSpaceSizes[(int)addrSpaceType];
+            ulong addrSpaceSize = 1UL << GetAddressSpaceWidth(flags);
 
             Result result = CreateUserAddressSpace(
-                addrSpaceType,
-                aslrEnabled,
+                flags,
                 fromBack,
                 addrSpaceBase,
                 addrSpaceSize,
@@ -137,6 +128,22 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
             return result;
         }
 
+        private static int GetAddressSpaceWidth(ProcessCreationFlags flags)
+        {
+            switch (flags & ProcessCreationFlags.AddressSpaceMask)
+            {
+                case ProcessCreationFlags.AddressSpace32Bit:
+                case ProcessCreationFlags.AddressSpace32BitWithoutAlias:
+                    return 32;
+                case ProcessCreationFlags.AddressSpace64BitDeprecated:
+                    return 36;
+                case ProcessCreationFlags.AddressSpace64Bit:
+                    return 39;
+            }
+
+            throw new ArgumentException($"Invalid process flags {flags}", nameof(flags));
+        }
+
         private struct Region
         {
             public ulong Start;
@@ -146,8 +153,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         }
 
         private Result CreateUserAddressSpace(
-            AddressSpaceType addrSpaceType,
-            bool aslrEnabled,
+            ProcessCreationFlags flags,
             bool fromBack,
             ulong addrSpaceStart,
             ulong addrSpaceEnd,
@@ -167,9 +173,11 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
             ulong stackAndTlsIoStart;
             ulong stackAndTlsIoEnd;
 
-            switch (addrSpaceType)
+            AliasRegionExtraSize = 0;
+
+            switch (flags & ProcessCreationFlags.AddressSpaceMask)
             {
-                case AddressSpaceType.Addr32Bits:
+                case ProcessCreationFlags.AddressSpace32Bit:
                     aliasRegion.Size = 0x40000000;
                     heapRegion.Size = 0x40000000;
                     stackRegion.Size = 0;
@@ -182,7 +190,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                     stackAndTlsIoEnd = 0x40000000;
                     break;
 
-                case AddressSpaceType.Addr36Bits:
+                case ProcessCreationFlags.AddressSpace64BitDeprecated:
                     aliasRegion.Size = 0x180000000;
                     heapRegion.Size = 0x180000000;
                     stackRegion.Size = 0;
@@ -195,7 +203,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                     stackAndTlsIoEnd = 0x80000000;
                     break;
 
-                case AddressSpaceType.Addr32BitsNoMap:
+                case ProcessCreationFlags.AddressSpace32BitWithoutAlias:
                     aliasRegion.Size = 0;
                     heapRegion.Size = 0x80000000;
                     stackRegion.Size = 0;
@@ -208,7 +216,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                     stackAndTlsIoEnd = 0x40000000;
                     break;
 
-                case AddressSpaceType.Addr39Bits:
+                case ProcessCreationFlags.AddressSpace64Bit:
                     if (_reservedAddressSpaceSize < addrSpaceEnd)
                     {
                         int addressSpaceWidth = (int)ulong.Log2(_reservedAddressSpaceSize);
@@ -217,8 +225,8 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                         heapRegion.Size = 0x180000000;
                         stackRegion.Size = 1UL << (addressSpaceWidth - 8);
                         tlsIoRegion.Size = 1UL << (addressSpaceWidth - 3);
-                        CodeRegionStart = BitUtils.AlignDown<ulong>(address, RegionAlignment);
-                        codeRegionSize = BitUtils.AlignUp<ulong>(endAddr, RegionAlignment) - CodeRegionStart;
+                        CodeRegionStart = BitUtils.AlignDown(address, RegionAlignment);
+                        codeRegionSize = BitUtils.AlignUp(endAddr, RegionAlignment) - CodeRegionStart;
                         stackAndTlsIoStart = 0;
                         stackAndTlsIoEnd = 0;
                         AslrRegionStart = 0x8000000;
@@ -238,9 +246,16 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                         stackAndTlsIoStart = 0;
                         stackAndTlsIoEnd = 0;
                     }
+
+                    if (flags.HasFlag(ProcessCreationFlags.EnableAliasRegionExtraSize))
+                    {
+                        AliasRegionExtraSize = addrSpaceEnd / 8;
+                        aliasRegion.Size += AliasRegionExtraSize;
+                    }
                     break;
+
                 default:
-                    throw new ArgumentException($"AddressSpaceType bigger than {(uint)AddressSpaceType.Addr39Bits}: {(uint)addrSpaceType}", nameof(addrSpaceType));
+                    throw new ArgumentException($"Invalid process flags {flags}", nameof(flags));
             }
 
             CodeRegionEnd = CodeRegionStart + codeRegionSize;
@@ -264,6 +279,8 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
             ulong mapTotalSize = aliasRegion.Size + heapRegion.Size + stackRegion.Size + tlsIoRegion.Size;
 
             ulong aslrMaxOffset = mapAvailableSize - mapTotalSize;
+
+            bool aslrEnabled = flags.HasFlag(ProcessCreationFlags.EnableAslr);
 
             _aslrEnabled = aslrEnabled;
 
@@ -673,9 +690,9 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                     MemoryState.UnmapProcessCodeMemoryAllowed,
                     KMemoryPermission.None,
                     KMemoryPermission.None,
-                    MemoryAttribute.Mask,
+                    MemoryAttribute.Mask & ~MemoryAttribute.PermissionLocked,
                     MemoryAttribute.None,
-                    MemoryAttribute.IpcAndDeviceMapped | MemoryAttribute.PermissionLocked,
+                    MemoryAttribute.IpcAndDeviceMapped,
                     out MemoryState state,
                     out _,
                     out _);
@@ -724,7 +741,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         {
             address = 0;
 
-            if (size > HeapRegionEnd - HeapRegionStart)
+            if (size > HeapRegionEnd - HeapRegionStart || size > _heapCapacity)
             {
                 return KernelResult.OutOfMemory;
             }
@@ -1568,7 +1585,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
 
                     while (size > 0)
                     {
-                        ulong copySize = 0x100000; // Copy chunck size. Any value will do, moderate sizes are recommended.
+                        ulong copySize = int.MaxValue;
 
                         if (copySize > size)
                         {
@@ -1577,11 +1594,11 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
 
                         if (toServer)
                         {
-                            currentProcess.CpuMemory.Write(serverAddress, GetSpan(clientAddress, (int)copySize));
+                            currentProcess.CpuMemory.Write(serverAddress, GetReadOnlySequence(clientAddress, (int)copySize));
                         }
                         else
                         {
-                            Write(clientAddress, currentProcess.CpuMemory.GetSpan(serverAddress, (int)copySize));
+                            Write(clientAddress, currentProcess.CpuMemory.GetReadOnlySequence(serverAddress, (int)copySize));
                         }
 
                         serverAddress += copySize;
@@ -1911,9 +1928,9 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                     Context.Memory.Fill(GetDramAddressFromPa(dstFirstPagePa), unusedSizeBefore, (byte)_ipcFillValue);
 
                     ulong copySize = addressRounded <= endAddr ? addressRounded - address : size;
-                    var data = srcPageTable.GetSpan(addressTruncated + unusedSizeBefore, (int)copySize);
+                    var data = srcPageTable.GetReadOnlySequence(addressTruncated + unusedSizeBefore, (int)copySize);
 
-                    Context.Memory.Write(GetDramAddressFromPa(dstFirstPagePa + unusedSizeBefore), data);
+                    ((IWritableBlock)Context.Memory).Write(GetDramAddressFromPa(dstFirstPagePa + unusedSizeBefore), data);
 
                     firstPageFillAddress += unusedSizeBefore + copySize;
 
@@ -1947,16 +1964,16 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
 
                 Result result;
 
-                if (srcPageTable.Supports4KBPages)
+                if (srcPageTable.UsesPrivateAllocations)
+                {
+                    result = MapForeign(srcPageTable.GetHostRegions(addressRounded, alignedSize), currentVa, alignedSize);
+                }
+                else
                 {
                     KPageList pageList = new();
                     srcPageTable.GetPhysicalRegions(addressRounded, alignedSize, pageList);
 
                     result = MapPages(currentVa, pageList, permission, MemoryMapFlags.None);
-                }
-                else
-                {
-                    result = MapForeign(srcPageTable.GetHostRegions(addressRounded, alignedSize), currentVa, alignedSize);
                 }
 
                 if (result != Result.Success)
@@ -1977,9 +1994,9 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
                 if (send)
                 {
                     ulong copySize = endAddr - endAddrTruncated;
-                    var data = srcPageTable.GetSpan(endAddrTruncated, (int)copySize);
+                    var data = srcPageTable.GetReadOnlySequence(endAddrTruncated, (int)copySize);
 
-                    Context.Memory.Write(GetDramAddressFromPa(dstLastPagePa), data);
+                    ((IWritableBlock)Context.Memory).Write(GetDramAddressFromPa(dstLastPagePa), data);
 
                     lastPageFillAddr += copySize;
 
@@ -2944,6 +2961,18 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         protected abstract void GetPhysicalRegions(ulong va, ulong size, KPageList pageList);
 
         /// <summary>
+        /// Gets a read-only sequence of data from CPU mapped memory.
+        /// </summary>
+        /// <remarks>
+        /// Allows reading non-contiguous memory without first copying it to a newly allocated single contiguous block.
+        /// </remarks>
+        /// <param name="va">Virtual address of the data</param>
+        /// <param name="size">Size of the data</param>
+        /// <returns>A read-only sequence of the data</returns>
+        /// <exception cref="Ryujinx.Memory.InvalidMemoryRegionException">Throw for unhandled invalid or unmapped memory accesses</exception>
+        protected abstract ReadOnlySequence<byte> GetReadOnlySequence(ulong va, int size);
+
+        /// <summary>
         /// Gets a read-only span of data from CPU mapped memory.
         /// </summary>
         /// <remarks>
@@ -2952,7 +2981,6 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         /// </remarks>
         /// <param name="va">Virtual address of the data</param>
         /// <param name="size">Size of the data</param>
-        /// <param name="tracked">True if read tracking is triggered on the span</param>
         /// <returns>A read-only span of the data</returns>
         /// <exception cref="Ryujinx.Memory.InvalidMemoryRegionException">Throw for unhandled invalid or unmapped memory accesses</exception>
         protected abstract ReadOnlySpan<byte> GetSpan(ulong va, int size);
@@ -3059,6 +3087,14 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         /// <param name="va">Virtual address of the region</param>
         /// <param name="size">Size of the region</param>
         protected abstract void SignalMemoryTracking(ulong va, ulong size, bool write);
+
+        /// <summary>
+        /// Writes data to CPU mapped memory, with write tracking.
+        /// </summary>
+        /// <param name="va">Virtual address to write the data into</param>
+        /// <param name="data">Data to be written</param>
+        /// <exception cref="Ryujinx.Memory.InvalidMemoryRegionException">Throw for unhandled invalid or unmapped memory accesses</exception>
+        protected abstract void Write(ulong va, ReadOnlySequence<byte> data);
 
         /// <summary>
         /// Writes data to CPU mapped memory, with write tracking.

@@ -9,6 +9,7 @@ namespace Ryujinx.Graphics.Shader
         SeparateSamplerHandle = 1,
         SeparateSamplerId = 2,
         SeparateConstantSamplerHandle = 3,
+        Direct = 4,
     }
 
     public static class TextureHandle
@@ -88,7 +89,7 @@ namespace Ryujinx.Graphics.Shader
         {
             (int textureWordOffset, int samplerWordOffset, TextureHandleType handleType) = UnpackOffsets(wordOffset);
 
-            int handle = cachedTextureBuffer.Length != 0 ? cachedTextureBuffer[textureWordOffset] : 0;
+            int handle = textureWordOffset < cachedTextureBuffer.Length ? cachedTextureBuffer[textureWordOffset] : 0;
 
             // The "wordOffset" (which is really the immediate value used on texture instructions on the shader)
             // is a 13-bit value. However, in order to also support separate samplers and textures (which uses
@@ -102,7 +103,7 @@ namespace Ryujinx.Graphics.Shader
 
                 if (handleType != TextureHandleType.SeparateConstantSamplerHandle)
                 {
-                    samplerHandle = cachedSamplerBuffer.Length != 0 ? cachedSamplerBuffer[samplerWordOffset] : 0;
+                    samplerHandle = samplerWordOffset < cachedSamplerBuffer.Length ? cachedSamplerBuffer[samplerWordOffset] : 0;
                 }
                 else
                 {

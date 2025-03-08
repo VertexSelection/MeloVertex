@@ -8,11 +8,20 @@ namespace Ryujinx.Memory
         private readonly T* _pointer;
         private readonly int _length;
 
+        public NativeMemoryManager(nuint pointer, int length)
+            : this((T*)pointer, length)
+        {
+        }
+
         public NativeMemoryManager(T* pointer, int length)
         {
             _pointer = pointer;
             _length = length;
         }
+
+        public unsafe T* Pointer => _pointer;
+
+        public int Length => _length;
 
         public override Span<T> GetSpan()
         {

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using static Ryujinx.Audio.Renderer.Common.BehaviourParameter;
 
@@ -44,7 +45,6 @@ namespace Ryujinx.Audio.Renderer.Server
         /// <see cref="Parameter.RendererInfoOutStatus"/> was added to supply the count of update done sent to the DSP.
         /// A new version of the command estimator was added to address timing changes caused by the voice changes.
         /// Additionally, the rendering limit percent was incremented to 80%.
-        ///
         /// </summary>
         /// <remarks>This was added in system update 6.0.0</remarks>
         public const int Revision5 = 5 << 24;
@@ -101,9 +101,25 @@ namespace Ryujinx.Audio.Renderer.Server
         public const int Revision11 = 11 << 24;
 
         /// <summary>
+        /// REV12:
+        /// Two new commands were added to for biquad filtering and mixing (with optinal volume ramp) on the same command.
+        /// Splitter destinations can now specify up to two biquad filtering parameters, used for filtering the buffer before mixing.
+        /// </summary>
+        /// <remarks>This was added in system update 17.0.0</remarks>
+        public const int Revision12 = 12 << 24;
+
+        /// <summary>
+        /// REV13:
+        /// The compressor effect can now output statistics.
+        /// Splitter destinations now explicitly reset the previous mix volume, instead of doing so on first use.
+        /// </summary>
+        /// <remarks>This was added in system update 18.0.0</remarks>
+        public const int Revision13 = 13 << 24;
+
+        /// <summary>
         /// Last revision supported by the implementation.
         /// </summary>
-        public const int LastRevision = Revision11;
+        public const int LastRevision = Revision13;
 
         /// <summary>
         /// Target revision magic supported by the implementation.
@@ -211,7 +227,7 @@ namespace Ryujinx.Audio.Renderer.Server
         /// <summary>
         /// Check if the audio renderer should fix the GC-ADPCM context not being provided to the DSP.
         /// </summary>
-        /// <returns>True if if the audio renderer should fix it.</returns>
+        /// <returns>True if the audio renderer should fix it.</returns>
         public bool IsAdpcmLoopContextBugFixed()
         {
             return CheckFeatureSupported(UserRevision, BaseRevisionMagic + Revision2);
@@ -273,7 +289,7 @@ namespace Ryujinx.Audio.Renderer.Server
         }
 
         /// <summary>
-        /// Check if the audio renderer should trust the user destination count in <see cref="Splitter.SplitterState.Update(Splitter.SplitterContext, ref Parameter.SplitterInParameter, ReadOnlySpan{byte})"/>.
+        /// Check if the audio renderer should trust the user destination count in <see cref="Renderer.Server.Splitter.SplitterState.Update(Renderer.Server.Splitter.SplitterContext, Renderer.Parameter.SplitterInParameter, SequenceReader{byte})"/>.
         /// </summary>
         /// <returns>True if the audio renderer should trust the user destination count.</returns>
         public bool IsSplitterBugFixed()
@@ -353,7 +369,7 @@ namespace Ryujinx.Audio.Renderer.Server
         /// Check if the audio renderer should use an optimized Biquad Filter (Direct Form 1) in case of two biquad filters are defined on a voice.
         /// </summary>
         /// <returns>True if the audio renderer should use the optimization.</returns>
-        public bool IsBiquadFilterGroupedOptimizationSupported()
+        public bool UseMultiTapBiquadFilterProcessing()
         {
             return CheckFeatureSupported(UserRevision, BaseRevisionMagic + Revision10);
         }
@@ -365,6 +381,24 @@ namespace Ryujinx.Audio.Renderer.Server
         public bool IsNewEffectChannelMappingSupported()
         {
             return CheckFeatureSupported(UserRevision, BaseRevisionMagic + Revision11);
+        }
+
+        /// <summary>
+        /// Check if the audio renderer should support biquad filter on splitter.
+        /// </summary>
+        /// <returns>True if the audio renderer support biquad filter on splitter</returns>
+        public bool IsBiquadFilterParameterForSplitterEnabled()
+        {
+            return CheckFeatureSupported(UserRevision, BaseRevisionMagic + Revision12);
+        }
+
+        /// <summary>
+        /// Check if the audio renderer should support explicit previous mix volume reset on splitter.
+        /// </summary>
+        /// <returns>True if the audio renderer support explicit previous mix volume reset on splitter</returns>
+        public bool IsSplitterPrevVolumeResetSupported()
+        {
+            return CheckFeatureSupported(UserRevision, BaseRevisionMagic + Revision13);
         }
 
         /// <summary>

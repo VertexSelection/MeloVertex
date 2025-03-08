@@ -117,8 +117,15 @@ namespace ARMeilleure.Translation.Cache
                 if (OperatingSystem.IsIOS())
                 {
                     Marshal.Copy(code, 0, funcPtr, code.Length);
-                    ReprotectAsExecutable(targetRegion, funcOffset, code.Length);
-                    JitSupportDarwinAot.Invalidate(funcPtr, (ulong)code.Length);
+                    if (deferProtect)
+                    {
+                        _deferredRxProtect.Enqueue((funcOffset, code.Length));
+                    }
+                    else
+                    {
+                        ReprotectAsExecutable(targetRegion, funcOffset, code.Length);
+                        JitSupportDarwinAot.Invalidate(funcPtr, (ulong)code.Length);
+                    }
                 }
                 else if (OperatingSystem.IsMacOS()&& RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                 {

@@ -39,17 +39,17 @@ namespace Ryujinx.Audio.Renderer.Server.Effect
             return GetSingleBuffer();
         }
 
-        public override void Update(out BehaviourParameter.ErrorInfo updateErrorInfo, ref EffectInParameterVersion1 parameter, PoolMapper mapper)
+        public override void Update(out BehaviourParameter.ErrorInfo updateErrorInfo, in EffectInParameterVersion1 parameter, PoolMapper mapper)
         {
             // Nintendo doesn't do anything here but we still require updateErrorInfo to be initialised.
             updateErrorInfo = new BehaviourParameter.ErrorInfo();
         }
 
-        public override void Update(out BehaviourParameter.ErrorInfo updateErrorInfo, ref EffectInParameterVersion2 parameter, PoolMapper mapper)
+        public override void Update(out BehaviourParameter.ErrorInfo updateErrorInfo, in EffectInParameterVersion2 parameter, PoolMapper mapper)
         {
-            Debug.Assert(IsTypeValid(ref parameter));
+            Debug.Assert(IsTypeValid(in parameter));
 
-            UpdateParameterBase(ref parameter);
+            UpdateParameterBase(in parameter);
 
             Parameter = MemoryMarshal.Cast<byte, CompressorParameter>(parameter.SpecificData)[0];
             IsEnabled = parameter.IsEnabled;
@@ -62,6 +62,19 @@ namespace Ryujinx.Audio.Renderer.Server.Effect
             UpdateUsageStateForCommandGeneration();
 
             Parameter.Status = UsageState.Enabled;
+            Parameter.StatisticsReset = false;
+        }
+
+        public override void InitializeResultState(ref EffectResultState state)
+        {
+            ref CompressorStatistics statistics = ref MemoryMarshal.Cast<byte, CompressorStatistics>(state.SpecificData)[0];
+
+            statistics.Reset(Parameter.ChannelCount);
+        }
+
+        public override void UpdateResultState(ref EffectResultState destState, ref EffectResultState srcState)
+        {
+            destState = srcState;
         }
     }
 }

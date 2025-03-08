@@ -125,9 +125,18 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
             CompressionAlgorithm algorithm = CompressionAlgorithm.None;
             Read(ref algorithm);
 
-            if (algorithm == CompressionAlgorithm.Deflate)
+            switch (algorithm)
             {
-                _activeStream = new DeflateStream(_stream, CompressionMode.Decompress, true);
+                case CompressionAlgorithm.None:
+                    break;
+                case CompressionAlgorithm.Deflate:
+                    _activeStream = new DeflateStream(_stream, CompressionMode.Decompress, true);
+                    break;
+                case CompressionAlgorithm.Brotli:
+                    _activeStream = new BrotliStream(_stream, CompressionMode.Decompress, true);
+                    break;
+                default:
+                    throw new ArgumentException($"Invalid compression algorithm \"{algorithm}\"");
             }
         }
 
@@ -139,9 +148,18 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
         {
             Write(ref algorithm);
 
-            if (algorithm == CompressionAlgorithm.Deflate)
+            switch (algorithm)
             {
-                _activeStream = new DeflateStream(_stream, CompressionLevel.SmallestSize, true);
+                case CompressionAlgorithm.None:
+                    break;
+                case CompressionAlgorithm.Deflate:
+                    _activeStream = new DeflateStream(_stream, CompressionLevel.Fastest, true);
+                    break;
+                case CompressionAlgorithm.Brotli:
+                    _activeStream = new BrotliStream(_stream, CompressionLevel.Fastest, true);
+                    break;
+                default:
+                    throw new ArgumentException($"Invalid compression algorithm \"{algorithm}\"");
             }
         }
 
@@ -177,10 +195,18 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
             switch (algorithm)
             {
                 case CompressionAlgorithm.None:
-                    stream.Read(data);
+                    stream.ReadExactly(data);
                     break;
                 case CompressionAlgorithm.Deflate:
                     stream = new DeflateStream(stream, CompressionMode.Decompress, true);
+                    for (int offset = 0; offset < data.Length;)
+                    {
+                        offset += stream.Read(data[offset..]);
+                    }
+                    stream.Dispose();
+                    break;
+                case CompressionAlgorithm.Brotli:
+                    stream = new BrotliStream(stream, CompressionMode.Decompress, true);
                     for (int offset = 0; offset < data.Length;)
                     {
                         offset += stream.Read(data[offset..]);
@@ -206,7 +232,12 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
                     stream.Write(data);
                     break;
                 case CompressionAlgorithm.Deflate:
-                    stream = new DeflateStream(stream, CompressionLevel.SmallestSize, true);
+                    stream = new DeflateStream(stream, CompressionLevel.Fastest, true);
+                    stream.Write(data);
+                    stream.Dispose();
+                    break;
+                case CompressionAlgorithm.Brotli:
+                    stream = new BrotliStream(stream, CompressionLevel.Fastest, true);
                     stream.Write(data);
                     stream.Dispose();
                     break;

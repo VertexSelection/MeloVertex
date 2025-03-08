@@ -16,15 +16,17 @@ namespace Ryujinx.Audio.Backends.DelayLayer
 
         public ulong SampleDelay48k;
 
+        public float Volume { get; set; }
+
         public DelayLayerHardwareDeviceDriver(IHardwareDeviceDriver realDevice, ulong sampleDelay48k)
         {
             _realDriver = realDevice;
             SampleDelay48k = sampleDelay48k;
         }
 
-        public IHardwareDeviceSession OpenDeviceSession(Direction direction, IVirtualMemoryManager memoryManager, SampleFormat sampleFormat, uint sampleRate, uint channelCount, float volume)
+        public IHardwareDeviceSession OpenDeviceSession(Direction direction, IVirtualMemoryManager memoryManager, SampleFormat sampleFormat, uint sampleRate, uint channelCount)
         {
-            IHardwareDeviceSession session = _realDriver.OpenDeviceSession(direction, memoryManager, sampleFormat, sampleRate, channelCount, volume);
+            IHardwareDeviceSession session = _realDriver.OpenDeviceSession(direction, memoryManager, sampleFormat, sampleRate, channelCount);
 
             if (direction == Direction.Output)
             {

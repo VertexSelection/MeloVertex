@@ -4,8 +4,8 @@ using Ryujinx.Common.Logging;
 using Ryujinx.HLE.HOS.Applets.SoftwareKeyboard;
 using Ryujinx.HLE.HOS.Services.Am.AppletAE;
 using Ryujinx.HLE.HOS.Services.Hid.Types.SharedMemory.Npad;
-using Ryujinx.HLE.Ui;
-using Ryujinx.HLE.Ui.Input;
+using Ryujinx.HLE.UI;
+using Ryujinx.HLE.UI.Input;
 using Ryujinx.Memory;
 using System;
 using System.Diagnostics;
@@ -94,14 +94,14 @@ namespace Ryujinx.HLE.HOS.Applets
                     _keyboardBackgroundInitialize = MemoryMarshal.Read<SoftwareKeyboardInitialize>(keyboardConfig);
                     _backgroundState = InlineKeyboardState.Uninitialized;
 
-                    if (_device.UiHandler == null)
+                    if (_device.UIHandler == null)
                     {
                         Logger.Error?.Print(LogClass.ServiceAm, "GUI Handler is not set, software keyboard applet will not work properly");
                     }
                     else
                     {
                         // Create a text handler that converts keyboard strokes to strings.
-                        _dynamicTextInputHandler = _device.UiHandler.CreateDynamicTextInputHandler();
+                        _dynamicTextInputHandler = _device.UIHandler.CreateDynamicTextInputHandler();
                         _dynamicTextInputHandler.TextChangedEvent += HandleTextChangedEvent;
                         _dynamicTextInputHandler.KeyPressedEvent += HandleKeyPressedEvent;
 
@@ -109,7 +109,7 @@ namespace Ryujinx.HLE.HOS.Applets
                         _npads.NpadButtonDownEvent += HandleNpadButtonDownEvent;
                         _npads.NpadButtonUpEvent += HandleNpadButtonUpEvent;
 
-                        _keyboardRenderer = new SoftwareKeyboardRenderer(_device.UiHandler.HostUiTheme);
+                        _keyboardRenderer = new SoftwareKeyboardRenderer(_device.UIHandler.HostUITheme);
                     }
 
                     return ResultCode.Success;
@@ -203,13 +203,12 @@ namespace Ryujinx.HLE.HOS.Applets
                 _keyboardForegroundConfig.StringLengthMax = 100;
             }
 
-            // If no GUI handler is set, fallback to default behavior.
-            if (_device.UiHandler == null)
+            if (_device.UIHandler == null)
             {
                 Logger.Warning?.Print(LogClass.Application, "GUI Handler is not set. Falling back to default");
 
-                // Prepare the SoftwareKeyboardUiArgs struct
-                var args = new SoftwareKeyboardUiArgs
+                // Prepare the SoftwareKeyboardUIArgs struct
+                var args = new SoftwareKeyboardUIArgs
                 {
                     KeyboardMode = _keyboardForegroundConfig.Mode,
                     HeaderText = StripUnicodeControlCodes(_keyboardForegroundConfig.HeaderText),
@@ -228,7 +227,7 @@ namespace Ryujinx.HLE.HOS.Applets
             else
             {
                 // Call the configured GUI handler to get user's input.
-                var args = new SoftwareKeyboardUiArgs
+                var args = new SoftwareKeyboardUIArgs
                 {
                     KeyboardMode = _keyboardForegroundConfig.Mode,
                     HeaderText = StripUnicodeControlCodes(_keyboardForegroundConfig.HeaderText),
@@ -240,7 +239,7 @@ namespace Ryujinx.HLE.HOS.Applets
                     StringLengthMax = _keyboardForegroundConfig.StringLengthMax,
                     InitialText = initialText,
                 };
-                _device.UiHandler.DisplayInputDialog(args, inputText => 
+                _device.UIHandler.DisplayInputDialog(args, inputText => 
                 {
                     Console.WriteLine($"User entered: {inputText}");
                     

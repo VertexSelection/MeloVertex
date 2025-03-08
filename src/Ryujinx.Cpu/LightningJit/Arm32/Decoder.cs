@@ -208,6 +208,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
             InstMeta meta;
             InstFlags extraFlags = InstFlags.None;
             bool hasHostCall = false;
+            bool hasHostCallSkipContext = false;
             bool isTruncated = false;
 
             do
@@ -246,9 +247,17 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
                     meta = InstTableA32<T>.GetMeta(encoding, cpuPreset.Version, cpuPreset.Features);
                 }
 
-                if (meta.Name.IsSystemOrCall() && !hasHostCall)
+                if (meta.Name.IsSystemOrCall())
                 {
-                    hasHostCall = meta.Name.IsCall() || InstEmitSystem.NeedsCall(meta.Name);
+                    if (!hasHostCall)
+                    {
+                        hasHostCall = InstEmitSystem.NeedsCall(meta.Name);
+                    }
+
+                    if (!hasHostCallSkipContext)
+                    {
+                        hasHostCallSkipContext = meta.Name.IsCall() || InstEmitSystem.NeedsCallSkipContext(meta.Name);
+                    }
                 }
 
                 insts.Add(new(encoding, meta.Name, meta.EmitFunc, meta.Flags | extraFlags));
@@ -259,8 +268,8 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
 
             if (!isTruncated && IsBackwardsBranch(meta.Name, encoding))
             {
-                hasHostCall = true;
                 isLoopEnd = true;
+                hasHostCallSkipContext = true;
             }
 
             return new(
@@ -269,6 +278,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
                 insts,
                 !isTruncated,
                 hasHostCall,
+                hasHostCallSkipContext,
                 isTruncated,
                 isLoopEnd,
                 isThumb);
@@ -415,7 +425,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
 
         private static bool IsRtWrite(InstName name, uint encoding)
         {
-            // Some instruction can move GPR to FP/SIMD or FP/SIMD to GPR depending on the encoding.
+            // Some instructions can move GPR to FP/SIMD or FP/SIMD to GPR depending on the encoding.
             // Detect those cases so that we can tell if we're actually doing a register write.
 
             switch (name)

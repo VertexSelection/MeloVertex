@@ -55,22 +55,25 @@ namespace Ryujinx.Graphics.OpenGL.Image
             throw new NotImplementedException();
         }
 
-        public void SetData(IMemoryOwner<byte> data)
+        /// <inheritdoc/>
+        public void SetData(MemoryOwner<byte> data)
         {
-            var dataSpan = data.Memory.Span;
+            var dataSpan = data.Span;
 
             Buffer.SetData(_buffer, _bufferOffset, dataSpan[..Math.Min(dataSpan.Length, _bufferSize)]);
 
             data.Dispose();
         }
 
-        public void SetData(IMemoryOwner<byte> data, int layer, int level)
+        /// <inheritdoc/>
+        public void SetData(MemoryOwner<byte> data, int layer, int level)
         {
             data.Dispose();
             throw new NotSupportedException();
         }
 
-        public void SetData(IMemoryOwner<byte> data, int layer, int level, Rectangle<int> region)
+        /// <inheritdoc/>
+        public void SetData(MemoryOwner<byte> data, int layer, int level, Rectangle<int> region)
         {
             data.Dispose();
             throw new NotSupportedException();

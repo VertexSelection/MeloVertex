@@ -30,7 +30,7 @@ namespace ARMeilleure.Translation.PTC
         private const string OuterHeaderMagicString = "PTCohd\0\0";
         private const string InnerHeaderMagicString = "PTCihd\0\0";
 
-        private const uint InternalVersion = 5518; //! To be incremented manually for each change to the ARMeilleure project.
+        private const uint InternalVersion = 6950; //! To be incremented manually for each change to the ARMeilleure project.
 
         private const string ActualDir = "0";
         private const string BackupDir = "1";
@@ -858,8 +858,14 @@ namespace ARMeilleure.Translation.PTC
 
             Stopwatch sw = Stopwatch.StartNew();
 
-            threads.ForEach((thread) => thread.Start());
-            threads.ForEach((thread) => thread.Join());
+            foreach (var thread in threads)
+            {
+                thread.Start();
+            }
+            foreach (var thread in threads)
+            {
+                thread.Join();
+            }
 
             threads.Clear();
 

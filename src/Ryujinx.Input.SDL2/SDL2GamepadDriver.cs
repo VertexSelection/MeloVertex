@@ -103,8 +103,7 @@ namespace Ryujinx.Input.SDL2
             {
                 SDL2Driver.Instance.OnJoyStickConnected -= HandleJoyStickConnected;
                 SDL2Driver.Instance.OnJoystickDisconnected -= HandleJoyStickDisconnected;
-
-                // Simulate a full disconnect when disposing
+                
                 foreach (string id in _gamepadsIds)
                 {
                     OnGamepadDisconnected?.Invoke(id);

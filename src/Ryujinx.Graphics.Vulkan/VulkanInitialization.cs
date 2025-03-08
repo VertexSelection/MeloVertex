@@ -42,6 +42,10 @@ namespace Ryujinx.Graphics.Vulkan
             "VK_EXT_depth_clip_control",
             "VK_KHR_portability_subset", // As per spec, we should enable this if present.
             "VK_EXT_4444_formats",
+            "VK_KHR_8bit_storage",
+            "VK_KHR_maintenance2",
+            "VK_EXT_attachment_feedback_loop_layout",
+            "VK_EXT_attachment_feedback_loop_dynamic_state",
         };
 
         private static readonly string[] _requiredExtensions = {
@@ -136,7 +140,7 @@ namespace Ryujinx.Graphics.Vulkan
         {
             instance.EnumeratePhysicalDevices(out var physicalDevices).ThrowOnError();
 
-            // First we try to pick the the user preferred GPU.
+            // First we try to pick the user preferred GPU.
             for (int i = 0; i < physicalDevices.Length; i++)
             {
                 if (IsPreferredAndSuitableDevice(api, physicalDevices[i], surface, preferredGpuId))
@@ -355,6 +359,36 @@ namespace Ryujinx.Graphics.Vulkan
                 features2.PNext = &supportedFeaturesDepthClipControl;
             }
 
+            PhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT supportedFeaturesAttachmentFeedbackLoopLayout = new()
+            {
+                SType = StructureType.PhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesExt,
+                PNext = features2.PNext,
+            };
+
+            if (physicalDevice.IsDeviceExtensionPresent("VK_EXT_attachment_feedback_loop_layout"))
+            {
+                features2.PNext = &supportedFeaturesAttachmentFeedbackLoopLayout;
+            }
+
+            PhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT supportedFeaturesDynamicAttachmentFeedbackLoopLayout = new()
+            {
+                SType = StructureType.PhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesExt,
+                PNext = features2.PNext,
+            };
+
+            if (physicalDevice.IsDeviceExtensionPresent("VK_EXT_attachment_feedback_loop_dynamic_state"))
+            {
+                features2.PNext = &supportedFeaturesDynamicAttachmentFeedbackLoopLayout;
+            }
+
+            PhysicalDeviceVulkan12Features supportedPhysicalDeviceVulkan12Features = new()
+            {
+                SType = StructureType.PhysicalDeviceVulkan12Features,
+                PNext = features2.PNext,
+            };
+
+            features2.PNext = &supportedPhysicalDeviceVulkan12Features;
+
             api.GetPhysicalDeviceFeatures2(physicalDevice.PhysicalDevice, &features2);
 
             var supportedFeatures = features2.Features;
@@ -382,6 +416,7 @@ namespace Ryujinx.Graphics.Vulkan
                 TessellationShader = supportedFeatures.TessellationShader,
                 VertexPipelineStoresAndAtomics = supportedFeatures.VertexPipelineStoresAndAtomics,
                 RobustBufferAccess = useRobustBufferAccess,
+                SampleRateShading = supportedFeatures.SampleRateShading,
             };
 
             void* pExtendedFeatures = null;
@@ -451,9 +486,11 @@ namespace Ryujinx.Graphics.Vulkan
             {
                 SType = StructureType.PhysicalDeviceVulkan12Features,
                 PNext = pExtendedFeatures,
-                DescriptorIndexing = physicalDevice.IsDeviceExtensionPresent("VK_EXT_descriptor_indexing"),
-                DrawIndirectCount = physicalDevice.IsDeviceExtensionPresent(KhrDrawIndirectCount.ExtensionName),
-                UniformBufferStandardLayout = physicalDevice.IsDeviceExtensionPresent("VK_KHR_uniform_buffer_standard_layout"),
+                DescriptorIndexing = supportedPhysicalDeviceVulkan12Features.DescriptorIndexing,
+                DrawIndirectCount = supportedPhysicalDeviceVulkan12Features.DrawIndirectCount,
+                UniformBufferStandardLayout = supportedPhysicalDeviceVulkan12Features.UniformBufferStandardLayout,
+                UniformAndStorageBuffer8BitAccess = supportedPhysicalDeviceVulkan12Features.UniformAndStorageBuffer8BitAccess,
+                StorageBuffer8BitAccess = supportedPhysicalDeviceVulkan12Features.StorageBuffer8BitAccess,
             };
 
             pExtendedFeatures = &featuresVk12;
@@ -486,20 +523,6 @@ namespace Ryujinx.Graphics.Vulkan
                 pExtendedFeatures = &featuresFragmentShaderInterlock;
             }
 
-            PhysicalDeviceSubgroupSizeControlFeaturesEXT featuresSubgroupSizeControl;
-
-            if (physicalDevice.IsDeviceExtensionPresent("VK_EXT_subgroup_size_control"))
-            {
-                featuresSubgroupSizeControl = new PhysicalDeviceSubgroupSizeControlFeaturesEXT
-                {
-                    SType = StructureType.PhysicalDeviceSubgroupSizeControlFeaturesExt,
-                    PNext = pExtendedFeatures,
-                    SubgroupSizeControl = true,
-                };
-
-                pExtendedFeatures = &featuresSubgroupSizeControl;
-            }
-
             PhysicalDeviceCustomBorderColorFeaturesEXT featuresCustomBorderColor;
 
             if (physicalDevice.IsDeviceExtensionPresent("VK_EXT_custom_border_color") &&
@@ -530,6 +553,36 @@ namespace Ryujinx.Graphics.Vulkan
                 };
 
                 pExtendedFeatures = &featuresDepthClipControl;
+            }
+
+            PhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT featuresAttachmentFeedbackLoopLayout;
+
+            if (physicalDevice.IsDeviceExtensionPresent("VK_EXT_attachment_feedback_loop_layout") &&
+                supportedFeaturesAttachmentFeedbackLoopLayout.AttachmentFeedbackLoopLayout)
+            {
+                featuresAttachmentFeedbackLoopLayout = new()
+                {
+                    SType = StructureType.PhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesExt,
+                    PNext = pExtendedFeatures,
+                    AttachmentFeedbackLoopLayout = true,
+                };
+
+                pExtendedFeatures = &featuresAttachmentFeedbackLoopLayout;
+            }
+
+            PhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT featuresDynamicAttachmentFeedbackLoopLayout;
+
+            if (physicalDevice.IsDeviceExtensionPresent("VK_EXT_attachment_feedback_loop_dynamic_state") &&
+                supportedFeaturesDynamicAttachmentFeedbackLoopLayout.AttachmentFeedbackLoopDynamicState)
+            {
+                featuresDynamicAttachmentFeedbackLoopLayout = new()
+                {
+                    SType = StructureType.PhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesExt,
+                    PNext = pExtendedFeatures,
+                    AttachmentFeedbackLoopDynamicState = true,
+                };
+
+                pExtendedFeatures = &featuresDynamicAttachmentFeedbackLoopLayout;
             }
 
             var enabledExtensions = _requiredExtensions.Union(_desirableExtensions.Intersect(physicalDevice.DeviceExtensions)).ToArray();

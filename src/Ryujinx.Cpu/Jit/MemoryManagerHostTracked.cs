@@ -1,82 +1,64 @@
 using ARMeilleure.Memory;
+using Ryujinx.Common.Memory;
+using Ryujinx.Cpu.Jit.HostTracked;
+using Ryujinx.Cpu.Signal;
 using Ryujinx.Memory;
 using Ryujinx.Memory.Range;
 using Ryujinx.Memory.Tracking;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace Ryujinx.Cpu.Jit
 {
     /// <summary>
     /// Represents a CPU memory manager which maps guest virtual memory directly onto a host virtual region.
     /// </summary>
-    public sealed class MemoryManagerHostTracked : MemoryManagerBase, IWritableBlock, IMemoryManager, IVirtualMemoryManagerTracked
+    public sealed class MemoryManagerHostTracked : VirtualMemoryManagerRefCountedBase, IMemoryManager, IVirtualMemoryManagerTracked
     {
-        public const int PageBits = 12;
-        public const int PageSize = 1 << PageBits;
-        public const int PageMask = PageSize - 1;
-
-        public const int PageToPteShift = 5; // 32 pages (2 bits each) in one ulong page table entry.
-        public const ulong BlockMappedMask = 0x5555555555555555; // First bit of each table entry set.
-
-        private enum HostMappedPtBits : ulong
-        {
-            Unmapped = 0,
-            Mapped,
-            WriteTracked,
-            ReadWriteTracked,
-
-            MappedReplicated = 0x5555555555555555,
-            WriteTrackedReplicated = 0xaaaaaaaaaaaaaaaa,
-            ReadWriteTrackedReplicated = ulong.MaxValue
-        }
-
         private readonly InvalidAccessHandler _invalidAccessHandler;
+        private readonly bool _unsafeMode;
 
         private readonly MemoryBlock _backingMemory;
-        private readonly PageTable<ulong> _pageTable;
-
-        private readonly ulong[] _pageBitmap;
 
         public int AddressSpaceBits { get; }
 
-        public MemoryTracking Tracking { get; private set; }
+        public MemoryTracking Tracking { get; }
 
-        private const int PteSize = 8;
+        private readonly NativePageTable _nativePageTable;
+        private readonly Ryujinx.Cpu.Jit.HostTracked.AddressSpacePartitioned _addressSpace;
 
-        private readonly AddressSpacePartitioned _addressSpace;
+        private readonly ManagedPageFlags _pages;
 
-        public ulong AddressSpaceSize { get; }
-
-        private readonly MemoryBlock _flatPageTable;
+        protected override ulong AddressSpaceSize { get; }
 
         /// <inheritdoc/>
-        public bool Supports4KBPages => false;
+        public bool UsesPrivateAllocations => true;
 
-        public IntPtr PageTablePointer => _flatPageTable.Pointer;
+        public IntPtr PageTablePointer => _nativePageTable.PageTablePointer;
 
-        public MemoryManagerType Type => MemoryManagerType.HostTracked;
+        public MemoryManagerType Type => _unsafeMode ? MemoryManagerType.HostTrackedUnsafe : MemoryManagerType.HostTracked;
 
         public event Action<ulong, ulong> UnmapEvent;
 
         /// <summary>
-        /// Creates a new instance of the host mapped memory manager.
+        /// Creates a new instance of the host tracked memory manager.
         /// </summary>
         /// <param name="backingMemory">Physical backing memory where virtual memory will be mapped to</param>
         /// <param name="addressSpaceSize">Size of the address space</param>
+        /// <param name="unsafeMode">True if unmanaged access should not be masked (unsafe), false otherwise.</param>
         /// <param name="invalidAccessHandler">Optional function to handle invalid memory accesses</param>
-        public MemoryManagerHostTracked(MemoryBlock backingMemory, ulong addressSpaceSize, InvalidAccessHandler invalidAccessHandler)
+        public MemoryManagerHostTracked(MemoryBlock backingMemory, ulong addressSpaceSize, bool unsafeMode, InvalidAccessHandler invalidAccessHandler)
         {
-            Tracking = new MemoryTracking(this, AddressSpacePartitioned.Use4KBProtection ? PageSize : (int)MemoryBlock.GetPageSize(), invalidAccessHandler);
+            bool useProtectionMirrors = MemoryBlock.GetPageSize() > PageSize;
+
+            Tracking = new MemoryTracking(this, PageSize, invalidAccessHandler, useProtectionMirrors);
 
             _backingMemory = backingMemory;
-            _pageTable = new PageTable<ulong>();
             _invalidAccessHandler = invalidAccessHandler;
-            _addressSpace = new(Tracking, backingMemory, UpdatePt);
+            _unsafeMode = unsafeMode;
             AddressSpaceSize = addressSpaceSize;
 
             ulong asSize = PageSize;
@@ -90,8 +72,81 @@ namespace Ryujinx.Cpu.Jit
 
             AddressSpaceBits = asBits;
 
-            _pageBitmap = new ulong[1 << (AddressSpaceBits - (PageBits + PageToPteShift))];
-            _flatPageTable = new MemoryBlock((asSize / PageSize) * PteSize);
+            if (useProtectionMirrors && !NativeSignalHandler.SupportsFaultAddressPatching())
+            {
+                // Currently we require being able to change the fault address to something else
+                // in order to "emulate" 4KB granularity protection on systems with larger page size.
+
+                throw new PlatformNotSupportedException();
+            }
+
+            _pages = new ManagedPageFlags(asBits);
+            _nativePageTable = new(asSize);
+            _addressSpace = new(Tracking, backingMemory, _nativePageTable, useProtectionMirrors);
+        }
+
+        public override ReadOnlySequence<byte> GetReadOnlySequence(ulong va, int size, bool tracked = false)
+        {
+            if (size == 0)
+            {
+                return ReadOnlySequence<byte>.Empty;
+            }
+
+            try
+            {
+                if (tracked)
+                {
+                    SignalMemoryTracking(va, (ulong)size, false);
+                }
+                else
+                {
+                    AssertValidAddressAndSize(va, (ulong)size);
+                }
+
+                ulong endVa = va + (ulong)size;
+                int offset = 0;
+
+                BytesReadOnlySequenceSegment first = null, last = null;
+
+                while (va < endVa)
+                {
+                    (MemoryBlock memory, ulong rangeOffset, ulong copySize) = GetMemoryOffsetAndSize(va, (ulong)(size - offset));
+
+                    Memory<byte> physicalMemory = memory.GetMemory(rangeOffset, (int)copySize);
+
+                    if (first is null)
+                    {
+                        first = last = new BytesReadOnlySequenceSegment(physicalMemory);
+                    }
+                    else
+                    {
+                        if (last.IsContiguousWith(physicalMemory, out nuint contiguousStart, out int contiguousSize))
+                        {
+                            Memory<byte> contiguousPhysicalMemory = new NativeMemoryManager<byte>(contiguousStart, contiguousSize).Memory;
+
+                            last.Replace(contiguousPhysicalMemory);
+                        }
+                        else
+                        {
+                            last = last.Append(physicalMemory);
+                        }
+                    }
+
+                    va += copySize;
+                    offset += (int)copySize;
+                }
+
+                return new ReadOnlySequence<byte>(first, 0, last, (int)(size - last.RunningIndex));
+            }
+            catch (InvalidMemoryRegionException)
+            {
+                if (_invalidAccessHandler == null || !_invalidAccessHandler(va))
+                {
+                    throw;
+                }
+
+                return ReadOnlySequence<byte>.Empty;
+            }
         }
 
         /// <inheritdoc/>
@@ -104,50 +159,10 @@ namespace Ryujinx.Cpu.Jit
                 _addressSpace.Map(va, pa, size);
             }
 
-            AddMapping(va, size);
-            PtMap(va, pa, size, flags.HasFlag(MemoryMapFlags.Private));
+            _pages.AddMapping(va, size);
+            _nativePageTable.Map(va, pa, size, _addressSpace, _backingMemory, flags.HasFlag(MemoryMapFlags.Private));
 
             Tracking.Map(va, size);
-        }
-
-        private void PtMap(ulong va, ulong pa, ulong size, bool privateMap)
-        {
-            while (size != 0)
-            {
-                _pageTable.Map(va, pa);
-
-                if (privateMap)
-                {
-                    _flatPageTable.Write((va / PageSize) * PteSize, (ulong)_addressSpace.GetPointer(va, PageSize) - va);
-                }
-                else
-                {
-                    _flatPageTable.Write((va / PageSize) * PteSize, (ulong)_backingMemory.GetPointer(pa, PageSize) - va);
-                }
-
-                va += PageSize;
-                pa += PageSize;
-                size -= PageSize;
-            }
-        }
-
-        private void UpdatePt(ulong va, IntPtr ptr, ulong size)
-        {
-            ulong remainingSize = size;
-            while (remainingSize != 0)
-            {
-                _flatPageTable.Write((va / PageSize) * PteSize, (ulong)ptr - va);
-
-                va += PageSize;
-                ptr += PageSize;
-                remainingSize -= PageSize;
-            }
-        }
-
-        /// <inheritdoc/>
-        public void MapForeign(ulong va, nuint hostPointer, ulong size)
-        {
-            throw new NotSupportedException();
         }
 
         /// <inheritdoc/>
@@ -160,70 +175,15 @@ namespace Ryujinx.Cpu.Jit
             UnmapEvent?.Invoke(va, size);
             Tracking.Unmap(va, size);
 
-            RemoveMapping(va, size);
-            PtUnmap(va, size);
+            _pages.RemoveMapping(va, size);
+            _nativePageTable.Unmap(va, size);
         }
 
-        private void PtUnmap(ulong va, ulong size)
-        {
-            while (size != 0)
-            {
-                _pageTable.Unmap(va);
-                _flatPageTable.Write((va / PageSize) * PteSize, 0UL);
-
-                va += PageSize;
-                size -= PageSize;
-            }
-        }
-
-        /// <summary>
-        /// Checks if the virtual address is part of the addressable space.
-        /// </summary>
-        /// <param name="va">Virtual address</param>
-        /// <returns>True if the virtual address is part of the addressable space</returns>
-        private bool ValidateAddress(ulong va)
-        {
-            return va < AddressSpaceSize;
-        }
-
-        /// <summary>
-        /// Checks if the combination of virtual address and size is part of the addressable space.
-        /// </summary>
-        /// <param name="va">Virtual address of the range</param>
-        /// <param name="size">Size of the range in bytes</param>
-        /// <returns>True if the combination of virtual address and size is part of the addressable space</returns>
-        private bool ValidateAddressAndSize(ulong va, ulong size)
-        {
-            ulong endVa = va + size;
-            return endVa >= va && endVa >= size && endVa <= AddressSpaceSize;
-        }
-
-        /// <summary>
-        /// Ensures the combination of virtual address and size is part of the addressable space.
-        /// </summary>
-        /// <param name="va">Virtual address of the range</param>
-        /// <param name="size">Size of the range in bytes</param>
-        /// <exception cref="InvalidMemoryRegionException">Throw when the memory region specified outside the addressable space</exception>
-        private void AssertValidAddressAndSize(ulong va, ulong size)
-        {
-            if (!ValidateAddressAndSize(va, size))
-            {
-                throw new InvalidMemoryRegionException($"va=0x{va:X16}, size=0x{size:X16}");
-            }
-        }
-
-        public T Read<T>(ulong va) where T : unmanaged
-        {
-            return MemoryMarshal.Cast<byte, T>(GetSpan(va, Unsafe.SizeOf<T>()))[0];
-        }
-
-        public T ReadTracked<T>(ulong va) where T : unmanaged
+        public override T ReadTracked<T>(ulong va)
         {
             try
             {
-                SignalMemoryTracking(va, (ulong)Unsafe.SizeOf<T>(), false);
-
-                return Read<T>(va);
+                return base.ReadTracked<T>(va);
             }
             catch (InvalidMemoryRegionException)
             {
@@ -236,39 +196,40 @@ namespace Ryujinx.Cpu.Jit
             }
         }
 
-        public void Read(ulong va, Span<byte> data)
-        {
-            ReadImpl(va, data);
-        }
-
-        public void Write<T>(ulong va, T value) where T : unmanaged
-        {
-            Write(va, MemoryMarshal.Cast<T, byte>(MemoryMarshal.CreateSpan(ref value, 1)));
-        }
-
-        public void Write(ulong va, ReadOnlySpan<byte> data)
+        public override void Read(ulong va, Span<byte> data)
         {
             if (data.Length == 0)
             {
                 return;
             }
 
-            SignalMemoryTracking(va, (ulong)data.Length, true);
-
-            WriteImpl(va, data);
-        }
-
-        public void WriteUntracked(ulong va, ReadOnlySpan<byte> data)
-        {
-            if (data.Length == 0)
+            try
             {
-                return;
-            }
+                AssertValidAddressAndSize(va, (ulong)data.Length);
 
-            WriteImpl(va, data);
+                ulong endVa = va + (ulong)data.Length;
+                int offset = 0;
+
+                while (va < endVa)
+                {
+                    (MemoryBlock memory, ulong rangeOffset, ulong copySize) = GetMemoryOffsetAndSize(va, (ulong)(data.Length - offset));
+
+                    memory.GetSpan(rangeOffset, (int)copySize).CopyTo(data.Slice(offset, (int)copySize));
+
+                    va += copySize;
+                    offset += (int)copySize;
+                }
+            }
+            catch (InvalidMemoryRegionException)
+            {
+                if (_invalidAccessHandler == null || !_invalidAccessHandler(va))
+                {
+                    throw;
+                }
+            }
         }
 
-        public bool WriteWithRedundancyCheck(ulong va, ReadOnlySpan<byte> data)
+        public override bool WriteWithRedundancyCheck(ulong va, ReadOnlySpan<byte> data)
         {
             if (data.Length == 0)
             {
@@ -298,35 +259,7 @@ namespace Ryujinx.Cpu.Jit
             }
         }
 
-        private void WriteImpl(ulong va, ReadOnlySpan<byte> data)
-        {
-            try
-            {
-                AssertValidAddressAndSize(va, (ulong)data.Length);
-
-                ulong endVa = va + (ulong)data.Length;
-                int offset = 0;
-
-                while (va < endVa)
-                {
-                    (MemoryBlock memory, ulong rangeOffset, ulong copySize) = GetMemoryOffsetAndSize(va, (ulong)(data.Length - offset));
-
-                    data.Slice(offset, (int)copySize).CopyTo(memory.GetSpan(rangeOffset, (int)copySize));
-
-                    va += copySize;
-                    offset += (int)copySize;
-                }
-            }
-            catch (InvalidMemoryRegionException)
-            {
-                if (_invalidAccessHandler == null || !_invalidAccessHandler(va))
-                {
-                    throw;
-                }
-            }
-        }
-
-        public ReadOnlySpan<byte> GetSpan(ulong va, int size, bool tracked = false)
+        public override ReadOnlySpan<byte> GetSpan(ulong va, int size, bool tracked = false)
         {
             if (size == 0)
             {
@@ -346,13 +279,13 @@ namespace Ryujinx.Cpu.Jit
             {
                 Span<byte> data = new byte[size];
 
-                ReadImpl(va, data);
+                Read(va, data);
 
                 return data;
             }
         }
 
-        public WritableRegion GetWritableRegion(ulong va, int size, bool tracked = false)
+        public override WritableRegion GetWritableRegion(ulong va, int size, bool tracked = false)
         {
             if (size == 0)
             {
@@ -370,11 +303,11 @@ namespace Ryujinx.Cpu.Jit
             }
             else
             {
-                Memory<byte> memory = new byte[size];
+                MemoryOwner<byte> memoryOwner = MemoryOwner<byte>.Rent(size);
 
-                ReadImpl(va, memory.Span);
+                Read(va, memoryOwner.Span);
 
-                return new WritableRegion(this, va, memory);
+                return new WritableRegion(this, va, memoryOwner);
             }
         }
 
@@ -391,92 +324,24 @@ namespace Ryujinx.Cpu.Jit
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsMapped(ulong va)
+        public override bool IsMapped(ulong va)
         {
-            return ValidateAddress(va) && IsMappedImpl(va);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsMappedImpl(ulong va)
-        {
-            ulong page = va >> PageBits;
-
-            int bit = (int)((page & 31) << 1);
-
-            int pageIndex = (int)(page >> PageToPteShift);
-            ref ulong pageRef = ref _pageBitmap[pageIndex];
-
-            ulong pte = Volatile.Read(ref pageRef);
-
-            return ((pte >> bit) & 3) != 0;
+            return ValidateAddress(va) && _pages.IsMapped(va);
         }
 
         public bool IsRangeMapped(ulong va, ulong size)
         {
             AssertValidAddressAndSize(va, size);
 
-            return IsRangeMappedImpl(va, size);
+            return _pages.IsRangeMapped(va, size);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void GetPageBlockRange(ulong pageStart, ulong pageEnd, out ulong startMask, out ulong endMask, out int pageIndex, out int pageEndIndex)
-        {
-            startMask = ulong.MaxValue << ((int)(pageStart & 31) << 1);
-            endMask = ulong.MaxValue >> (64 - ((int)(pageEnd & 31) << 1));
-
-            pageIndex = (int)(pageStart >> PageToPteShift);
-            pageEndIndex = (int)((pageEnd - 1) >> PageToPteShift);
-        }
-
-        private bool IsRangeMappedImpl(ulong va, ulong size)
-        {
-            int pages = GetPagesCount(va, size, out _);
-
-            if (pages == 1)
-            {
-                return IsMappedImpl(va);
-            }
-
-            ulong pageStart = va >> PageBits;
-            ulong pageEnd = pageStart + (ulong)pages;
-
-            GetPageBlockRange(pageStart, pageEnd, out ulong startMask, out ulong endMask, out int pageIndex, out int pageEndIndex);
-
-            // Check if either bit in each 2 bit page entry is set.
-            // OR the block with itself shifted down by 1, and check the first bit of each entry.
-
-            ulong mask = BlockMappedMask & startMask;
-
-            while (pageIndex <= pageEndIndex)
-            {
-                if (pageIndex == pageEndIndex)
-                {
-                    mask &= endMask;
-                }
-
-                ref ulong pageRef = ref _pageBitmap[pageIndex++];
-                ulong pte = Volatile.Read(ref pageRef);
-
-                pte |= pte >> 1;
-                if ((pte & mask) != mask)
-                {
-                    return false;
-                }
-
-                mask = BlockMappedMask;
-            }
-
-            return true;
-        }
-
-        private static void ThrowMemoryNotContiguous() => throw new MemoryNotContiguousException();
 
         private bool TryGetVirtualContiguous(ulong va, int size, out MemoryBlock memory, out ulong offset)
         {
-            if (_addressSpace.HasAnyPrivateAllocation(va, (ulong)size, out PrivateRange range))
+            if (_addressSpace.HasAnyPrivateAllocation(va, (ulong)size, out Ryujinx.Cpu.Jit.HostTracked.PrivateRange range))
             {
                 // If we have a private allocation overlapping the range,
-                // this the access is only considered contiguous if it covers the entire range.
+                // then the access is only considered contiguous if it covers the entire range.
 
                 if (range.Memory != null)
                 {
@@ -559,9 +424,7 @@ namespace Ryujinx.Cpu.Jit
 
         private (MemoryBlock, ulong, ulong) GetMemoryOffsetAndSize(ulong va, ulong size)
         {
-            ulong endVa = va + size;
-
-            PrivateRange privateRange = _addressSpace.GetFirstPrivateAllocation(va, size, out ulong nextVa);
+            Ryujinx.Cpu.Jit.HostTracked.PrivateRange privateRange = _addressSpace.GetFirstPrivateAllocation(va, size, out ulong nextVa);
 
             if (privateRange.Memory != null)
             {
@@ -570,7 +433,7 @@ namespace Ryujinx.Cpu.Jit
 
             ulong physSize = GetContiguousSize(va, Math.Min(size, nextVa - va));
 
-            return new(_backingMemory, GetPhysicalAddressChecked(va), physSize);
+            return (_backingMemory, GetPhysicalAddressChecked(va), physSize);
         }
 
         public IEnumerable<HostMemoryRange> GetHostRegions(ulong va, ulong size)
@@ -651,44 +514,11 @@ namespace Ryujinx.Cpu.Jit
             return regions;
         }
 
-        private void ReadImpl(ulong va, Span<byte> data)
-        {
-            if (data.Length == 0)
-            {
-                return;
-            }
-
-            try
-            {
-                AssertValidAddressAndSize(va, (ulong)data.Length);
-
-                ulong endVa = va + (ulong)data.Length;
-                int offset = 0;
-
-                while (va < endVa)
-                {
-                    (MemoryBlock memory, ulong rangeOffset, ulong copySize) = GetMemoryOffsetAndSize(va, (ulong)(data.Length - offset));
-
-                    memory.GetSpan(rangeOffset, (int)copySize).CopyTo(data.Slice(offset, (int)copySize));
-
-                    va += copySize;
-                    offset += (int)copySize;
-                }
-            }
-            catch (InvalidMemoryRegionException)
-            {
-                if (_invalidAccessHandler == null || !_invalidAccessHandler(va))
-                {
-                    throw;
-                }
-            }
-        }
-
         /// <inheritdoc/>
         /// <remarks>
         /// This function also validates that the given range is both valid and mapped, and will throw if it is not.
         /// </remarks>
-        public void SignalMemoryTracking(ulong va, ulong size, bool write, bool precise = false, int? exemptId = null)
+        public override void SignalMemoryTracking(ulong va, ulong size, bool write, bool precise = false, int? exemptId = null)
         {
             AssertValidAddressAndSize(va, size);
 
@@ -700,186 +530,22 @@ namespace Ryujinx.Cpu.Jit
 
             // Software table, used for managed memory tracking.
 
-            int pages = GetPagesCount(va, size, out _);
-            ulong pageStart = va >> PageBits;
-
-            if (pages == 1)
-            {
-                ulong tag = (ulong)(write ? HostMappedPtBits.WriteTracked : HostMappedPtBits.ReadWriteTracked);
-
-                int bit = (int)((pageStart & 31) << 1);
-
-                int pageIndex = (int)(pageStart >> PageToPteShift);
-                ref ulong pageRef = ref _pageBitmap[pageIndex];
-
-                ulong pte = Volatile.Read(ref pageRef);
-                ulong state = ((pte >> bit) & 3);
-
-                if (state >= tag)
-                {
-                    Tracking.VirtualMemoryEvent(va, size, write, precise: false, exemptId);
-                    return;
-                }
-                else if (state == 0)
-                {
-                    ThrowInvalidMemoryRegionException($"Not mapped: va=0x{va:X16}, size=0x{size:X16}");
-                }
-            }
-            else
-            {
-                ulong pageEnd = pageStart + (ulong)pages;
-
-                GetPageBlockRange(pageStart, pageEnd, out ulong startMask, out ulong endMask, out int pageIndex, out int pageEndIndex);
-
-                ulong mask = startMask;
-
-                ulong anyTrackingTag = (ulong)HostMappedPtBits.WriteTrackedReplicated;
-
-                while (pageIndex <= pageEndIndex)
-                {
-                    if (pageIndex == pageEndIndex)
-                    {
-                        mask &= endMask;
-                    }
-
-                    ref ulong pageRef = ref _pageBitmap[pageIndex++];
-
-                    ulong pte = Volatile.Read(ref pageRef);
-                    ulong mappedMask = mask & BlockMappedMask;
-
-                    ulong mappedPte = pte | (pte >> 1);
-                    if ((mappedPte & mappedMask) != mappedMask)
-                    {
-                        ThrowInvalidMemoryRegionException($"Not mapped: va=0x{va:X16}, size=0x{size:X16}");
-                    }
-
-                    pte &= mask;
-                    if ((pte & anyTrackingTag) != 0) // Search for any tracking.
-                    {
-                        // Writes trigger any tracking.
-                        // Only trigger tracking from reads if both bits are set on any page.
-                        if (write || (pte & (pte >> 1) & BlockMappedMask) != 0)
-                        {
-                            Tracking.VirtualMemoryEvent(va, size, write, precise: false, exemptId);
-                            break;
-                        }
-                    }
-
-                    mask = ulong.MaxValue;
-                }
-            }
+            _pages.SignalMemoryTracking(Tracking, va, size, write, exemptId);
         }
 
-        /// <summary>
-        /// Computes the number of pages in a virtual address range.
-        /// </summary>
-        /// <param name="va">Virtual address of the range</param>
-        /// <param name="size">Size of the range</param>
-        /// <param name="startVa">The virtual address of the beginning of the first page</param>
-        /// <remarks>This function does not differentiate between allocated and unallocated pages.</remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int GetPagesCount(ulong va, ulong size, out ulong startVa)
+        public RegionHandle BeginTracking(ulong address, ulong size, int id, RegionFlags flags = RegionFlags.None)
         {
-            // WARNING: Always check if ulong does not overflow during the operations.
-            startVa = va & ~(ulong)PageMask;
-            ulong vaSpan = (va - startVa + size + PageMask) & ~(ulong)PageMask;
-
-            return (int)(vaSpan / PageSize);
+            return Tracking.BeginTracking(address, size, id, flags);
         }
 
-        public RegionHandle BeginTracking(ulong address, ulong size, int id)
+        public MultiRegionHandle BeginGranularTracking(ulong address, ulong size, IEnumerable<IRegionHandle> handles, ulong granularity, int id, RegionFlags flags = RegionFlags.None)
         {
-            return Tracking.BeginTracking(address, size, id);
-        }
-
-        public MultiRegionHandle BeginGranularTracking(ulong address, ulong size, IEnumerable<IRegionHandle> handles, ulong granularity, int id)
-        {
-            return Tracking.BeginGranularTracking(address, size, handles, granularity, id);
+            return Tracking.BeginGranularTracking(address, size, handles, granularity, id, flags);
         }
 
         public SmartMultiRegionHandle BeginSmartGranularTracking(ulong address, ulong size, ulong granularity, int id)
         {
             return Tracking.BeginSmartGranularTracking(address, size, granularity, id);
-        }
-
-        /// <summary>
-        /// Adds the given address mapping to the page table.
-        /// </summary>
-        /// <param name="va">Virtual memory address</param>
-        /// <param name="size">Size to be mapped</param>
-        private void AddMapping(ulong va, ulong size)
-        {
-            int pages = GetPagesCount(va, size, out _);
-            ulong pageStart = va >> PageBits;
-            ulong pageEnd = pageStart + (ulong)pages;
-
-            GetPageBlockRange(pageStart, pageEnd, out ulong startMask, out ulong endMask, out int pageIndex, out int pageEndIndex);
-
-            ulong mask = startMask;
-
-            while (pageIndex <= pageEndIndex)
-            {
-                if (pageIndex == pageEndIndex)
-                {
-                    mask &= endMask;
-                }
-
-                ref ulong pageRef = ref _pageBitmap[pageIndex++];
-
-                ulong pte;
-                ulong mappedMask;
-
-                // Map all 2-bit entries that are unmapped.
-                do
-                {
-                    pte = Volatile.Read(ref pageRef);
-
-                    mappedMask = pte | (pte >> 1);
-                    mappedMask |= (mappedMask & BlockMappedMask) << 1;
-                    mappedMask |= ~mask; // Treat everything outside the range as mapped, thus unchanged.
-                }
-                while (Interlocked.CompareExchange(ref pageRef, (pte & mappedMask) | (BlockMappedMask & (~mappedMask)), pte) != pte);
-
-                mask = ulong.MaxValue;
-            }
-        }
-
-        /// <summary>
-        /// Removes the given address mapping from the page table.
-        /// </summary>
-        /// <param name="va">Virtual memory address</param>
-        /// <param name="size">Size to be unmapped</param>
-        private void RemoveMapping(ulong va, ulong size)
-        {
-            int pages = GetPagesCount(va, size, out _);
-            ulong pageStart = va >> PageBits;
-            ulong pageEnd = pageStart + (ulong)pages;
-
-            GetPageBlockRange(pageStart, pageEnd, out ulong startMask, out ulong endMask, out int pageIndex, out int pageEndIndex);
-
-            startMask = ~startMask;
-            endMask = ~endMask;
-
-            ulong mask = startMask;
-
-            while (pageIndex <= pageEndIndex)
-            {
-                if (pageIndex == pageEndIndex)
-                {
-                    mask |= endMask;
-                }
-
-                ref ulong pageRef = ref _pageBitmap[pageIndex++];
-                ulong pte;
-
-                do
-                {
-                    pte = Volatile.Read(ref pageRef);
-                }
-                while (Interlocked.CompareExchange(ref pageRef, pte & mask, pte) != pte);
-
-                mask = 0;
-            }
         }
 
         private ulong GetPhysicalAddressChecked(ulong va)
@@ -894,10 +560,8 @@ namespace Ryujinx.Cpu.Jit
 
         private ulong GetPhysicalAddressInternal(ulong va)
         {
-            return _pageTable.Read(va) + (va & PageMask);
+            return _nativePageTable.GetPhysicalAddress(va);
         }
-
-        private static void ThrowInvalidMemoryRegionException(string message) => throw new InvalidMemoryRegionException(message);
 
         /// <inheritdoc/>
         public void Reprotect(ulong va, ulong size, MemoryPermission protection)
@@ -906,91 +570,16 @@ namespace Ryujinx.Cpu.Jit
         }
 
         /// <inheritdoc/>
-        public void TrackingReprotect(ulong va, ulong size, MemoryPermission protection)
+        public void TrackingReprotect(ulong va, ulong size, MemoryPermission protection, bool guest)
         {
-            // Protection is inverted on software pages, since the default value is 0.
-            protection = (~protection) & MemoryPermission.ReadAndWrite;
-
-            int pages = GetPagesCount(va, size, out va);
-            ulong pageStart = va >> PageBits;
-
-            if (pages == 1)
+            if (guest)
             {
-                ulong protTag = protection switch
-                {
-                    MemoryPermission.None => (ulong)HostMappedPtBits.Mapped,
-                    MemoryPermission.Write => (ulong)HostMappedPtBits.WriteTracked,
-                    _ => (ulong)HostMappedPtBits.ReadWriteTracked,
-                };
-
-                int bit = (int)((pageStart & 31) << 1);
-
-                ulong tagMask = 3UL << bit;
-                ulong invTagMask = ~tagMask;
-
-                ulong tag = protTag << bit;
-
-                int pageIndex = (int)(pageStart >> PageToPteShift);
-                ref ulong pageRef = ref _pageBitmap[pageIndex];
-
-                ulong pte;
-
-                do
-                {
-                    pte = Volatile.Read(ref pageRef);
-                }
-                while ((pte & tagMask) != 0 && Interlocked.CompareExchange(ref pageRef, (pte & invTagMask) | tag, pte) != pte);
+                _addressSpace.Reprotect(va, size, protection);
             }
             else
             {
-                ulong pageEnd = pageStart + (ulong)pages;
-
-                GetPageBlockRange(pageStart, pageEnd, out ulong startMask, out ulong endMask, out int pageIndex, out int pageEndIndex);
-
-                ulong mask = startMask;
-
-                ulong protTag = protection switch
-                {
-                    MemoryPermission.None => (ulong)HostMappedPtBits.MappedReplicated,
-                    MemoryPermission.Write => (ulong)HostMappedPtBits.WriteTrackedReplicated,
-                    _ => (ulong)HostMappedPtBits.ReadWriteTrackedReplicated,
-                };
-
-                while (pageIndex <= pageEndIndex)
-                {
-                    if (pageIndex == pageEndIndex)
-                    {
-                        mask &= endMask;
-                    }
-
-                    ref ulong pageRef = ref _pageBitmap[pageIndex++];
-
-                    ulong pte;
-                    ulong mappedMask;
-
-                    // Change the protection of all 2 bit entries that are mapped.
-                    do
-                    {
-                        pte = Volatile.Read(ref pageRef);
-
-                        mappedMask = pte | (pte >> 1);
-                        mappedMask |= (mappedMask & BlockMappedMask) << 1;
-                        mappedMask &= mask; // Only update mapped pages within the given range.
-                    }
-                    while (Interlocked.CompareExchange(ref pageRef, (pte & (~mappedMask)) | (protTag & mappedMask), pte) != pte);
-
-                    mask = ulong.MaxValue;
-                }
+                _pages.TrackingReprotect(va, size, protection);
             }
-
-            protection = protection switch
-            {
-                MemoryPermission.None => MemoryPermission.ReadAndWrite,
-                MemoryPermission.Write => MemoryPermission.Read,
-                _ => MemoryPermission.None,
-            };
-
-            _addressSpace.Reprotect(va, size, protection);
         }
 
         /// <summary>
@@ -999,6 +588,47 @@ namespace Ryujinx.Cpu.Jit
         protected override void Destroy()
         {
             _addressSpace.Dispose();
+            _nativePageTable.Dispose();
         }
+
+        protected override Memory<byte> GetPhysicalAddressMemory(nuint pa, int size)
+            => _backingMemory.GetMemory(pa, size);
+
+        protected override Span<byte> GetPhysicalAddressSpan(nuint pa, int size)
+            => _backingMemory.GetSpan(pa, size);
+
+        protected override void WriteImpl(ulong va, ReadOnlySpan<byte> data)
+        {
+            try
+            {
+                AssertValidAddressAndSize(va, (ulong)data.Length);
+
+                ulong endVa = va + (ulong)data.Length;
+                int offset = 0;
+
+                while (va < endVa)
+                {
+                    (MemoryBlock memory, ulong rangeOffset, ulong copySize) = GetMemoryOffsetAndSize(va, (ulong)(data.Length - offset));
+
+                    data.Slice(offset, (int)copySize).CopyTo(memory.GetSpan(rangeOffset, (int)copySize));
+
+                    va += copySize;
+                    offset += (int)copySize;
+                }
+            }
+            catch (InvalidMemoryRegionException)
+            {
+                if (_invalidAccessHandler == null || !_invalidAccessHandler(va))
+                {
+                    throw;
+                }
+            }
+        }
+
+        protected override nuint TranslateVirtualAddressChecked(ulong va)
+            => (nuint)GetPhysicalAddressChecked(va);
+
+        protected override nuint TranslateVirtualAddressUnchecked(ulong va)
+            => (nuint)GetPhysicalAddressInternal(va);
     }
 }

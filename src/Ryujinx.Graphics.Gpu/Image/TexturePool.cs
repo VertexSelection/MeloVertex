@@ -6,6 +6,7 @@ using Ryujinx.Memory.Range;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Threading;
 
 namespace Ryujinx.Graphics.Gpu.Image
@@ -75,6 +76,76 @@ namespace Ryujinx.Graphics.Gpu.Image
         private TextureDescriptor _defaultDescriptor;
 
         /// <summary>
+        /// List of textures that shares the same memory region, but have different formats.
+        /// </summary>
+        private class TextureAliasList
+        {
+            /// <summary>
+            /// Alias texture.
+            /// </summary>
+            /// <param name="Format">Texture format</param>
+            /// <param name="Texture">Texture</param>
+            private readonly record struct Alias(Format Format, Texture Texture);
+
+            /// <summary>
+            /// List of texture aliases.
+            /// </summary>
+            private readonly List<Alias> _aliases;
+
+            /// <summary>
+            /// Creates a new instance of the texture alias list.
+            /// </summary>
+            public TextureAliasList()
+            {
+                _aliases = new List<Alias>();
+            }
+
+            /// <summary>
+            /// Adds a new texture alias.
+            /// </summary>
+            /// <param name="format">Alias format</param>
+            /// <param name="texture">Alias texture</param>
+            public void Add(Format format, Texture texture)
+            {
+                _aliases.Add(new Alias(format, texture));
+                texture.IncrementReferenceCount();
+            }
+
+            /// <summary>
+            /// Finds a texture with the requested format, or returns null if not found.
+            /// </summary>
+            /// <param name="format">Format to find</param>
+            /// <returns>Texture with the requested format, or null if not found</returns>
+            public Texture Find(Format format)
+            {
+                foreach (var alias in _aliases)
+                {
+                    if (alias.Format == format)
+                    {
+                        return alias.Texture;
+                    }
+                }
+
+                return null;
+            }
+
+            /// <summary>
+            /// Removes all alias textures.
+            /// </summary>
+            public void Destroy()
+            {
+                foreach (var entry in _aliases)
+                {
+                    entry.Texture.DecrementReferenceCount();
+                }
+
+                _aliases.Clear();
+            }
+        }
+
+        private readonly Dictionary<Texture, TextureAliasList> _aliasLists;
+
+        /// <summary>
         /// Linked list node used on the texture pool cache.
         /// </summary>
         public LinkedListNode<TexturePool> CacheNode { get; set; }
@@ -94,6 +165,7 @@ namespace Ryujinx.Graphics.Gpu.Image
         public TexturePool(GpuContext context, GpuChannel channel, ulong address, int maximumId) : base(context, channel.MemoryManager.Physical, address, maximumId)
         {
             _channel = channel;
+            _aliasLists = new Dictionary<Texture, TextureAliasList>();
         }
 
         /// <summary>
@@ -114,14 +186,13 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 if (texture == null)
                 {
-                    TextureInfo info = GetInfo(descriptor, out int layerSize);
-
                     // The dereference queue can put our texture back on the cache.
                     if ((texture = ProcessDereferenceQueue(id)) != null)
                     {
                         return ref descriptor;
                     }
 
+                    TextureInfo info = GetInfo(descriptor, out int layerSize);
                     texture = PhysicalMemory.TextureCache.FindOrCreateTexture(_channel.MemoryManager, TextureSearchFlags.ForSampler, info, layerSize);
 
                     // If this happens, then the texture address is invalid, we can't add it to the cache.
@@ -157,6 +228,17 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>The texture with the given ID</returns>
         public override Texture Get(int id)
         {
+            return Get(id, srgbSampler: true);
+        }
+
+        /// <summary>
+        /// Gets the texture with the given ID.
+        /// </summary>
+        /// <param name="id">ID of the texture. This is effectively a zero-based index</param>
+        /// <param name="srgbSampler">Whether the texture is being accessed with a sampler that has sRGB conversion enabled</param>
+        /// <returns>The texture with the given ID</returns>
+        public Texture Get(int id, bool srgbSampler)
+        {
             if ((uint)id >= Items.Length)
             {
                 return null;
@@ -169,7 +251,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                 SynchronizeMemory();
             }
 
-            GetInternal(id, out Texture texture);
+            GetForBinding(id, srgbSampler, out Texture texture);
 
             return texture;
         }
@@ -181,9 +263,10 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// This method assumes that the pool has been manually synchronized before doing binding.
         /// </remarks>
         /// <param name="id">ID of the texture. This is effectively a zero-based index</param>
+        /// <param name="srgbSampler">Whether the texture is being accessed with a sampler that has sRGB conversion enabled</param>
         /// <param name="texture">The texture with the given ID</param>
         /// <returns>The texture descriptor with the given ID</returns>
-        public ref readonly TextureDescriptor GetForBinding(int id, out Texture texture)
+        public ref readonly TextureDescriptor GetForBinding(int id, bool srgbSampler, out Texture texture)
         {
             if ((uint)id >= Items.Length)
             {
@@ -193,7 +276,64 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             // When getting for binding, assume the pool has already been synchronized.
 
+            if (!srgbSampler)
+            {
+                // If the sampler does not have the sRGB bit enabled, then the texture can't use a sRGB format.
+                ref readonly TextureDescriptor tempDescriptor = ref GetDescriptorRef(id);
+
+                if (tempDescriptor.UnpackSrgb() && FormatTable.TryGetTextureFormat(tempDescriptor.UnpackFormat(), isSrgb: false, out FormatInfo formatInfo))
+                {
+                    // Get a view of the texture with the right format.
+                    return ref GetForBinding(id, formatInfo, out texture);
+                }
+            }
+
             return ref GetInternal(id, out texture);
+        }
+
+        /// <summary>
+        /// Gets the texture descriptor and texture with the given ID.
+        /// </summary>
+        /// <remarks>
+        /// This method assumes that the pool has been manually synchronized before doing binding.
+        /// </remarks>
+        /// <param name="id">ID of the texture. This is effectively a zero-based index</param>
+        /// <param name="formatInfo">Texture format information</param>
+        /// <param name="texture">The texture with the given ID</param>
+        /// <returns>The texture descriptor with the given ID</returns>
+        public ref readonly TextureDescriptor GetForBinding(int id, FormatInfo formatInfo, out Texture texture)
+        {
+            if ((uint)id >= Items.Length)
+            {
+                texture = null;
+                return ref _defaultDescriptor;
+            }
+
+            ref readonly TextureDescriptor descriptor = ref GetInternal(id, out texture);
+
+            if (texture != null && formatInfo.Format != 0 && texture.Format != formatInfo.Format)
+            {
+                if (!_aliasLists.TryGetValue(texture, out TextureAliasList aliasList))
+                {
+                    _aliasLists.Add(texture, aliasList = new TextureAliasList());
+                }
+
+                texture = aliasList.Find(formatInfo.Format);
+
+                if (texture == null)
+                {
+                    TextureInfo info = GetInfo(descriptor, out int layerSize);
+                    info = ChangeFormat(info, formatInfo);
+                    texture = PhysicalMemory.TextureCache.FindOrCreateTexture(_channel.MemoryManager, TextureSearchFlags.ForSampler, info, layerSize);
+
+                    if (texture != null)
+                    {
+                        aliasList.Add(formatInfo.Format, texture);
+                    }
+                }
+            }
+
+            return ref descriptor;
         }
 
         /// <summary>
@@ -233,6 +373,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             else
             {
                 texture.DecrementReferenceCount();
+                RemoveAliasList(texture);
             }
         }
 
@@ -326,6 +467,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                 {
                     texture.DecrementReferenceCount();
                 }
+
+                RemoveAliasList(texture);
             }
 
             return null;
@@ -368,6 +511,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                     if (Interlocked.Exchange(ref Items[id], null) != null)
                     {
                         texture.DecrementReferenceCount(this, id);
+                        RemoveAliasList(texture);
                     }
                 }
             }
@@ -490,6 +634,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                 levels = (maxLod - minLod) + 1;
             }
 
+            levels = ClampLevels(target, width, height, depthOrLayers, levels);
+
             SwizzleComponent swizzleR = descriptor.UnpackSwizzleR().Convert();
             SwizzleComponent swizzleG = descriptor.UnpackSwizzleG().Convert();
             SwizzleComponent swizzleB = descriptor.UnpackSwizzleB().Convert();
@@ -538,6 +684,34 @@ namespace Ryujinx.Graphics.Gpu.Image
                 swizzleG,
                 swizzleB,
                 swizzleA);
+        }
+
+        /// <summary>
+        /// Clamps the amount of mipmap levels to the maximum allowed for the given texture dimensions.
+        /// </summary>
+        /// <param name="target">Number of texture dimensions (1D, 2D, 3D, Cube, etc)</param>
+        /// <param name="width">Width of the texture</param>
+        /// <param name="height">Height of the texture, ignored for 1D textures</param>
+        /// <param name="depthOrLayers">Depth of the texture for 3D textures, otherwise ignored</param>
+        /// <param name="levels">Original amount of mipmap levels</param>
+        /// <returns>Clamped mipmap levels</returns>
+        private static int ClampLevels(Target target, int width, int height, int depthOrLayers, int levels)
+        {
+            int maxSize = width;
+
+            if (target != Target.Texture1D &&
+                target != Target.Texture1DArray)
+            {
+                maxSize = Math.Max(maxSize, height);
+            }
+
+            if (target == Target.Texture3D)
+            {
+                maxSize = Math.Max(maxSize, depthOrLayers);
+            }
+
+            int maxLevels = BitOperations.Log2((uint)maxSize) + 1;
+            return Math.Min(levels, maxLevels);
         }
 
         /// <summary>
@@ -592,13 +766,68 @@ namespace Ryujinx.Graphics.Gpu.Image
         }
 
         /// <summary>
+        /// Changes the format on the texture information structure, and also adjusts the width for the new format if needed.
+        /// </summary>
+        /// <param name="info">Texture information</param>
+        /// <param name="dstFormat">New format</param>
+        /// <returns>Texture information with the new format</returns>
+        private static TextureInfo ChangeFormat(in TextureInfo info, FormatInfo dstFormat)
+        {
+            int width = info.Width;
+
+            if (info.FormatInfo.BytesPerPixel != dstFormat.BytesPerPixel)
+            {
+                int stride = width * info.FormatInfo.BytesPerPixel;
+                width = stride / dstFormat.BytesPerPixel;
+            }
+
+            return new TextureInfo(
+                info.GpuAddress,
+                width,
+                info.Height,
+                info.DepthOrLayers,
+                info.Levels,
+                info.SamplesInX,
+                info.SamplesInY,
+                info.Stride,
+                info.IsLinear,
+                info.GobBlocksInY,
+                info.GobBlocksInZ,
+                info.GobBlocksInTileX,
+                info.Target,
+                dstFormat,
+                info.DepthStencilMode,
+                info.SwizzleR,
+                info.SwizzleG,
+                info.SwizzleB,
+                info.SwizzleA);
+        }
+
+        /// <summary>
+        /// Removes all aliases for a texture.
+        /// </summary>
+        /// <param name="texture">Texture to have the aliases removed</param>
+        private void RemoveAliasList(Texture texture)
+        {
+            if (_aliasLists.TryGetValue(texture, out TextureAliasList aliasList))
+            {
+                _aliasLists.Remove(texture);
+                aliasList.Destroy();
+            }
+        }
+
+        /// <summary>
         /// Decrements the reference count of the texture.
         /// This indicates that the texture pool is not using it anymore.
         /// </summary>
         /// <param name="item">The texture to be deleted</param>
         protected override void Delete(Texture item)
         {
-            item?.DecrementReferenceCount(this);
+            if (item != null)
+            {
+                item.DecrementReferenceCount(this);
+                RemoveAliasList(item);
+            }
         }
 
         public override void Dispose()

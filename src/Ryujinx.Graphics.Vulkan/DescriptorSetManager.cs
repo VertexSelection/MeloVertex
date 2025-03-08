@@ -6,7 +6,7 @@ namespace Ryujinx.Graphics.Vulkan
 {
     class DescriptorSetManager : IDisposable
     {
-        public const uint MaxSets = 32;
+        public const uint MaxSets = 8;
 
         public class DescriptorPoolHolder : IDisposable
         {
@@ -40,7 +40,7 @@ namespace Ryujinx.Graphics.Vulkan
                         PPoolSizes = pPoolsSize,
                     };
 
-                    Api.CreateDescriptorPool(device, descriptorPoolCreateInfo, null, out _pool).ThrowOnError();
+                    Api.CreateDescriptorPool(device, in descriptorPoolCreateInfo, null, out _pool).ThrowOnError();
                 }
             }
 

@@ -316,7 +316,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
             uint pStateUseMask = multiBlock.GlobalUseMask.PStateMask;
 
             CodeWriter writer = new();
-            RegisterAllocator regAlloc = new(gprUseMask, fpSimdUseMask, pStateUseMask, multiBlock.HasHostCall);
+            RegisterAllocator regAlloc = new(memoryManager.Type, gprUseMask, fpSimdUseMask, pStateUseMask, multiBlock.HasHostCall);
             RegisterSaveRestore rsr = new(
                 regAlloc.AllGprMask & AbiConstants.GprCalleeSavedRegsMask,
                 regAlloc.AllFpSimdMask & AbiConstants.FpSimdCalleeSavedRegsMask,
@@ -350,11 +350,20 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
 
                     if (instInfo.AddressForm != AddressForm.None)
                     {
-                        InstEmitMemory.RewriteInstruction(memoryManager.Type, writer, regAlloc, instInfo.Name, instInfo.Flags, instInfo.AddressForm, pc, encoding);
+                        InstEmitMemory.RewriteInstruction(
+                            memoryManager.AddressSpaceBits,
+                            memoryManager.Type,
+                            writer,
+                            regAlloc,
+                            instInfo.Name,
+                            instInfo.Flags,
+                            instInfo.AddressForm,
+                            pc,
+                            encoding);
                     }
                     else if (instInfo.Name == InstName.Sys)
                     {
-                        InstEmitMemory.RewriteSysInstruction(memoryManager.Type, writer, regAlloc, encoding);
+                        InstEmitMemory.RewriteSysInstruction(memoryManager.AddressSpaceBits, memoryManager.Type, writer, regAlloc, encoding);
                     }
                     else if (instInfo.Name.IsSystem())
                     {

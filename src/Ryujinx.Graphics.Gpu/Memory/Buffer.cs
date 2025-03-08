@@ -5,9 +5,13 @@ using Ryujinx.Memory.Tracking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Ryujinx.Graphics.Gpu.Memory
 {
+    delegate void BufferFlushAction(ulong address, ulong size, ulong syncNumber);
+
     /// <summary>
     /// Buffer, used to store vertex and index data, uniform and storage buffers, and others.
     /// </summary>
@@ -21,7 +25,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// <summary>
         /// Host buffer handle.
         /// </summary>
-        public BufferHandle Handle { get; }
+        public BufferHandle Handle { get; private set; }
 
         /// <summary>
         /// Start address of the buffer in guest memory.
@@ -58,12 +62,26 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// </remarks>
         private BufferModifiedRangeList _modifiedRanges = null;
 
+        /// <summary>
+        /// A structure that is used to flush buffer data back to a host mapped buffer for cached readback.
+        /// Only used if the buffer data is explicitly owned by device local memory.
+        /// </summary>
+        private BufferPreFlush _preFlush = null;
+
+        /// <summary>
+        /// Usage tracking state that determines what type of backing the buffer should use.
+        /// </summary>
+        public BufferBackingState BackingState;
+
         private readonly MultiRegionHandle _memoryTrackingGranular;
         private readonly RegionHandle _memoryTracking;
 
         private readonly RegionSignal _externalFlushDelegate;
         private readonly Action<ulong, ulong> _loadDelegate;
         private readonly Action<ulong, ulong> _modifiedDelegate;
+
+        private HashSet<MultiRangeBuffer> _virtualDependencies;
+        private readonly ReaderWriterLockSlim _virtualDependenciesLock;
 
         private int _sequenceNumber;
 
@@ -82,6 +100,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// <param name="physicalMemory">Physical memory where the buffer is mapped</param>
         /// <param name="address">Start address of the buffer</param>
         /// <param name="size">Size of the buffer in bytes</param>
+        /// <param name="stage">The type of usage that created the buffer</param>
         /// <param name="sparseCompatible">Indicates if the buffer can be used in a sparse buffer mapping</param>
         /// <param name="baseBuffers">Buffers which this buffer contains, and will inherit tracking handles from</param>
         public Buffer(
@@ -89,6 +108,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
             PhysicalMemory physicalMemory,
             ulong address,
             ulong size,
+            BufferStage stage,
             bool sparseCompatible,
             IEnumerable<Buffer> baseBuffers = null)
         {
@@ -98,9 +118,11 @@ namespace Ryujinx.Graphics.Gpu.Memory
             Size = size;
             SparseCompatible = sparseCompatible;
 
-            BufferAccess access = sparseCompatible ? BufferAccess.SparseCompatible : BufferAccess.Default;
+            BackingState = new BufferBackingState(_context, this, stage, baseBuffers);
 
-            Handle = context.Renderer.CreateBuffer((int)size, access, baseBuffers?.MaxBy(x => x.Size).Handle ?? BufferHandle.Null);
+            BufferAccess access = BackingState.SwitchAccess(this);
+
+            Handle = context.Renderer.CreateBuffer((int)size, access);
 
             _useGranular = size > GranularBufferThreshold;
 
@@ -123,13 +145,13 @@ namespace Ryujinx.Graphics.Gpu.Memory
 
             if (_useGranular)
             {
-                _memoryTrackingGranular = physicalMemory.BeginGranularTracking(address, size, ResourceKind.Buffer, baseHandles);
+                _memoryTrackingGranular = physicalMemory.BeginGranularTracking(address, size, ResourceKind.Buffer, RegionFlags.UnalignedAccess, baseHandles);
 
                 _memoryTrackingGranular.RegisterPreciseAction(address, size, PreciseAction);
             }
             else
             {
-                _memoryTracking = physicalMemory.BeginTracking(address, size, ResourceKind.Buffer);
+                _memoryTracking = physicalMemory.BeginTracking(address, size, ResourceKind.Buffer, RegionFlags.UnalignedAccess);
 
                 if (baseHandles != null)
                 {
@@ -152,6 +174,31 @@ namespace Ryujinx.Graphics.Gpu.Memory
             _externalFlushDelegate = new RegionSignal(ExternalFlush);
             _loadDelegate = new Action<ulong, ulong>(LoadRegion);
             _modifiedDelegate = new Action<ulong, ulong>(RegionModified);
+
+            _virtualDependenciesLock = new ReaderWriterLockSlim();
+        }
+
+        /// <summary>
+        /// Recreates the backing buffer based on the desired access type
+        /// reported by the backing state struct.
+        /// </summary>
+        private void ChangeBacking()
+        {
+            BufferAccess access = BackingState.SwitchAccess(this);
+
+            BufferHandle newHandle = _context.Renderer.CreateBuffer((int)Size, access);
+
+            _context.Renderer.Pipeline.CopyBuffer(Handle, newHandle, 0, 0, (int)Size);
+
+            _modifiedRanges?.SelfMigration();
+
+            // If swtiching from device local to host mapped, pre-flushing data no longer makes sense.
+            // This is set to null and disposed when the migration fully completes.
+            _preFlush = null;
+
+            Handle = newHandle;
+
+            _physicalMemory.BufferCache.BufferBackingChanged(this);
         }
 
         /// <summary>
@@ -220,6 +267,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// </remarks>
         /// <param name="address">Start address of the range to synchronize</param>
         /// <param name="size">Size in bytes of the range to synchronize</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SynchronizeMemory(ulong address, ulong size)
         {
             if (_useGranular)
@@ -238,7 +286,9 @@ namespace Ryujinx.Graphics.Gpu.Memory
                     }
                     else
                     {
+                        BackingState.RecordSet();
                         _context.Renderer.SetBufferData(Handle, 0, _physicalMemory.GetSpan(Address, (int)Size));
+                        CopyToDependantVirtualBuffers();
                     }
 
                     _sequenceNumber = _context.SequenceNumber;
@@ -275,13 +325,33 @@ namespace Ryujinx.Graphics.Gpu.Memory
         }
 
         /// <summary>
+        /// Checks if a backing change is deemed necessary from the given usage.
+        /// If it is, queues a backing change to happen on the next sync action.
+        /// </summary>
+        /// <param name="stage">Buffer stage that can change backing type</param>
+        private void TryQueueBackingChange(BufferStage stage)
+        {
+            if (BackingState.ShouldChangeBacking(stage))
+            {
+                if (!_syncActionRegistered)
+                {
+                    _context.RegisterSyncAction(this);
+                    _syncActionRegistered = true;
+                }
+            }
+        }
+
+        /// <summary>
         /// Signal that the given region of the buffer has been modified.
         /// </summary>
         /// <param name="address">The start address of the modified region</param>
         /// <param name="size">The size of the modified region</param>
-        public void SignalModified(ulong address, ulong size)
+        /// <param name="stage">Buffer stage that triggered the modification</param>
+        public void SignalModified(ulong address, ulong size, BufferStage stage)
         {
             EnsureRangeList();
+
+            TryQueueBackingChange(stage);
 
             _modifiedRanges.SignalModified(address, size);
 
@@ -300,6 +370,37 @@ namespace Ryujinx.Graphics.Gpu.Memory
         public void ClearModified(ulong address, ulong size)
         {
             _modifiedRanges?.Clear(address, size);
+        }
+
+        /// <summary>
+        /// Action to be performed immediately before sync is created.
+        /// This will copy any buffer ranges designated for pre-flushing.
+        /// </summary>
+        /// <param name="syncpoint">True if the action is a guest syncpoint</param>
+        public void SyncPreAction(bool syncpoint)
+        {
+            if (_referenceCount == 0)
+            {
+                return;
+            }
+
+            if (BackingState.ShouldChangeBacking())
+            {
+                ChangeBacking();
+            }
+
+            if (BackingState.IsDeviceLocal)
+            {
+                _preFlush ??= new BufferPreFlush(_context, this, FlushImpl);
+
+                if (_preFlush.ShouldCopy)
+                {
+                    _modifiedRanges?.GetRangesAtSync(Address, Size, _context.SyncNumber, (address, size) =>
+                    {
+                        _preFlush.CopyModified(address, size);
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -457,9 +558,13 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// <param name="mSize">Size of the modified region</param>
         private void LoadRegion(ulong mAddress, ulong mSize)
         {
+            BackingState.RecordSet();
+
             int offset = (int)(mAddress - Address);
 
             _context.Renderer.SetBufferData(Handle, offset, _physicalMemory.GetSpan(mAddress, (int)mSize));
+
+            CopyToDependantVirtualBuffers(mAddress, mSize);
         }
 
         /// <summary>
@@ -520,7 +625,25 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// <param name="dstOffset">The offset of the destination buffer to copy into</param>
         public void CopyTo(Buffer destination, int dstOffset)
         {
+            CopyFromDependantVirtualBuffers();
             _context.Renderer.Pipeline.CopyBuffer(Handle, destination.Handle, 0, dstOffset, (int)Size);
+        }
+
+        /// <summary>
+        /// Flushes a range of the buffer.
+        /// This writes the range data back into guest memory.
+        /// </summary>
+        /// <param name="handle">Buffer handle to flush data from</param>
+        /// <param name="address">Start address of the range</param>
+        /// <param name="size">Size in bytes of the range</param>
+        private void FlushImpl(BufferHandle handle, ulong address, ulong size)
+        {
+            int offset = (int)(address - Address);
+
+            using PinnedSpan<byte> data = _context.Renderer.GetBufferData(handle, offset, (int)size);
+
+            // TODO: When write tracking shaders, they will need to be aware of changes in overlapping buffers.
+            _physicalMemory.WriteUntracked(address, CopyFromDependantVirtualBuffers(data.Get(), address, size));
         }
 
         /// <summary>
@@ -529,14 +652,63 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// </summary>
         /// <param name="address">Start address of the range</param>
         /// <param name="size">Size in bytes of the range</param>
-        public void Flush(ulong address, ulong size)
+        private void FlushImpl(ulong address, ulong size)
         {
-            int offset = (int)(address - Address);
+            FlushImpl(Handle, address, size);
+        }
 
-            using PinnedSpan<byte> data = _context.Renderer.GetBufferData(Handle, offset, (int)size);
+        /// <summary>
+        /// Flushes a range of the buffer from the most optimal source.
+        /// This writes the range data back into guest memory.
+        /// </summary>
+        /// <param name="address">Start address of the range</param>
+        /// <param name="size">Size in bytes of the range</param>
+        /// <param name="syncNumber">Sync number waited for before flushing the data</param>
+        public void Flush(ulong address, ulong size, ulong syncNumber)
+        {
+            BackingState.RecordFlush();
 
-            // TODO: When write tracking shaders, they will need to be aware of changes in overlapping buffers.
-            _physicalMemory.WriteUntracked(address, data.Get());
+            BufferPreFlush preFlush = _preFlush;
+
+            if (preFlush != null)
+            {
+                preFlush.FlushWithAction(address, size, syncNumber);
+            }
+            else
+            {
+                FlushImpl(address, size);
+            }
+        }
+        /// <summary>
+        /// Gets an action that disposes the backing buffer using its current handle.
+        /// Useful for deleting an old copy of the buffer after the handle changes.
+        /// </summary>
+        /// <returns>An action that flushes data from the specified range, using the buffer handle at the time the method is generated</returns>
+        public Action GetSnapshotDisposeAction()
+        {
+            BufferHandle handle = Handle;
+            BufferPreFlush preFlush = _preFlush;
+
+            return () =>
+            {
+                _context.Renderer.DeleteBuffer(handle);
+                preFlush?.Dispose();
+            };
+        }
+
+        /// <summary>
+        /// Gets an action that flushes a range of the buffer using its current handle.
+        /// Useful for flushing data from old copies of the buffer after the handle changes.
+        /// </summary>
+        /// <returns>An action that flushes data from the specified range, using the buffer handle at the time the method is generated</returns>
+        public BufferFlushAction GetSnapshotFlushAction()
+        {
+            BufferHandle handle = Handle;
+
+            return (ulong address, ulong size, ulong _) =>
+            {
+                FlushImpl(handle, address, size);
+            };
         }
 
         /// <summary>
@@ -630,6 +802,207 @@ namespace Ryujinx.Graphics.Gpu.Memory
         }
 
         /// <summary>
+        /// Adds a virtual buffer dependency, indicating that a virtual buffer depends on data from this buffer.
+        /// </summary>
+        /// <param name="virtualBuffer">Dependant virtual buffer</param>
+        public void AddVirtualDependency(MultiRangeBuffer virtualBuffer)
+        {
+            _virtualDependenciesLock.EnterWriteLock();
+
+            try
+            {
+                (_virtualDependencies ??= new()).Add(virtualBuffer);
+            }
+            finally
+            {
+                _virtualDependenciesLock.ExitWriteLock();
+            }
+        }
+
+        /// <summary>
+        /// Removes a virtual buffer dependency, indicating that a virtual buffer no longer depends on data from this buffer.
+        /// </summary>
+        /// <param name="virtualBuffer">Dependant virtual buffer</param>
+        public void RemoveVirtualDependency(MultiRangeBuffer virtualBuffer)
+        {
+            _virtualDependenciesLock.EnterWriteLock();
+
+            try
+            {
+                if (_virtualDependencies != null)
+                {
+                    _virtualDependencies.Remove(virtualBuffer);
+
+                    if (_virtualDependencies.Count == 0)
+                    {
+                        _virtualDependencies = null;
+                    }
+                }
+            }
+            finally
+            {
+                _virtualDependenciesLock.ExitWriteLock();
+            }
+        }
+
+        /// <summary>
+        /// Copies the buffer data to all virtual buffers that depends on it.
+        /// </summary>
+        public void CopyToDependantVirtualBuffers()
+        {
+            CopyToDependantVirtualBuffers(Address, Size);
+        }
+
+        /// <summary>
+        /// Copies the buffer data inside the specifide range to all virtual buffers that depends on it.
+        /// </summary>
+        /// <param name="address">Address of the range</param>
+        /// <param name="size">Size of the range in bytes</param>
+        public void CopyToDependantVirtualBuffers(ulong address, ulong size)
+        {
+            if (_virtualDependencies != null)
+            {
+                foreach (var virtualBuffer in _virtualDependencies)
+                {
+                    CopyToDependantVirtualBuffer(virtualBuffer, address, size);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Copies all modified ranges from all virtual buffers back into this buffer.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CopyFromDependantVirtualBuffers()
+        {
+            if (_virtualDependencies != null)
+            {
+                CopyFromDependantVirtualBuffersImpl();
+            }
+        }
+
+        /// <summary>
+        /// Copies all modified ranges from all virtual buffers back into this buffer.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void CopyFromDependantVirtualBuffersImpl()
+        {
+            foreach (var virtualBuffer in _virtualDependencies.OrderBy(x => x.ModificationSequenceNumber))
+            {
+                virtualBuffer.ConsumeModifiedRegion(this, (mAddress, mSize) =>
+                {
+                    // Get offset inside both this and the virtual buffer.
+                    // Note that sometimes there is no right answer for the virtual offset,
+                    // as the same physical range might be mapped multiple times inside a virtual buffer.
+                    // We just assume it does not happen in practice as it can only be implemented correctly
+                    // when the host has support for proper sparse mapping.
+
+                    ulong mEndAddress = mAddress + mSize;
+                    mAddress = Math.Max(mAddress, Address);
+                    mSize = Math.Min(mEndAddress, EndAddress) - mAddress;
+
+                    int physicalOffset = (int)(mAddress - Address);
+                    int virtualOffset = virtualBuffer.Range.FindOffset(new(mAddress, mSize));
+
+                    _context.Renderer.Pipeline.CopyBuffer(virtualBuffer.Handle, Handle, virtualOffset, physicalOffset, (int)mSize);
+                });
+            }
+        }
+
+        /// <summary>
+        /// Copies all overlapping modified ranges from all virtual buffers back into this buffer, and returns an updated span with the data.
+        /// </summary>
+        /// <param name="dataSpan">Span where the unmodified data will be taken from for the output</param>
+        /// <param name="address">Address of the region to copy</param>
+        /// <param name="size">Size of the region to copy in bytes</param>
+        /// <returns>A span with <paramref name="dataSpan"/>, and the data for all modified ranges if any</returns>
+        private ReadOnlySpan<byte> CopyFromDependantVirtualBuffers(ReadOnlySpan<byte> dataSpan, ulong address, ulong size)
+        {
+            _virtualDependenciesLock.EnterReadLock();
+
+            try
+            {
+                if (_virtualDependencies != null)
+                {
+                    byte[] storage = dataSpan.ToArray();
+
+                    foreach (var virtualBuffer in _virtualDependencies.OrderBy(x => x.ModificationSequenceNumber))
+                    {
+                        virtualBuffer.ConsumeModifiedRegion(address, size, (mAddress, mSize) =>
+                        {
+                            // Get offset inside both this and the virtual buffer.
+                            // Note that sometimes there is no right answer for the virtual offset,
+                            // as the same physical range might be mapped multiple times inside a virtual buffer.
+                            // We just assume it does not happen in practice as it can only be implemented correctly
+                            // when the host has support for proper sparse mapping.
+
+                            ulong mEndAddress = mAddress + mSize;
+                            mAddress = Math.Max(mAddress, address);
+                            mSize = Math.Min(mEndAddress, address + size) - mAddress;
+
+                            int physicalOffset = (int)(mAddress - Address);
+                            int virtualOffset = virtualBuffer.Range.FindOffset(new(mAddress, mSize));
+
+                            _context.Renderer.Pipeline.CopyBuffer(virtualBuffer.Handle, Handle, virtualOffset, physicalOffset, (int)size);
+                            virtualBuffer.GetData(storage.AsSpan().Slice((int)(mAddress - address), (int)mSize), virtualOffset, (int)mSize);
+                        });
+                    }
+
+                    dataSpan = storage;
+                }
+            }
+            finally
+            {
+                _virtualDependenciesLock.ExitReadLock();
+            }
+
+            return dataSpan;
+        }
+
+        /// <summary>
+        /// Copies the buffer data to the specified virtual buffer.
+        /// </summary>
+        /// <param name="virtualBuffer">Virtual buffer to copy the data into</param>
+        public void CopyToDependantVirtualBuffer(MultiRangeBuffer virtualBuffer)
+        {
+            CopyToDependantVirtualBuffer(virtualBuffer, Address, Size);
+        }
+
+        /// <summary>
+        /// Copies the buffer data inside the given range to the specified virtual buffer.
+        /// </summary>
+        /// <param name="virtualBuffer">Virtual buffer to copy the data into</param>
+        /// <param name="address">Address of the range</param>
+        /// <param name="size">Size of the range in bytes</param>
+        public void CopyToDependantVirtualBuffer(MultiRangeBuffer virtualBuffer, ulong address, ulong size)
+        {
+            // Broadcast data to all ranges of the virtual buffer that are contained inside this buffer.
+
+            ulong lastOffset = 0;
+
+            while (virtualBuffer.TryGetPhysicalOffset(this, lastOffset, out ulong srcOffset, out ulong dstOffset, out ulong copySize))
+            {
+                ulong innerOffset = address - Address;
+                ulong innerEndOffset = (address + size) - Address;
+
+                lastOffset = dstOffset + copySize;
+
+                // Clamp range to the specified range.
+                ulong copySrcOffset = Math.Max(srcOffset, innerOffset);
+                ulong copySrcEndOffset = Math.Min(innerEndOffset, srcOffset + copySize);
+
+                if (copySrcEndOffset > copySrcOffset)
+                {
+                    copySize = copySrcEndOffset - copySrcOffset;
+                    dstOffset += copySrcOffset - srcOffset;
+                    srcOffset = copySrcOffset;
+
+                    _context.Renderer.Pipeline.CopyBuffer(Handle, virtualBuffer.Handle, (int)srcOffset, (int)dstOffset, (int)copySize);
+                }
+            }
+        }
+
+        /// <summary>
         /// Increments the buffer reference count.
         /// </summary>
         public void IncrementReferenceCount()
@@ -656,6 +1029,8 @@ namespace Ryujinx.Graphics.Gpu.Memory
             _modifiedRanges?.Clear();
 
             _context.Renderer.DeleteBuffer(Handle);
+            _preFlush?.Dispose();
+            _preFlush = null;
 
             UnmappedSequence++;
         }

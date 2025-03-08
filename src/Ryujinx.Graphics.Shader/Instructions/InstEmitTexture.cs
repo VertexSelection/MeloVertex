@@ -578,12 +578,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 type = SamplerType.Texture2D;
                 flags = TextureFlags.Gather;
 
-                if (tld4sOp.Dc)
-                {
-                    sourcesList.Add(Rb());
-
-                    type |= SamplerType.Shadow;
-                }
+                int depthCompareIndex = sourcesList.Count;
 
                 if (tld4sOp.Aoffi)
                 {
@@ -592,7 +587,16 @@ namespace Ryujinx.Graphics.Shader.Instructions
                     flags |= TextureFlags.Offset;
                 }
 
-                sourcesList.Add(Const((int)tld4sOp.TexComp));
+                if (tld4sOp.Dc)
+                {
+                    sourcesList.Insert(depthCompareIndex, Rb());
+
+                    type |= SamplerType.Shadow;
+                }
+                else
+                {
+                    sourcesList.Add(Const((int)tld4sOp.TexComp));
+                }
             }
             else
             {
@@ -881,7 +885,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 return Register(dest++, RegisterType.Gpr);
             }
 
-            int binding = isBindless ? 0 : context.ResourceManager.GetTextureOrImageBinding(
+            SetBindingPair setAndBinding = isBindless ? default : context.ResourceManager.GetTextureOrImageBinding(
                 Instruction.Lod,
                 type,
                 TextureFormat.Unknown,
@@ -909,7 +913,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                     else
                     {
                         // The instruction component order is the inverse of GLSL's.
-                        Operand res = context.Lod(type, flags, binding, compIndex ^ 1, sources);
+                        Operand res = context.Lod(type, flags, setAndBinding, compIndex ^ 1, sources);
 
                         res = context.FPMultiply(res, ConstF(256.0f));
 
@@ -1112,12 +1116,12 @@ namespace Ryujinx.Graphics.Shader.Instructions
             }
 
             TextureFlags flags = isBindless ? TextureFlags.Bindless : TextureFlags.None;
-            int binding;
+            SetBindingPair setAndBinding;
 
             switch (query)
             {
                 case TexQuery.TexHeaderDimension:
-                    binding = isBindless ? 0 : context.ResourceManager.GetTextureOrImageBinding(
+                    setAndBinding = isBindless ? default : context.ResourceManager.GetTextureOrImageBinding(
                         Instruction.TextureQuerySize,
                         type,
                         TextureFormat.Unknown,
@@ -1136,13 +1140,13 @@ namespace Ryujinx.Graphics.Shader.Instructions
                                 break;
                             }
 
-                            context.Copy(d, context.TextureQuerySize(type, flags, binding, compIndex, sources));
+                            context.Copy(d, context.TextureQuerySize(type, flags, setAndBinding, compIndex, sources));
                         }
                     }
                     break;
 
                 case TexQuery.TexHeaderTextureType:
-                    binding = isBindless ? 0 : context.ResourceManager.GetTextureOrImageBinding(
+                    setAndBinding = isBindless ? default : context.ResourceManager.GetTextureOrImageBinding(
                         Instruction.TextureQuerySamples,
                         type,
                         TextureFormat.Unknown,
@@ -1167,7 +1171,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
 
                         if (d != null)
                         {
-                            context.Copy(d, context.TextureQuerySamples(type, flags, binding, sources));
+                            context.Copy(d, context.TextureQuerySamples(type, flags, setAndBinding, sources));
                         }
                     }
                     break;
@@ -1187,7 +1191,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
             Operand[] dests,
             Operand[] sources)
         {
-            int binding = flags.HasFlag(TextureFlags.Bindless) ? 0 : context.ResourceManager.GetTextureOrImageBinding(
+            SetBindingPair setAndBinding = flags.HasFlag(TextureFlags.Bindless) ? default : context.ResourceManager.GetTextureOrImageBinding(
                 Instruction.TextureSample,
                 type,
                 TextureFormat.Unknown,
@@ -1195,7 +1199,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 TextureOperation.DefaultCbufSlot,
                 handle);
 
-            context.TextureSample(type, flags, binding, componentMask, dests, sources);
+            context.TextureSample(type, flags, setAndBinding, componentMask, dests, sources);
         }
 
         private static SamplerType ConvertSamplerType(TexDim dimensions)

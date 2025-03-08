@@ -403,18 +403,24 @@ namespace ARMeilleure.Instructions
             {
                 return EmitHostMappedPointer(context, address);
             }
-            else if (context.Memory.Type == MemoryManagerType.HostTracked)
+            else if (context.Memory.Type.IsHostTracked())
             {
+                if (address.Type == OperandType.I32)
+                {
+                    address = context.ZeroExtend32(OperandType.I64, address);
+                }
+
+                if (context.Memory.Type == MemoryManagerType.HostTracked)
+                {
+                    Operand mask = Const(ulong.MaxValue >> (64 - context.Memory.AddressSpaceBits));
+                    address = context.BitwiseAnd(address, mask);
+                }
+
                 Operand ptBase = !context.HasPtc
                     ? Const(context.Memory.PageTablePointer.ToInt64())
                     : Const(context.Memory.PageTablePointer.ToInt64(), Ptc.PageTableSymbol);
 
                 Operand ptOffset = context.ShiftRightUI(address, Const(PageBits));
-
-                if (ptOffset.Type == OperandType.I32)
-                {
-                    ptOffset = context.ZeroExtend32(OperandType.I64, ptOffset);
-                }
 
                 return context.Add(address, context.Load(OperandType.I64, context.Add(ptBase, context.ShiftLeft(ptOffset, Const(3)))));
             }

@@ -57,9 +57,6 @@ namespace ARMeilleure.Translation
         private Thread[] _backgroundTranslationThreads;
         private volatile int _threadCount;
 
-        // FIXME: Remove this once the init logic of the emulator will be redone.
-        public static readonly ManualResetEvent IsReadyForTranslation = new(false);
-
         public Translator(IJitMemoryAllocator allocator, IMemoryManager memory, bool for64Bits)
         {
             _allocator = allocator;
@@ -79,11 +76,6 @@ namespace ARMeilleure.Translation
             Stubs = new TranslatorStubs(FunctionTable);
 
             FunctionTable.Fill = (ulong)Stubs.SlowDispatchStub;
-
-            if (memory.Type.IsHostMappedOrTracked())
-            {
-                NativeSignalHandler.InitializeSignalHandler(allocator.GetPageSize());
-            }
         }
 
         public IPtcLoadState LoadDiskCache(string titleIdText, string displayVersion, bool enabled)
@@ -105,8 +97,6 @@ namespace ARMeilleure.Translation
         {
             if (Interlocked.Increment(ref _threadCount) == 1)
             {
-                IsReadyForTranslation.WaitOne();
-
                 if (_ptc.State == PtcState.Enabled)
                 {
                     Debug.Assert(Functions.Count == 0);

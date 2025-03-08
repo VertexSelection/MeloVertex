@@ -133,28 +133,34 @@ namespace Ryujinx.Cpu.Jit
                 _mappingTree.Remove(_mappingTree.GetNode(offset));
             }
 
-            private bool VirtualMemoryEvent(ulong address, ulong size, bool write)
+            private ulong VirtualMemoryEvent(ulong address, ulong size, bool write)
             {
                 Mapping map;
-
+                
                 lock (_lock)
                 {
                     map = _mappingTree.GetNode(address);
                 }
-
+                
                 if (map == null)
                 {
-                    return false;
+                    return 0; // Return 0 instead of false
                 }
-
+                
                 address -= map.Address;
-
+                
                 if (address >= (map.EndVa - map.Va))
                 {
                     address -= (ulong)(map.BridgeSize / 2);
                 }
-
-                return _tracking.VirtualMemoryEvent(map.Va + address, size, write);
+                
+                // The original was returning a bool, now we need to return a ulong
+                if (_tracking.VirtualMemoryEvent(map.Va + address, size, write))
+                {
+                    return map.Va + address;
+                }
+                
+                return 0; // Return 0 on failure
             }
 
             public override void Destroy()

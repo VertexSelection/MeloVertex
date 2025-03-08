@@ -111,19 +111,22 @@ namespace Ryujinx.Graphics.GAL.Multithreading.Resources
             _renderer.QueueCommand();
         }
 
-        public void SetData(IMemoryOwner<byte> data)
+        /// <inheritdoc/>
+        public void SetData(MemoryOwner<byte> data)
         {
             _renderer.New<TextureSetDataCommand>().Set(Ref(this), Ref(data));
             _renderer.QueueCommand();
         }
 
-        public void SetData(IMemoryOwner<byte> data, int layer, int level)
+        /// <inheritdoc/>
+        public void SetData(MemoryOwner<byte> data, int layer, int level)
         {
             _renderer.New<TextureSetDataSliceCommand>().Set(Ref(this), Ref(data), layer, level);
             _renderer.QueueCommand();
         }
 
-        public void SetData(IMemoryOwner<byte> data, int layer, int level, Rectangle<int> region)
+        /// <inheritdoc/>
+        public void SetData(MemoryOwner<byte> data, int layer, int level, Rectangle<int> region)
         {
             _renderer.New<TextureSetDataSliceRegionCommand>().Set(Ref(this), Ref(data), layer, level, region);
             _renderer.QueueCommand();

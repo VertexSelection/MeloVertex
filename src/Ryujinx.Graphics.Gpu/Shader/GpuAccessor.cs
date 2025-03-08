@@ -17,6 +17,8 @@ namespace Ryujinx.Graphics.Gpu.Shader
         private readonly int _stageIndex;
         private readonly bool _compute;
         private readonly bool _isVulkan;
+        private readonly bool _hasGeometryShader;
+        private readonly bool _supportsQuads;
 
         /// <summary>
         /// Creates a new instance of the GPU state accessor for graphics shader translation.
@@ -25,12 +27,20 @@ namespace Ryujinx.Graphics.Gpu.Shader
         /// <param name="channel">GPU channel</param>
         /// <param name="state">Current GPU state</param>
         /// <param name="stageIndex">Graphics shader stage index (0 = Vertex, 4 = Fragment)</param>
-        public GpuAccessor(GpuContext context, GpuChannel channel, GpuAccessorState state, int stageIndex) : base(context, state.ResourceCounts, stageIndex)
+        /// <param name="hasGeometryShader">Indicates if a geometry shader is present</param>
+        public GpuAccessor(
+            GpuContext context,
+            GpuChannel channel,
+            GpuAccessorState state,
+            int stageIndex,
+            bool hasGeometryShader) : base(context, state.ResourceCounts, stageIndex)
         {
-            _isVulkan = context.Capabilities.Api == TargetApi.Vulkan;
             _channel = channel;
             _state = state;
             _stageIndex = stageIndex;
+            _isVulkan = context.Capabilities.Api == TargetApi.Vulkan;
+            _hasGeometryShader = hasGeometryShader;
+            _supportsQuads = context.Capabilities.SupportsQuads;
 
             if (stageIndex == (int)ShaderStage.Geometry - 1)
             {
@@ -72,6 +82,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
         public ReadOnlySpan<ulong> GetCode(ulong address, int minimumSize)
         {
             int size = Math.Max(minimumSize, 0x1000 - (int)(address & 0xfff));
+
             return MemoryMarshal.Cast<byte, ulong>(_channel.MemoryManager.GetSpan(address, size));
         }
 
@@ -104,7 +115,11 @@ namespace Ryujinx.Graphics.Gpu.Shader
         /// <inheritdoc/>
         public GpuGraphicsState QueryGraphicsState()
         {
-            return _state.GraphicsState.CreateShaderGraphicsState(!_isVulkan, _isVulkan || _state.GraphicsState.YNegateEnabled);
+            return _state.GraphicsState.CreateShaderGraphicsState(
+                !_isVulkan,
+                _supportsQuads,
+                _hasGeometryShader,
+                _isVulkan || _state.GraphicsState.YNegateEnabled);
         }
 
         /// <inheritdoc/>
@@ -119,12 +134,13 @@ namespace Ryujinx.Graphics.Gpu.Shader
             return _state.GraphicsState.HasUnalignedStorageBuffer || _state.ComputeState.HasUnalignedStorageBuffer;
         }
 
-        //// <inheritdoc/>
-        public TextureFormat QueryTextureFormat(int handle, int cbufSlot)
+        /// <inheritdoc/>
+        public int QuerySamplerArrayLengthFromPool()
         {
-            _state.SpecializationState?.RecordTextureFormat(_stageIndex, handle, cbufSlot);
-            var descriptor = GetTextureDescriptor(handle, cbufSlot);
-            return ConvertToTextureFormat(descriptor.UnpackFormat(), descriptor.UnpackSrgb());
+            int length = _state.SamplerPoolMaximumId + 1;
+            _state.SpecializationState?.RegisterTextureArrayLengthFromPool(isSampler: true, length);
+
+            return length;
         }
 
         /// <inheritdoc/>
@@ -132,6 +148,37 @@ namespace Ryujinx.Graphics.Gpu.Shader
         {
             _state.SpecializationState?.RecordTextureSamplerType(_stageIndex, handle, cbufSlot);
             return GetTextureDescriptor(handle, cbufSlot).UnpackTextureTarget().ConvertSamplerType();
+        }
+
+        /// <inheritdoc/>
+        public int QueryTextureArrayLengthFromBuffer(int slot)
+        {
+            int size = _compute
+                ? _channel.BufferManager.GetComputeUniformBufferSize(slot)
+                : _channel.BufferManager.GetGraphicsUniformBufferSize(_stageIndex, slot);
+
+            int arrayLength = size / Constants.TextureHandleSizeInBytes;
+
+            _state.SpecializationState?.RegisterTextureArrayLengthFromBuffer(_stageIndex, 0, slot, arrayLength);
+
+            return arrayLength;
+        }
+
+        /// <inheritdoc/>
+        public int QueryTextureArrayLengthFromPool()
+        {
+            int length = _state.PoolState.TexturePoolMaximumId + 1;
+            _state.SpecializationState?.RegisterTextureArrayLengthFromPool(isSampler: false, length);
+
+            return length;
+        }
+
+        //// <inheritdoc/>
+        public TextureFormat QueryTextureFormat(int handle, int cbufSlot)
+        {
+            _state.SpecializationState?.RecordTextureFormat(_stageIndex, handle, cbufSlot);
+            var descriptor = GetTextureDescriptor(handle, cbufSlot);
+            return ConvertToTextureFormat(descriptor.UnpackFormat(), descriptor.UnpackSrgb());
         }
 
         /// <inheritdoc/>

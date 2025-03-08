@@ -22,6 +22,7 @@ namespace Ryujinx.HLE.HOS.Services.Hid
 
         private bool _sixAxisSensorFusionEnabled;
         private bool _unintendedHomeButtonInputProtectionEnabled;
+        private bool _npadAnalogStickCenterClampEnabled;
         private bool _vibrationPermitted;
         private bool _usbFullKeyControllerEnabled;
         private readonly bool _isFirmwareUpdateAvailableForSixAxisSensor;
@@ -1107,6 +1108,19 @@ namespace Ryujinx.HLE.HOS.Services.Hid
             //       If not, it returns nothing.
         }
 
+        [CommandCmif(134)] // 6.1.0+
+        // SetNpadUseAnalogStickUseCenterClamp(bool Enable, nn::applet::AppletResourceUserId)
+        public ResultCode SetNpadUseAnalogStickUseCenterClamp(ServiceCtx context)
+        {
+            ulong pid = context.RequestData.ReadUInt64();
+            _npadAnalogStickCenterClampEnabled = context.RequestData.ReadUInt32() != 0;
+            long appletResourceUserId = context.RequestData.ReadInt64();
+
+            Logger.Stub?.PrintStub(LogClass.ServiceHid, new { pid, appletResourceUserId, _npadAnalogStickCenterClampEnabled });
+
+            return ResultCode.Success;
+        }
+
         [CommandCmif(200)]
         // GetVibrationDeviceInfo(nn::hid::VibrationDeviceHandle) -> nn::hid::VibrationDeviceInfo
         public ResultCode GetVibrationDeviceInfo(ServiceCtx context)
@@ -1818,6 +1832,19 @@ namespace Ryujinx.HLE.HOS.Services.Hid
             long appletResourceUserId = context.RequestData.ReadInt64();
 
             Logger.Stub?.PrintStub(LogClass.ServiceHid, new { appletResourceUserId, touchScreenConfigurationForNx });
+
+            return ResultCode.Success;
+        }
+
+        [CommandCmif(1004)] // 17.0.0+
+        // SetTouchScreenResolution(int width, int height, nn::applet::AppletResourceUserId)
+        public ResultCode SetTouchScreenResolution(ServiceCtx context)
+        {
+            int width = context.RequestData.ReadInt32();
+            int height = context.RequestData.ReadInt32();
+            long appletResourceUserId = context.RequestData.ReadInt64();
+
+            Logger.Stub?.PrintStub(LogClass.ServiceHid, new { width, height, appletResourceUserId });
 
             return ResultCode.Success;
         }

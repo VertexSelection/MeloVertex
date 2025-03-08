@@ -4,6 +4,7 @@ using LibHac.Common.Keys;
 using LibHac.Fs;
 using LibHac.Fs.Fsa;
 using LibHac.FsSystem;
+using LibHac.Ncm;
 using LibHac.Ns;
 using LibHac.Tools.Fs;
 using LibHac.Tools.FsSystem;
@@ -14,23 +15,26 @@ using Ryujinx.Common.Utilities;
 using Ryujinx.HLE.FileSystem;
 using Ryujinx.HLE.HOS.SystemState;
 using Ryujinx.HLE.Loaders.Npdm;
-using Ryujinx.Ui.Common.Configuration;
-using Ryujinx.Ui.Common.Configuration.System;
+using Ryujinx.HLE.Loaders.Processes.Extensions;
+using Ryujinx.UI.Common.Configuration;
+using Ryujinx.UI.Common.Configuration.System;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using ContentType = LibHac.Ncm.ContentType;
 using Path = System.IO.Path;
 using TimeSpan = System.TimeSpan;
 
-namespace Ryujinx.Ui.App.Common
+namespace Ryujinx.UI.App.Common
 {
     public class ApplicationLibrary
     {
+        public Language DesiredLanguage { get; set; }
         public event EventHandler<ApplicationAddedEventArgs> ApplicationAdded;
         public event EventHandler<ApplicationCountUpdatedEventArgs> ApplicationCountUpdated;
 
@@ -41,292 +45,324 @@ namespace Ryujinx.Ui.App.Common
         private readonly byte[] _nsoIcon;
 
         private readonly VirtualFileSystem _virtualFileSystem;
-        private Language _desiredTitleLanguage;
+        private readonly IntegrityCheckLevel _checkLevel;
         private CancellationTokenSource _cancellationToken;
 
         private static readonly ApplicationJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
-        private static readonly TitleUpdateMetadataJsonSerializerContext _titleSerializerContext = new(JsonHelper.GetDefaultSerializerOptions());
 
-        public ApplicationLibrary(VirtualFileSystem virtualFileSystem)
+        public ApplicationLibrary(VirtualFileSystem virtualFileSystem, IntegrityCheckLevel checkLevel)
         {
             _virtualFileSystem = virtualFileSystem;
+            _checkLevel = checkLevel;
 
-            _nspIcon = GetResourceBytes("Ryujinx.Ui.Common.Resources.Icon_NSP.png");
-            _xciIcon = GetResourceBytes("Ryujinx.Ui.Common.Resources.Icon_XCI.png");
-            _ncaIcon = GetResourceBytes("Ryujinx.Ui.Common.Resources.Icon_NCA.png");
-            _nroIcon = GetResourceBytes("Ryujinx.Ui.Common.Resources.Icon_NRO.png");
-            _nsoIcon = GetResourceBytes("Ryujinx.Ui.Common.Resources.Icon_NSO.png");
+            _nspIcon = GetResourceBytes("Ryujinx.UI.Common.Resources.Icon_NSP.png");
+            _xciIcon = GetResourceBytes("Ryujinx.UI.Common.Resources.Icon_XCI.png");
+            _ncaIcon = GetResourceBytes("Ryujinx.UI.Common.Resources.Icon_NCA.png");
+            _nroIcon = GetResourceBytes("Ryujinx.UI.Common.Resources.Icon_NRO.png");
+            _nsoIcon = GetResourceBytes("Ryujinx.UI.Common.Resources.Icon_NSO.png");
         }
 
         private static byte[] GetResourceBytes(string resourceName)
         {
-            Stream resourceStream = typeof(ApplicationLibrary).Assembly.GetManifestResourceStream(resourceName);
+            Stream resourceStream = Assembly.GetCallingAssembly().GetManifestResourceStream(resourceName);
             byte[] resourceByteArray = new byte[resourceStream.Length];
 
-            resourceStream.Read(resourceByteArray);
+            resourceStream.ReadExactly(resourceByteArray);
 
             return resourceByteArray;
         }
 
-        public void CancelLoading()
+        /// <exception cref="Ryujinx.HLE.Exceptions.InvalidNpdmException">The npdm file doesn't contain valid data.</exception>
+        /// <exception cref="NotImplementedException">The FsAccessHeader.ContentOwnerId section is not implemented.</exception>
+        /// <exception cref="ArgumentException">An error occured while reading bytes from the stream.</exception>
+        /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
+        /// <exception cref="IOException">An I/O error occurred.</exception>
+        private ApplicationData GetApplicationFromExeFs(PartitionFileSystem pfs, string filePath)
         {
-            _cancellationToken?.Cancel();
+            ApplicationData data = new()
+            {
+                Icon = _nspIcon,
+                Path = filePath,
+            };
+
+            using UniqueRef<IFile> npdmFile = new();
+
+            Result result = pfs.OpenFile(ref npdmFile.Ref, "/main.npdm".ToU8Span(), OpenMode.Read);
+
+            if (ResultFs.PathNotFound.Includes(result))
+            {
+                Npdm npdm = new(npdmFile.Get.AsStream());
+
+                data.Name = npdm.TitleName;
+                data.Id = npdm.Aci0.TitleId;
+            }
+
+            return data;
         }
 
-        public static void ReadControlData(IFileSystem controlFs, Span<byte> outProperty)
+        /// <exception cref="MissingKeyException">The configured key set is missing a key.</exception>
+        /// <exception cref="InvalidDataException">The NCA header could not be decrypted.</exception>
+        /// <exception cref="NotSupportedException">The NCA version is not supported.</exception>
+        /// <exception cref="HorizonResultException">An error occured while reading PFS data.</exception>
+        /// <exception cref="Ryujinx.HLE.Exceptions.InvalidNpdmException">The npdm file doesn't contain valid data.</exception>
+        /// <exception cref="NotImplementedException">The FsAccessHeader.ContentOwnerId section is not implemented.</exception>
+        /// <exception cref="ArgumentException">An error occured while reading bytes from the stream.</exception>
+        /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
+        /// <exception cref="IOException">An I/O error occurred.</exception>
+        private ApplicationData GetApplicationFromNsp(PartitionFileSystem pfs, string filePath)
         {
-            using UniqueRef<IFile> controlFile = new();
+            bool isExeFs = false;
 
-            controlFs.OpenFile(ref controlFile.Ref, "/control.nacp".ToU8Span(), OpenMode.Read).ThrowIfFailure();
-            controlFile.Get.Read(out _, 0, outProperty, ReadOption.None).ThrowIfFailure();
+            // If the NSP doesn't have a main NCA, decrement the number of applications found and then continue to the next application.
+            bool hasMainNca = false;
+
+            foreach (DirectoryEntryEx fileEntry in pfs.EnumerateEntries("/", "*"))
+            {
+                if (Path.GetExtension(fileEntry.FullPath)?.ToLower() == ".nca")
+                {
+                    using UniqueRef<IFile> ncaFile = new();
+
+                    try
+                    {
+                        pfs.OpenFile(ref ncaFile.Ref, fileEntry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
+
+                        Nca nca = new(_virtualFileSystem.KeySet, ncaFile.Get.AsStorage());
+                        int dataIndex = Nca.GetSectionIndexFromType(NcaSectionType.Data, NcaContentType.Program);
+
+                        // Some main NCAs don't have a data partition, so check if the partition exists before opening it
+                        if (nca.Header.ContentType == NcaContentType.Program &&
+                            !(nca.SectionExists(NcaSectionType.Data) &&
+                              nca.Header.GetFsHeader(dataIndex).IsPatchSection()))
+                        {
+                            hasMainNca = true;
+
+                            break;
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        Logger.Warning?.Print(LogClass.Application, $"Encountered an error while trying to load applications from file '{filePath}': {exception}");
+
+                        return null;
+                    }
+                }
+                else if (Path.GetFileNameWithoutExtension(fileEntry.FullPath) == "main")
+                {
+                    isExeFs = true;
+                }
+            }
+
+            if (hasMainNca)
+            {
+                List<ApplicationData> applications = GetApplicationsFromPfs(pfs, filePath);
+
+                switch (applications.Count)
+                {
+                    case 1:
+                        return applications[0];
+                    case >= 1:
+                        Logger.Warning?.Print(LogClass.Application, $"File '{filePath}' contains more applications than expected: {applications.Count}");
+                        return applications[0];
+                    default:
+                        return null;
+                }
+            }
+
+            if (isExeFs)
+            {
+                return GetApplicationFromExeFs(pfs, filePath);
+            }
+
+            return null;
         }
 
-        public void LoadApplications(List<string> appDirs, Language desiredTitleLanguage)
+        /// <exception cref="MissingKeyException">The configured key set is missing a key.</exception>
+        /// <exception cref="InvalidDataException">The NCA header could not be decrypted.</exception>
+        /// <exception cref="NotSupportedException">The NCA version is not supported.</exception>
+        /// <exception cref="HorizonResultException">An error occured while reading PFS data.</exception>
+        private List<ApplicationData> GetApplicationsFromPfs(IFileSystem pfs, string filePath)
         {
-            int numApplicationsFound = 0;
-            int numApplicationsLoaded = 0;
+            var applications = new List<ApplicationData>();
+            string extension = Path.GetExtension(filePath).ToLower();
 
-            _desiredTitleLanguage = desiredTitleLanguage;
+            foreach ((ulong titleId, ContentMetaData content) in pfs.GetContentData(ContentMetaType.Application, _virtualFileSystem, _checkLevel))
+            {
+                ApplicationData applicationData = new()
+                {
+                    Id = titleId,
+                    Path = filePath,
+                };
 
-            _cancellationToken = new CancellationTokenSource();
+                Nca mainNca = content.GetNcaByType(_virtualFileSystem.KeySet, ContentType.Program);
+                Nca controlNca = content.GetNcaByType(_virtualFileSystem.KeySet, ContentType.Control);
 
-            // Builds the applications list with paths to found applications
-            List<string> applications = new();
+                BlitStruct<ApplicationControlProperty> controlHolder = new(1);
+
+                IFileSystem controlFs = controlNca?.OpenFileSystem(NcaSectionType.Data, _checkLevel);
+
+                // Check if there is an update available.
+                if (IsUpdateApplied(mainNca, out IFileSystem updatedControlFs))
+                {
+                    // Replace the original ControlFs by the updated one.
+                    controlFs = updatedControlFs;
+                }
+
+                if (controlFs == null)
+                {
+                    continue;
+                }
+
+                ReadControlData(controlFs, controlHolder.ByteSpan);
+
+                GetApplicationInformation(ref controlHolder.Value, ref applicationData);
+
+                // Read the icon from the ControlFS and store it as a byte array
+                try
+                {
+                    using UniqueRef<IFile> icon = new();
+
+                    controlFs.OpenFile(ref icon.Ref, $"/icon_{DesiredLanguage}.dat".ToU8Span(), OpenMode.Read).ThrowIfFailure();
+
+                    using MemoryStream stream = new();
+
+                    icon.Get.AsStream().CopyTo(stream);
+                    applicationData.Icon = stream.ToArray();
+                }
+                catch (HorizonResultException)
+                {
+                    foreach (DirectoryEntryEx entry in controlFs.EnumerateEntries("/", "*"))
+                    {
+                        if (entry.Name == "control.nacp")
+                        {
+                            continue;
+                        }
+
+                        using var icon = new UniqueRef<IFile>();
+
+                        controlFs.OpenFile(ref icon.Ref, entry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
+
+                        using MemoryStream stream = new();
+
+                        icon.Get.AsStream().CopyTo(stream);
+                        applicationData.Icon = stream.ToArray();
+
+                        if (applicationData.Icon != null)
+                        {
+                            break;
+                        }
+                    }
+
+                    applicationData.Icon ??= extension == ".xci" ? _xciIcon : _nspIcon;
+                }
+
+                applicationData.ControlHolder = controlHolder;
+
+                applications.Add(applicationData);
+            }
+
+            return applications;
+        }
+
+        public bool TryGetApplicationsFromFile(string applicationPath, out List<ApplicationData> applications)
+        {
+            applications = [];
+            long fileSize;
 
             try
             {
-                foreach (string appDir in appDirs)
+                fileSize = new FileInfo(applicationPath).Length;
+            }
+            catch (FileNotFoundException)
+            {
+                Logger.Warning?.Print(LogClass.Application, $"The file was not found: '{applicationPath}'");
+
+                return false;
+            }
+
+            BlitStruct<ApplicationControlProperty> controlHolder = new(1);
+
+            try
+            {
+                string extension = Path.GetExtension(applicationPath).ToLower();
+
+                using FileStream file = new(applicationPath, FileMode.Open, FileAccess.Read);
+
+                switch (extension)
                 {
-                    if (_cancellationToken.Token.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    if (!Directory.Exists(appDir))
-                    {
-                        Logger.Warning?.Print(LogClass.Application, $"The \"game_dirs\" section in \"Config.json\" contains an invalid directory: \"{appDir}\"");
-
-                        continue;
-                    }
-
-                    try
-                    {
-                        IEnumerable<string> files = Directory.EnumerateFiles(appDir, "*", SearchOption.AllDirectories).Where(file =>
+                    case ".xci":
                         {
-                            return
-                            (Path.GetExtension(file).ToLower() is ".nsp" && ConfigurationState.Instance.Ui.ShownFileTypes.NSP.Value) ||
-                            (Path.GetExtension(file).ToLower() is ".pfs0" && ConfigurationState.Instance.Ui.ShownFileTypes.PFS0.Value) ||
-                            (Path.GetExtension(file).ToLower() is ".xci" && ConfigurationState.Instance.Ui.ShownFileTypes.XCI.Value) ||
-                            (Path.GetExtension(file).ToLower() is ".nca" && ConfigurationState.Instance.Ui.ShownFileTypes.NCA.Value) ||
-                            (Path.GetExtension(file).ToLower() is ".nro" && ConfigurationState.Instance.Ui.ShownFileTypes.NRO.Value) ||
-                            (Path.GetExtension(file).ToLower() is ".nso" && ConfigurationState.Instance.Ui.ShownFileTypes.NSO.Value);
-                        });
+                            Xci xci = new(_virtualFileSystem.KeySet, file.AsStorage());
 
-                        foreach (string app in files)
-                        {
-                            if (_cancellationToken.Token.IsCancellationRequested)
+                            applications = GetApplicationsFromPfs(xci.OpenPartition(XciPartitionType.Secure), applicationPath);
+
+                            if (applications.Count == 0)
                             {
-                                return;
+                                return false;
                             }
 
-                            var fileInfo = new FileInfo(app);
-                            string extension = fileInfo.Extension.ToLower();
-
-                            if (!fileInfo.Attributes.HasFlag(FileAttributes.Hidden) && extension is ".nsp" or ".pfs0" or ".xci" or ".nca" or ".nro" or ".nso")
-                            {
-                                var fullPath = fileInfo.ResolveLinkTarget(true)?.FullName ?? fileInfo.FullName;
-
-                                if (!File.Exists(fullPath))
-                                {
-                                    Logger.Warning?.Print(LogClass.Application, $"Skipping invalid symlink: {fileInfo.FullName}");
-                                    continue;
-                                }
-
-                                applications.Add(fullPath);
-                                numApplicationsFound++;
-                            }
+                            break;
                         }
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        Logger.Warning?.Print(LogClass.Application, $"Failed to get access to directory: \"{appDir}\"");
-                    }
-                }
-
-                // Loops through applications list, creating a struct and then firing an event containing the struct for each application
-                foreach (string applicationPath in applications)
-                {
-                    if (_cancellationToken.Token.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    long fileSize = new FileInfo(applicationPath).Length;
-                    string titleName = "Unknown";
-                    string titleId = "0000000000000000";
-                    string developer = "Unknown";
-                    string version = "0";
-                    byte[] applicationIcon = null;
-
-                    BlitStruct<ApplicationControlProperty> controlHolder = new(1);
-
-                    try
-                    {
-                        string extension = Path.GetExtension(applicationPath).ToLower();
-
-                        using FileStream file = new(applicationPath, FileMode.Open, FileAccess.Read);
-
-                        if (extension == ".nsp" || extension == ".pfs0" || extension == ".xci")
+                    case ".nsp":
+                    case ".pfs0":
                         {
-                            try
+                            var pfs = new PartitionFileSystem();
+                            pfs.Initialize(file.AsStorage()).ThrowIfFailure();
+
+                            ApplicationData result = GetApplicationFromNsp(pfs, applicationPath);
+
+                            if (result == null)
                             {
-                                IFileSystem pfs;
-
-                                bool isExeFs = false;
-
-                                if (extension == ".xci")
-                                {
-                                    Xci xci = new(_virtualFileSystem.KeySet, file.AsStorage());
-
-                                    pfs = xci.OpenPartition(XciPartitionType.Secure);
-                                }
-                                else
-                                {
-                                    var pfsTemp = new PartitionFileSystem();
-                                    pfsTemp.Initialize(file.AsStorage()).ThrowIfFailure();
-                                    pfs = pfsTemp;
-
-                                    // If the NSP doesn't have a main NCA, decrement the number of applications found and then continue to the next application.
-                                    bool hasMainNca = false;
-
-                                    foreach (DirectoryEntryEx fileEntry in pfs.EnumerateEntries("/", "*"))
-                                    {
-                                        if (Path.GetExtension(fileEntry.FullPath).ToLower() == ".nca")
-                                        {
-                                            using UniqueRef<IFile> ncaFile = new();
-
-                                            pfs.OpenFile(ref ncaFile.Ref, fileEntry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
-
-                                            Nca nca = new(_virtualFileSystem.KeySet, ncaFile.Get.AsStorage());
-                                            int dataIndex = Nca.GetSectionIndexFromType(NcaSectionType.Data, NcaContentType.Program);
-
-                                            // Some main NCAs don't have a data partition, so check if the partition exists before opening it
-                                            if (nca.Header.ContentType == NcaContentType.Program && !(nca.SectionExists(NcaSectionType.Data) && nca.Header.GetFsHeader(dataIndex).IsPatchSection()))
-                                            {
-                                                hasMainNca = true;
-
-                                                break;
-                                            }
-                                        }
-                                        else if (Path.GetFileNameWithoutExtension(fileEntry.FullPath) == "main")
-                                        {
-                                            isExeFs = true;
-                                        }
-                                    }
-
-                                    if (!hasMainNca && !isExeFs)
-                                    {
-                                        numApplicationsFound--;
-
-                                        continue;
-                                    }
-                                }
-
-                                if (isExeFs)
-                                {
-                                    applicationIcon = _nspIcon;
-
-                                    using UniqueRef<IFile> npdmFile = new();
-
-                                    Result result = pfs.OpenFile(ref npdmFile.Ref, "/main.npdm".ToU8Span(), OpenMode.Read);
-
-                                    if (ResultFs.PathNotFound.Includes(result))
-                                    {
-                                        Npdm npdm = new(npdmFile.Get.AsStream());
-
-                                        titleName = npdm.TitleName;
-                                        titleId = npdm.Aci0.TitleId.ToString("x16");
-                                    }
-                                }
-                                else
-                                {
-                                    GetControlFsAndTitleId(pfs, out IFileSystem controlFs, out titleId);
-
-                                    // Check if there is an update available.
-                                    if (IsUpdateApplied(titleId, out IFileSystem updatedControlFs))
-                                    {
-                                        // Replace the original ControlFs by the updated one.
-                                        controlFs = updatedControlFs;
-                                    }
-
-                                    ReadControlData(controlFs, controlHolder.ByteSpan);
-
-                                    GetGameInformation(ref controlHolder.Value, out titleName, out _, out developer, out version);
-
-                                    // Read the icon from the ControlFS and store it as a byte array
-                                    try
-                                    {
-                                        using UniqueRef<IFile> icon = new();
-
-                                        controlFs.OpenFile(ref icon.Ref, $"/icon_{_desiredTitleLanguage}.dat".ToU8Span(), OpenMode.Read).ThrowIfFailure();
-
-                                        using MemoryStream stream = new();
-
-                                        icon.Get.AsStream().CopyTo(stream);
-                                        applicationIcon = stream.ToArray();
-                                    }
-                                    catch (HorizonResultException)
-                                    {
-                                        foreach (DirectoryEntryEx entry in controlFs.EnumerateEntries("/", "*"))
-                                        {
-                                            if (entry.Name == "control.nacp")
-                                            {
-                                                continue;
-                                            }
-
-                                            using var icon = new UniqueRef<IFile>();
-
-                                            controlFs.OpenFile(ref icon.Ref, entry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
-
-                                            using MemoryStream stream = new();
-
-                                            icon.Get.AsStream().CopyTo(stream);
-                                            applicationIcon = stream.ToArray();
-
-                                            if (applicationIcon != null)
-                                            {
-                                                break;
-                                            }
-                                        }
-
-                                        applicationIcon ??= extension == ".xci" ? _xciIcon : _nspIcon;
-                                    }
-                                }
+                                return false;
                             }
-                            catch (MissingKeyException exception)
-                            {
-                                applicationIcon = extension == ".xci" ? _xciIcon : _nspIcon;
 
-                                Logger.Warning?.Print(LogClass.Application, $"Your key set is missing a key with the name: {exception.Name}");
-                            }
-                            catch (InvalidDataException)
-                            {
-                                applicationIcon = extension == ".xci" ? _xciIcon : _nspIcon;
+                            applications.Add(result);
 
-                                Logger.Warning?.Print(LogClass.Application, $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {applicationPath}");
-                            }
-                            catch (Exception exception)
-                            {
-                                Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. File: '{applicationPath}' Error: {exception}");
-
-                                numApplicationsFound--;
-
-                                continue;
-                            }
+                            break;
                         }
-                        else if (extension == ".nro")
+                    case ".nro":
                         {
                             BinaryReader reader = new(file);
+                            ApplicationData application = new();
+
+                            file.Seek(24, SeekOrigin.Begin);
+
+                            int assetOffset = reader.ReadInt32();
+
+                            if (Encoding.ASCII.GetString(Read(assetOffset, 4)) == "ASET")
+                            {
+                                byte[] iconSectionInfo = Read(assetOffset + 8, 0x10);
+
+                                long iconOffset = BitConverter.ToInt64(iconSectionInfo, 0);
+                                long iconSize = BitConverter.ToInt64(iconSectionInfo, 8);
+
+                                ulong nacpOffset = reader.ReadUInt64();
+                                ulong nacpSize = reader.ReadUInt64();
+
+                                // Reads and stores game icon as byte array
+                                if (iconSize > 0)
+                                {
+                                    application.Icon = Read(assetOffset + iconOffset, (int)iconSize);
+                                }
+                                else
+                                {
+                                    application.Icon = _nroIcon;
+                                }
+
+                                // Read the NACP data
+                                Read(assetOffset + (int)nacpOffset, (int)nacpSize).AsSpan().CopyTo(controlHolder.ByteSpan);
+
+                                GetApplicationInformation(ref controlHolder.Value, ref application);
+                            }
+                            else
+                            {
+                                application.Icon = _nroIcon;
+                                application.Name = Path.GetFileNameWithoutExtension(applicationPath);
+                            }
+
+                            application.ControlHolder = controlHolder;
+                            applications.Add(application);
+
+                            break;
 
                             byte[] Read(long position, int size)
                             {
@@ -334,102 +370,74 @@ namespace Ryujinx.Ui.App.Common
 
                                 return reader.ReadBytes(size);
                             }
-
-                            try
-                            {
-                                file.Seek(24, SeekOrigin.Begin);
-
-                                int assetOffset = reader.ReadInt32();
-
-                                if (Encoding.ASCII.GetString(Read(assetOffset, 4)) == "ASET")
-                                {
-                                    byte[] iconSectionInfo = Read(assetOffset + 8, 0x10);
-
-                                    long iconOffset = BitConverter.ToInt64(iconSectionInfo, 0);
-                                    long iconSize = BitConverter.ToInt64(iconSectionInfo, 8);
-
-                                    ulong nacpOffset = reader.ReadUInt64();
-                                    ulong nacpSize = reader.ReadUInt64();
-
-                                    // Reads and stores game icon as byte array
-                                    if (iconSize > 0)
-                                    {
-                                        applicationIcon = Read(assetOffset + iconOffset, (int)iconSize);
-                                    }
-                                    else
-                                    {
-                                        applicationIcon = _nroIcon;
-                                    }
-
-                                    // Read the NACP data
-                                    Read(assetOffset + (int)nacpOffset, (int)nacpSize).AsSpan().CopyTo(controlHolder.ByteSpan);
-
-                                    GetGameInformation(ref controlHolder.Value, out titleName, out titleId, out developer, out version);
-                                }
-                                else
-                                {
-                                    applicationIcon = _nroIcon;
-                                    titleName = Path.GetFileNameWithoutExtension(applicationPath);
-                                }
-                            }
-                            catch
-                            {
-                                Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. Errored File: {applicationPath}");
-
-                                numApplicationsFound--;
-
-                                continue;
-                            }
                         }
-                        else if (extension == ".nca")
+                    case ".nca":
                         {
-                            try
+                            ApplicationData application = new();
+
+                            Nca nca = new(_virtualFileSystem.KeySet, new FileStream(applicationPath, FileMode.Open, FileAccess.Read).AsStorage());
+
+                            if (!nca.IsProgram() || nca.IsPatch())
                             {
-                                Nca nca = new(_virtualFileSystem.KeySet, new FileStream(applicationPath, FileMode.Open, FileAccess.Read).AsStorage());
-                                int dataIndex = Nca.GetSectionIndexFromType(NcaSectionType.Data, NcaContentType.Program);
-
-                                if (nca.Header.ContentType != NcaContentType.Program || (nca.SectionExists(NcaSectionType.Data) && nca.Header.GetFsHeader(dataIndex).IsPatchSection()))
-                                {
-                                    numApplicationsFound--;
-
-                                    continue;
-                                }
-                            }
-                            catch (InvalidDataException)
-                            {
-                                Logger.Warning?.Print(LogClass.Application, $"The NCA header content type check has failed. This is usually because the header key is incorrect or missing. Errored File: {applicationPath}");
-                            }
-                            catch
-                            {
-                                Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. Errored File: {applicationPath}");
-
-                                numApplicationsFound--;
-
-                                continue;
+                                return false;
                             }
 
-                            applicationIcon = _ncaIcon;
-                            titleName = Path.GetFileNameWithoutExtension(applicationPath);
+                            application.Icon = _ncaIcon;
+                            application.Name = Path.GetFileNameWithoutExtension(applicationPath);
+                            application.ControlHolder = controlHolder;
+
+                            applications.Add(application);
+
+                            break;
                         }
-                        // If its an NSO we just set defaults
-                        else if (extension == ".nso")
+                    // If its an NSO we just set defaults
+                    case ".nso":
                         {
-                            applicationIcon = _nsoIcon;
-                            titleName = Path.GetFileNameWithoutExtension(applicationPath);
+                            ApplicationData application = new()
+                            {
+                                Icon = _nsoIcon,
+                                Name = Path.GetFileNameWithoutExtension(applicationPath),
+                            };
+
+                            applications.Add(application);
+
+                            break;
                         }
-                    }
-                    catch (IOException exception)
+                }
+            }
+            catch (MissingKeyException exception)
+            {
+                Logger.Warning?.Print(LogClass.Application, $"Your key set is missing a key with the name: {exception.Name}");
+
+                return false;
+            }
+            catch (InvalidDataException)
+            {
+                Logger.Warning?.Print(LogClass.Application, $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {applicationPath}");
+
+                return false;
+            }
+            catch (IOException exception)
+            {
+                Logger.Warning?.Print(LogClass.Application, exception.Message);
+
+                return false;
+            }
+            catch (Exception exception)
+            {
+                Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. File: '{applicationPath}' Error: {exception}");
+
+                return false;
+            }
+
+            foreach (var data in applications)
+            {
+                // Only load metadata for applications with an ID
+                if (data.Id != 0)
+                {
+                    ApplicationMetadata appMetadata = LoadAndSaveMetaData(data.IdString, appMetadata =>
                     {
-                        Logger.Warning?.Print(LogClass.Application, exception.Message);
-
-                        numApplicationsFound--;
-
-                        continue;
-                    }
-
-                    ApplicationMetadata appMetadata = LoadAndSaveMetaData(titleId, appMetadata =>
-                    {
-                        appMetadata.Title = titleName;
+                        appMetadata.Title = data.Name;
 
                         // Only do the migration if time_played has a value and timespan_played hasn't been updated yet.
                         if (appMetadata.TimePlayedOld != default && appMetadata.TimePlayed == TimeSpan.Zero)
@@ -453,28 +461,134 @@ namespace Ryujinx.Ui.App.Common
                         }
                     });
 
-                    ApplicationData data = new()
-                    {
-                        Favorite = appMetadata.Favorite,
-                        Icon = applicationIcon,
-                        TitleName = titleName,
-                        TitleId = titleId,
-                        Developer = developer,
-                        Version = version,
-                        TimePlayed = appMetadata.TimePlayed,
-                        LastPlayed = appMetadata.LastPlayed,
-                        FileExtension = Path.GetExtension(applicationPath).TrimStart('.').ToUpper(),
-                        FileSize = fileSize,
-                        Path = applicationPath,
-                        ControlHolder = controlHolder,
-                    };
+                    data.Favorite = appMetadata.Favorite;
+                    data.TimePlayed = appMetadata.TimePlayed;
+                    data.LastPlayed = appMetadata.LastPlayed;
+                }
 
-                    numApplicationsLoaded++;
+                data.FileExtension = Path.GetExtension(applicationPath).TrimStart('.').ToUpper();
+                data.FileSize = fileSize;
+                data.Path = applicationPath;
+            }
 
-                    OnApplicationAdded(new ApplicationAddedEventArgs
+            return true;
+        }
+
+        public void CancelLoading()
+        {
+            _cancellationToken?.Cancel();
+        }
+
+        public static void ReadControlData(IFileSystem controlFs, Span<byte> outProperty)
+        {
+            using UniqueRef<IFile> controlFile = new();
+
+            controlFs.OpenFile(ref controlFile.Ref, "/control.nacp".ToU8Span(), OpenMode.Read).ThrowIfFailure();
+            controlFile.Get.Read(out _, 0, outProperty, ReadOption.None).ThrowIfFailure();
+        }
+
+        public void LoadApplications(List<string> appDirs)
+        {
+            int numApplicationsFound = 0;
+            int numApplicationsLoaded = 0;
+
+            _cancellationToken = new CancellationTokenSource();
+
+            // Builds the applications list with paths to found applications
+            List<string> applicationPaths = new();
+
+            try
+            {
+                foreach (string appDir in appDirs)
+                {
+                    if (_cancellationToken.Token.IsCancellationRequested)
                     {
-                        AppData = data,
-                    });
+                        return;
+                    }
+
+                    if (!Directory.Exists(appDir))
+                    {
+                        Logger.Warning?.Print(LogClass.Application, $"The specified game directory \"{appDir}\" does not exist.");
+
+                        continue;
+                    }
+
+                    try
+                    {
+                        EnumerationOptions options = new()
+                        {
+                            RecurseSubdirectories = true,
+                            IgnoreInaccessible = false,
+                        };
+
+                        IEnumerable<string> files = Directory.EnumerateFiles(appDir, "*", options).Where(file =>
+                        {
+                            return
+                            (Path.GetExtension(file).ToLower() is ".nsp" && ConfigurationState.Instance.UI.ShownFileTypes.NSP.Value) ||
+                            (Path.GetExtension(file).ToLower() is ".pfs0" && ConfigurationState.Instance.UI.ShownFileTypes.PFS0.Value) ||
+                            (Path.GetExtension(file).ToLower() is ".xci" && ConfigurationState.Instance.UI.ShownFileTypes.XCI.Value) ||
+                            (Path.GetExtension(file).ToLower() is ".nca" && ConfigurationState.Instance.UI.ShownFileTypes.NCA.Value) ||
+                            (Path.GetExtension(file).ToLower() is ".nro" && ConfigurationState.Instance.UI.ShownFileTypes.NRO.Value) ||
+                            (Path.GetExtension(file).ToLower() is ".nso" && ConfigurationState.Instance.UI.ShownFileTypes.NSO.Value);
+                        });
+
+                        foreach (string app in files)
+                        {
+                            if (_cancellationToken.Token.IsCancellationRequested)
+                            {
+                                return;
+                            }
+
+                            var fileInfo = new FileInfo(app);
+
+                            try
+                            {
+                                var fullPath = fileInfo.ResolveLinkTarget(true)?.FullName ?? fileInfo.FullName;
+
+                                applicationPaths.Add(fullPath);
+                                numApplicationsFound++;
+                            }
+                            catch (IOException exception)
+                            {
+                                Logger.Warning?.Print(LogClass.Application, $"Failed to resolve the full path to file: \"{app}\" Error: {exception}");
+                            }
+                        }
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        Logger.Warning?.Print(LogClass.Application, $"Failed to get access to directory: \"{appDir}\"");
+                    }
+                }
+
+                // Loops through applications list, creating a struct and then firing an event containing the struct for each application
+                foreach (string applicationPath in applicationPaths)
+                {
+                    if (_cancellationToken.Token.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    if (TryGetApplicationsFromFile(applicationPath, out List<ApplicationData> applications))
+                    {
+                        foreach (var application in applications)
+                        {
+                            OnApplicationAdded(new ApplicationAddedEventArgs
+                            {
+                                AppData = application,
+                            });
+                        }
+
+                        if (applications.Count > 1)
+                        {
+                            numApplicationsFound += applications.Count - 1;
+                        }
+
+                        numApplicationsLoaded += applications.Count;
+                    }
+                    else
+                    {
+                        numApplicationsFound--;
+                    }
 
                     OnApplicationCountUpdated(new ApplicationCountUpdatedEventArgs
                     {
@@ -504,15 +618,6 @@ namespace Ryujinx.Ui.App.Common
         protected void OnApplicationCountUpdated(ApplicationCountUpdatedEventArgs e)
         {
             ApplicationCountUpdated?.Invoke(null, e);
-        }
-
-        private void GetControlFsAndTitleId(IFileSystem pfs, out IFileSystem controlFs, out string titleId)
-        {
-            (_, _, Nca controlNca) = GetGameData(_virtualFileSystem, pfs, 0);
-
-            // Return the ControlFS
-            controlFs = controlNca?.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.None);
-            titleId = controlNca?.Header.TitleId.ToString("x16");
         }
 
         public static ApplicationMetadata LoadAndSaveMetaData(string titleId, Action<ApplicationMetadata> modifyFunction = null)
@@ -552,9 +657,28 @@ namespace Ryujinx.Ui.App.Common
             return appMetadata;
         }
 
-        public byte[] GetApplicationIcon(string applicationPath, Language desiredTitleLanguage)
+        public byte[] GetApplicationIcon(string applicationPath, Language desiredTitleLanguage, ulong applicationId)
         {
             byte[] applicationIcon = null;
+
+            if (applicationId == 0)
+            {
+                if (Directory.Exists(applicationPath))
+                {
+                    return _ncaIcon;
+                }
+
+                return Path.GetExtension(applicationPath).ToLower() switch
+                {
+                    ".nsp" => _nspIcon,
+                    ".pfs0" => _nspIcon,
+                    ".xci" => _xciIcon,
+                    ".nso" => _nsoIcon,
+                    ".nro" => _nroIcon,
+                    ".nca" => _ncaIcon,
+                    _ => _ncaIcon,
+                };
+            }
 
             try
             {
@@ -601,7 +725,16 @@ namespace Ryujinx.Ui.App.Common
                             else
                             {
                                 // Store the ControlFS in variable called controlFs
-                                GetControlFsAndTitleId(pfs, out IFileSystem controlFs, out _);
+                                Dictionary<ulong, ContentMetaData> programs = pfs.GetContentData(ContentMetaType.Application, _virtualFileSystem, _checkLevel);
+                                IFileSystem controlFs = null;
+
+                                if (programs.TryGetValue(applicationId, out ContentMetaData value))
+                                {
+                                    if (value.GetNcaByType(_virtualFileSystem.KeySet, ContentType.Control) is { } controlNca)
+                                    {
+                                        controlFs = controlNca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.None);
+                                    }
+                                }
 
                                 // Read the icon from the ControlFS and store it as a byte array
                                 try
@@ -628,16 +761,11 @@ namespace Ryujinx.Ui.App.Common
 
                                         controlFs.OpenFile(ref icon.Ref, entry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
 
-                                        using (MemoryStream stream = new())
-                                        {
-                                            icon.Get.AsStream().CopyTo(stream);
-                                            applicationIcon = stream.ToArray();
-                                        }
+                                        using MemoryStream stream = new();
+                                        icon.Get.AsStream().CopyTo(stream);
+                                        applicationIcon = stream.ToArray();
 
-                                        if (applicationIcon != null)
-                                        {
-                                            break;
-                                        }
+                                        break;
                                     }
 
                                     applicationIcon ??= extension == ".xci" ? _xciIcon : _nspIcon;
@@ -720,80 +848,79 @@ namespace Ryujinx.Ui.App.Common
             return applicationIcon ?? _ncaIcon;
         }
 
-        private void GetGameInformation(ref ApplicationControlProperty controlData, out string titleName, out string titleId, out string publisher, out string version)
+        private void GetApplicationInformation(ref ApplicationControlProperty controlData, ref ApplicationData data)
         {
-            _ = Enum.TryParse(_desiredTitleLanguage.ToString(), out TitleLanguage desiredTitleLanguage);
+            _ = Enum.TryParse(DesiredLanguage.ToString(), out TitleLanguage desiredTitleLanguage);
 
             if (controlData.Title.ItemsRo.Length > (int)desiredTitleLanguage)
             {
-                titleName = controlData.Title[(int)desiredTitleLanguage].NameString.ToString();
-                publisher = controlData.Title[(int)desiredTitleLanguage].PublisherString.ToString();
+                data.Name = controlData.Title[(int)desiredTitleLanguage].NameString.ToString();
+                data.Developer = controlData.Title[(int)desiredTitleLanguage].PublisherString.ToString();
             }
             else
             {
-                titleName = null;
-                publisher = null;
+                data.Name = null;
+                data.Developer = null;
             }
 
-            if (string.IsNullOrWhiteSpace(titleName))
+            if (string.IsNullOrWhiteSpace(data.Name))
             {
                 foreach (ref readonly var controlTitle in controlData.Title.ItemsRo)
                 {
                     if (!controlTitle.NameString.IsEmpty())
                     {
-                        titleName = controlTitle.NameString.ToString();
+                        data.Name = controlTitle.NameString.ToString();
 
                         break;
                     }
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(publisher))
+            if (string.IsNullOrWhiteSpace(data.Developer))
             {
                 foreach (ref readonly var controlTitle in controlData.Title.ItemsRo)
                 {
                     if (!controlTitle.PublisherString.IsEmpty())
                     {
-                        publisher = controlTitle.PublisherString.ToString();
+                        data.Developer = controlTitle.PublisherString.ToString();
 
                         break;
                     }
                 }
             }
 
-            if (controlData.PresenceGroupId != 0)
+            if (data.Id == 0)
             {
-                titleId = controlData.PresenceGroupId.ToString("x16");
-            }
-            else if (controlData.SaveDataOwnerId != 0)
-            {
-                titleId = controlData.SaveDataOwnerId.ToString();
-            }
-            else if (controlData.AddOnContentBaseId != 0)
-            {
-                titleId = (controlData.AddOnContentBaseId - 0x1000).ToString("x16");
-            }
-            else
-            {
-                titleId = "0000000000000000";
+                if (controlData.SaveDataOwnerId != 0)
+                {
+                    data.Id = controlData.SaveDataOwnerId;
+                }
+                else if (controlData.PresenceGroupId != 0)
+                {
+                    data.Id = controlData.PresenceGroupId;
+                }
+                else if (controlData.AddOnContentBaseId != 0)
+                {
+                    data.Id = (controlData.AddOnContentBaseId - 0x1000);
+                }
             }
 
-            version = controlData.DisplayVersionString.ToString();
+            data.Version = controlData.DisplayVersionString.ToString();
         }
 
-        private bool IsUpdateApplied(string titleId, out IFileSystem updatedControlFs)
+        private bool IsUpdateApplied(Nca mainNca, out IFileSystem updatedControlFs)
         {
             updatedControlFs = null;
 
-            string updatePath = "(unknown)";
+            string updatePath = null;
 
             try
             {
-                (Nca patchNca, Nca controlNca) = GetGameUpdateData(_virtualFileSystem, titleId, 0, out updatePath);
+                (Nca patchNca, Nca controlNca) = mainNca.GetUpdateData(_virtualFileSystem, _checkLevel, 0, out updatePath);
 
                 if (patchNca != null && controlNca != null)
                 {
-                    updatedControlFs = controlNca?.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.None);
+                    updatedControlFs = controlNca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.None);
 
                     return true;
                 }
@@ -808,121 +935,6 @@ namespace Ryujinx.Ui.App.Common
             }
 
             return false;
-        }
-
-        public static (Nca main, Nca patch, Nca control) GetGameData(VirtualFileSystem fileSystem, IFileSystem pfs, int programIndex)
-        {
-            Nca mainNca = null;
-            Nca patchNca = null;
-            Nca controlNca = null;
-
-            fileSystem.ImportTickets(pfs);
-
-            foreach (DirectoryEntryEx fileEntry in pfs.EnumerateEntries("/", "*.nca"))
-            {
-                using var ncaFile = new UniqueRef<IFile>();
-
-                pfs.OpenFile(ref ncaFile.Ref, fileEntry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
-
-                Nca nca = new(fileSystem.KeySet, ncaFile.Release().AsStorage());
-
-                int ncaProgramIndex = (int)(nca.Header.TitleId & 0xF);
-
-                if (ncaProgramIndex != programIndex)
-                {
-                    continue;
-                }
-
-                if (nca.Header.ContentType == NcaContentType.Program)
-                {
-                    int dataIndex = Nca.GetSectionIndexFromType(NcaSectionType.Data, NcaContentType.Program);
-
-                    if (nca.SectionExists(NcaSectionType.Data) && nca.Header.GetFsHeader(dataIndex).IsPatchSection())
-                    {
-                        patchNca = nca;
-                    }
-                    else
-                    {
-                        mainNca = nca;
-                    }
-                }
-                else if (nca.Header.ContentType == NcaContentType.Control)
-                {
-                    controlNca = nca;
-                }
-            }
-
-            return (mainNca, patchNca, controlNca);
-        }
-
-        public static (Nca patch, Nca control) GetGameUpdateDataFromPartition(VirtualFileSystem fileSystem, PartitionFileSystem pfs, string titleId, int programIndex)
-        {
-            Nca patchNca = null;
-            Nca controlNca = null;
-
-            fileSystem.ImportTickets(pfs);
-
-            foreach (DirectoryEntryEx fileEntry in pfs.EnumerateEntries("/", "*.nca"))
-            {
-                using var ncaFile = new UniqueRef<IFile>();
-
-                pfs.OpenFile(ref ncaFile.Ref, fileEntry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
-
-                Nca nca = new(fileSystem.KeySet, ncaFile.Release().AsStorage());
-
-                int ncaProgramIndex = (int)(nca.Header.TitleId & 0xF);
-
-                if (ncaProgramIndex != programIndex)
-                {
-                    continue;
-                }
-
-                if ($"{nca.Header.TitleId.ToString("x16")[..^3]}000" != titleId)
-                {
-                    break;
-                }
-
-                if (nca.Header.ContentType == NcaContentType.Program)
-                {
-                    patchNca = nca;
-                }
-                else if (nca.Header.ContentType == NcaContentType.Control)
-                {
-                    controlNca = nca;
-                }
-            }
-
-            return (patchNca, controlNca);
-        }
-
-        public static (Nca patch, Nca control) GetGameUpdateData(VirtualFileSystem fileSystem, string titleId, int programIndex, out string updatePath)
-        {
-            updatePath = null;
-
-            if (ulong.TryParse(titleId, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong titleIdBase))
-            {
-                // Clear the program index part.
-                titleIdBase &= ~0xFUL;
-
-                // Load update information if exists.
-                string titleUpdateMetadataPath = Path.Combine(AppDataManager.GamesDirPath, titleIdBase.ToString("x16"), "updates.json");
-
-                if (File.Exists(titleUpdateMetadataPath))
-                {
-                    updatePath = JsonHelper.DeserializeFromFile(titleUpdateMetadataPath, _titleSerializerContext.TitleUpdateMetadata).Selected;
-
-                    if (File.Exists(updatePath))
-                    {
-                        FileStream file = new(updatePath, FileMode.Open, FileAccess.Read);
-                        PartitionFileSystem nsp = new();
-                        nsp.Initialize(file.AsStorage()).ThrowIfFailure();
-
-                        return GetGameUpdateDataFromPartition(fileSystem, nsp, titleIdBase.ToString("x16"), programIndex);
-                    }
-                }
-            }
-
-            return (null, null);
         }
     }
 }

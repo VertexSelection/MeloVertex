@@ -20,6 +20,9 @@ namespace Ryujinx.Graphics.Gpu.Shader
         private int _reservedTextures;
         private int _reservedImages;
 
+        private int _staticTexturesCount;
+        private int _staticImagesCount;
+
         /// <summary>
         /// Creates a new GPU accessor.
         /// </summary>
@@ -48,7 +51,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
             _reservedImages = rrc.ReservedImages;
         }
 
-        public int QueryBindingConstantBuffer(int index)
+        public SetBindingPair CreateConstantBufferBinding(int index)
         {
             int binding;
 
@@ -61,10 +64,42 @@ namespace Ryujinx.Graphics.Gpu.Shader
                 binding = _resourceCounts.UniformBuffersCount++;
             }
 
-            return binding + _reservedConstantBuffers;
+            return new SetBindingPair(_context.Capabilities.UniformBufferSetIndex, binding + _reservedConstantBuffers);
         }
 
-        public int QueryBindingStorageBuffer(int index)
+        public SetBindingPair CreateImageBinding(int count, bool isBuffer)
+        {
+            int binding;
+
+            if (_context.Capabilities.Api == TargetApi.Vulkan)
+            {
+                if (count == 1)
+                {
+                    int index = _staticImagesCount++;
+
+                    if (isBuffer)
+                    {
+                        index += (int)_context.Capabilities.MaximumImagesPerStage;
+                    }
+
+                    binding = GetBindingFromIndex(index, _context.Capabilities.MaximumImagesPerStage * 2, "Image");
+                }
+                else
+                {
+                    binding = (int)GetDynamicBaseIndexDual(_context.Capabilities.MaximumImagesPerStage) + _resourceCounts.ImagesCount++;
+                }
+            }
+            else
+            {
+                binding = _resourceCounts.ImagesCount;
+
+                _resourceCounts.ImagesCount += count;
+            }
+
+            return new SetBindingPair(_context.Capabilities.ImageSetIndex, binding + _reservedImages);
+        }
+
+        public SetBindingPair CreateStorageBufferBinding(int index)
         {
             int binding;
 
@@ -77,49 +112,39 @@ namespace Ryujinx.Graphics.Gpu.Shader
                 binding = _resourceCounts.StorageBuffersCount++;
             }
 
-            return binding + _reservedStorageBuffers;
+            return new SetBindingPair(_context.Capabilities.StorageBufferSetIndex, binding + _reservedStorageBuffers);
         }
 
-        public int QueryBindingTexture(int index, bool isBuffer)
+        public SetBindingPair CreateTextureBinding(int count, bool isBuffer)
         {
             int binding;
 
             if (_context.Capabilities.Api == TargetApi.Vulkan)
             {
-                if (isBuffer)
+                if (count == 1)
                 {
-                    index += (int)_context.Capabilities.MaximumTexturesPerStage;
-                }
+                    int index = _staticTexturesCount++;
 
-                binding = GetBindingFromIndex(index, _context.Capabilities.MaximumTexturesPerStage * 2, "Texture");
+                    if (isBuffer)
+                    {
+                        index += (int)_context.Capabilities.MaximumTexturesPerStage;
+                    }
+
+                    binding = GetBindingFromIndex(index, _context.Capabilities.MaximumTexturesPerStage * 2, "Texture");
+                }
+                else
+                {
+                    binding = (int)GetDynamicBaseIndexDual(_context.Capabilities.MaximumTexturesPerStage) + _resourceCounts.TexturesCount++;
+                }
             }
             else
             {
-                binding = _resourceCounts.TexturesCount++;
+                binding = _resourceCounts.TexturesCount;
+
+                _resourceCounts.TexturesCount += count;
             }
 
-            return binding + _reservedTextures;
-        }
-
-        public int QueryBindingImage(int index, bool isBuffer)
-        {
-            int binding;
-
-            if (_context.Capabilities.Api == TargetApi.Vulkan)
-            {
-                if (isBuffer)
-                {
-                    index += (int)_context.Capabilities.MaximumImagesPerStage;
-                }
-
-                binding = GetBindingFromIndex(index, _context.Capabilities.MaximumImagesPerStage * 2, "Image");
-            }
-            else
-            {
-                binding = _resourceCounts.ImagesCount++;
-            }
-
-            return binding + _reservedImages;
+            return new SetBindingPair(_context.Capabilities.TextureSetIndex, binding + _reservedTextures);
         }
 
         private int GetBindingFromIndex(int index, uint maxPerStage, string resourceName)
@@ -146,6 +171,26 @@ namespace Ryujinx.Graphics.Gpu.Shader
                 2 => 4, // Tessellation evaluation
                 _ => 0, // Vertex/Compute
             };
+        }
+
+        private static uint GetDynamicBaseIndexDual(uint maxPerStage)
+        {
+            return GetDynamicBaseIndex(maxPerStage) * 2;
+        }
+
+        private static uint GetDynamicBaseIndex(uint maxPerStage)
+        {
+            return maxPerStage * Constants.ShaderStages;
+        }
+
+        public int CreateExtraSet()
+        {
+            if (_resourceCounts.SetsCount >= _context.Capabilities.MaximumExtraSets)
+            {
+                return -1;
+            }
+
+            return _context.Capabilities.ExtraSetBaseIndex + _resourceCounts.SetsCount++;
         }
 
         public int QueryHostGatherBiasPrecision() => _context.Capabilities.GatherBiasPrecision;
@@ -177,6 +222,8 @@ namespace Ryujinx.Graphics.Gpu.Shader
         public bool QueryHostSupportsNonConstantTextureOffset() => _context.Capabilities.SupportsNonConstantTextureOffset;
 
         public bool QueryHostSupportsScaledVertexFormats() => _context.Capabilities.SupportsScaledVertexFormats;
+
+        public bool QueryHostSupportsSeparateSampler() => _context.Capabilities.SupportsSeparateSampler;
 
         public bool QueryHostSupportsShaderBallot() => _context.Capabilities.SupportsShaderBallot;
 

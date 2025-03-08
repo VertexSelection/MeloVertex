@@ -69,7 +69,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             Address = address;
             Size = size;
 
-            _memoryTracking = physicalMemory.BeginGranularTracking(address, size, ResourceKind.Pool);
+            _memoryTracking = physicalMemory.BeginGranularTracking(address, size, ResourceKind.Pool, RegionFlags.None);
             _memoryTracking.RegisterPreciseAction(address, size, PreciseAction);
             _modifiedDelegate = RegionModified;
         }
@@ -110,6 +110,21 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <param name="id">ID of the resource. This is effectively a zero-based index</param>
         /// <returns>The GPU resource with the given ID</returns>
         public abstract T1 Get(int id);
+
+        /// <summary>
+        /// Gets the cached item with the given ID, or null if there is no cached item for the specified ID.
+        /// </summary>
+        /// <param name="id">ID of the item. This is effectively a zero-based index</param>
+        /// <returns>The cached item with the given ID</returns>
+        public T1 GetCachedItem(int id)
+        {
+            if (!IsValidId(id))
+            {
+                return default;
+            }
+
+            return Items[id];
+        }
 
         /// <summary>
         /// Checks if a given ID is valid and inside the range of the pool.
@@ -192,6 +207,23 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 // Force the pool to be checked again the next time it is used.
                 SequenceNumber--;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the pool was modified by comparing the current <seealso cref="ModifiedSequenceNumber"/> with a cached one.
+        /// </summary>
+        /// <param name="sequenceNumber">Cached modified sequence number</param>
+        /// <returns>True if the pool was modified, false otherwise</returns>
+        public bool WasModified(ref int sequenceNumber)
+        {
+            if (sequenceNumber != ModifiedSequenceNumber)
+            {
+                sequenceNumber = ModifiedSequenceNumber;
+
+                return true;
             }
 
             return false;

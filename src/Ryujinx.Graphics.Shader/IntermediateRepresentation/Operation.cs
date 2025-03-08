@@ -20,13 +20,13 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
             }
             set
             {
-                if (value != null && value.Type == OperandType.LocalVariable)
-                {
-                    value.AsgOp = this;
-                }
-
                 if (value != null)
                 {
+                    if (value.Type == OperandType.LocalVariable)
+                    {
+                        value.AsgOp = this;
+                    }
+
                     _dests = new[] { value };
                 }
                 else
@@ -215,6 +215,11 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
             Array.Copy(_sources, index, newSources, index + 1, _sources.Length - index);
 
             newSources[index] = source;
+
+            if (source != null && source.Type == OperandType.LocalVariable)
+            {
+                source.UseOps.Add(this);
+            }
 
             _sources = newSources;
         }

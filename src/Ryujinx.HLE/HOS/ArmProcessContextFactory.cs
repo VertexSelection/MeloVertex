@@ -72,9 +72,10 @@ namespace Ryujinx.HLE.HOS
 
                 AddressSpace addressSpace = null;
 
-                if ((mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe) && (MemoryBlock.GetPageSize() <= 0x1000))
+                // We want to use host tracked mode if the host page size is > 4KB.
+                if ((mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe) && MemoryBlock.GetPageSize() <= 0x1000)
                 {
-                    if (!AddressSpace.TryCreate(context.Memory, addressSpaceSize, MemoryBlock.GetPageSize() == MemoryManagerHostMapped.PageSize, out addressSpace))
+                    if (!AddressSpace.TryCreate(context.Memory, addressSpaceSize, out addressSpace))
                     {
                         Logger.Warning?.Print(LogClass.Cpu, "Address space creation failed, falling back to software page table");
 
@@ -93,7 +94,7 @@ namespace Ryujinx.HLE.HOS
                     case MemoryManagerMode.HostMappedUnsafe:
                         if (addressSpace == null)
                         {
-                            var memoryManagerHostTracked = new MemoryManagerHostTracked(context.Memory, addressSpaceSize, invalidAccessHandler);
+                            var memoryManagerHostTracked = new MemoryManagerHostTracked(context.Memory, addressSpaceSize, mode == MemoryManagerMode.HostMappedUnsafe, invalidAccessHandler);
                             processContext = new ArmProcessContext<MemoryManagerHostTracked>(pid, cpuEngine, _gpu, memoryManagerHostTracked, addressSpaceSize, for64Bit);
                         }
                         else

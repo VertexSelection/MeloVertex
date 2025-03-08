@@ -9,13 +9,6 @@ namespace Ryujinx.Graphics.Vulkan
 {
     static class PipelineConverter
     {
-        private const AccessFlags SubpassAccessMask =
-            AccessFlags.MemoryReadBit |
-            AccessFlags.MemoryWriteBit |
-            AccessFlags.ShaderReadBit |
-            AccessFlags.ColorAttachmentWriteBit |
-            AccessFlags.DepthStencilAttachmentWriteBit;
-
         public static unsafe DisposableRenderPass ToRenderPass(this ProgramPipelineState state, VulkanRenderer gd, Device device)
         {
             const int MaxAttachments = Constants.MaxRenderTargets + 1;
@@ -108,7 +101,7 @@ namespace Ryujinx.Graphics.Vulkan
                 }
             }
 
-            var subpassDependency = CreateSubpassDependency();
+            var subpassDependency = CreateSubpassDependency(gd);
 
             fixed (AttachmentDescription* pAttachmentDescs = attachmentDescs)
             {
@@ -123,35 +116,39 @@ namespace Ryujinx.Graphics.Vulkan
                     DependencyCount = 1,
                 };
 
-                gd.Api.CreateRenderPass(device, renderPassCreateInfo, null, out var renderPass).ThrowOnError();
+                gd.Api.CreateRenderPass(device, in renderPassCreateInfo, null, out var renderPass).ThrowOnError();
 
                 return new DisposableRenderPass(gd.Api, device, renderPass);
             }
         }
 
-        public static SubpassDependency CreateSubpassDependency()
+        public static SubpassDependency CreateSubpassDependency(VulkanRenderer gd)
         {
+            var (access, stages) = BarrierBatch.GetSubpassAccessSuperset(gd);
+
             return new SubpassDependency(
                 0,
                 0,
-                PipelineStageFlags.AllGraphicsBit,
-                PipelineStageFlags.AllGraphicsBit,
-                SubpassAccessMask,
-                SubpassAccessMask,
+                stages,
+                stages,
+                access,
+                access,
                 0);
         }
 
-        public unsafe static SubpassDependency2 CreateSubpassDependency2()
+        public unsafe static SubpassDependency2 CreateSubpassDependency2(VulkanRenderer gd)
         {
+            var (access, stages) = BarrierBatch.GetSubpassAccessSuperset(gd);
+
             return new SubpassDependency2(
                 StructureType.SubpassDependency2,
                 null,
                 0,
                 0,
-                PipelineStageFlags.AllGraphicsBit,
-                PipelineStageFlags.AllGraphicsBit,
-                SubpassAccessMask,
-                SubpassAccessMask,
+                stages,
+                stages,
+                access,
+                access,
                 0);
         }
 
@@ -180,9 +177,6 @@ namespace Ryujinx.Graphics.Vulkan
             pipeline.LogicOpEnable = state.LogicOpEnable;
             pipeline.LogicOp = state.LogicOp.Convert();
 
-            pipeline.MinDepthBounds = 0f; // Not implemented.
-            pipeline.MaxDepthBounds = 0f; // Not implemented.
-
             pipeline.PatchControlPoints = state.PatchControlPoints;
             pipeline.PolygonMode = PolygonMode.Fill; // Not implemented.
             pipeline.PrimitiveRestartEnable = state.PrimitiveRestartEnable;
@@ -208,17 +202,11 @@ namespace Ryujinx.Graphics.Vulkan
             pipeline.StencilFrontPassOp = state.StencilTest.FrontDpPass.Convert();
             pipeline.StencilFrontDepthFailOp = state.StencilTest.FrontDpFail.Convert();
             pipeline.StencilFrontCompareOp = state.StencilTest.FrontFunc.Convert();
-            pipeline.StencilFrontCompareMask = 0;
-            pipeline.StencilFrontWriteMask = 0;
-            pipeline.StencilFrontReference = 0;
 
             pipeline.StencilBackFailOp = state.StencilTest.BackSFail.Convert();
             pipeline.StencilBackPassOp = state.StencilTest.BackDpPass.Convert();
             pipeline.StencilBackDepthFailOp = state.StencilTest.BackDpFail.Convert();
             pipeline.StencilBackCompareOp = state.StencilTest.BackFunc.Convert();
-            pipeline.StencilBackCompareMask = 0;
-            pipeline.StencilBackWriteMask = 0;
-            pipeline.StencilBackReference = 0;
 
             pipeline.StencilTestEnable = state.StencilTest.TestEnable;
 
@@ -302,6 +290,7 @@ namespace Ryujinx.Graphics.Vulkan
             int attachmentCount = 0;
             int maxColorAttachmentIndex = -1;
             uint attachmentIntegerFormatMask = 0;
+            bool allFormatsFloatOrSrgb = true;
 
             for (int i = 0; i < Constants.MaxRenderTargets; i++)
             {
@@ -314,6 +303,8 @@ namespace Ryujinx.Graphics.Vulkan
                     {
                         attachmentIntegerFormatMask |= 1u << i;
                     }
+
+                    allFormatsFloatOrSrgb &= state.AttachmentFormats[i].IsFloatOrSrgb();
                 }
             }
 
@@ -325,6 +316,7 @@ namespace Ryujinx.Graphics.Vulkan
             pipeline.ColorBlendAttachmentStateCount = (uint)(maxColorAttachmentIndex + 1);
             pipeline.VertexAttributeDescriptionsCount = (uint)Math.Min(Constants.MaxVertexAttributes, state.VertexAttribCount);
             pipeline.Internal.AttachmentIntegerFormatMask = attachmentIntegerFormatMask;
+            pipeline.Internal.LogicOpsAllowed = attachmentCount == 0 || !allFormatsFloatOrSrgb;
 
             return pipeline;
         }

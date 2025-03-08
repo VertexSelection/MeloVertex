@@ -35,18 +35,29 @@ namespace ARMeilleure.Memory
         /// Allows invalid access from JIT code to the rest of the program, but is faster.
         /// </summary>
         HostMappedUnsafe,
+
+        /// <summary>
+        /// High level implementation using a software flat page table for address translation
+        /// without masking the address and no support for handling invalid or non-contiguous memory access.
+        /// </summary>
+        HostTrackedUnsafe,
     }
 
-    static class MemoryManagerTypeExtensions
+    public static class MemoryManagerTypeExtensions
     {
         public static bool IsHostMapped(this MemoryManagerType type)
         {
             return type == MemoryManagerType.HostMapped || type == MemoryManagerType.HostMappedUnsafe;
         }
 
+        public static bool IsHostTracked(this MemoryManagerType type)
+        {
+            return type == MemoryManagerType.HostTracked || type == MemoryManagerType.HostTrackedUnsafe;
+        }
+
         public static bool IsHostMappedOrTracked(this MemoryManagerType type)
         {
-            return type == MemoryManagerType.HostTracked || type == MemoryManagerType.HostMapped || type == MemoryManagerType.HostMappedUnsafe;
+            return type.IsHostMapped() || type.IsHostTracked();
         }
     }
 }

@@ -121,7 +121,14 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Bsd
         {
             IPEndPoint endPoint = isRemote ? socket.RemoteEndPoint : socket.LocalEndPoint;
 
-            context.Memory.Write(bufferPosition, BsdSockAddr.FromIPEndPoint(endPoint));
+            if (endPoint != null)
+            {
+                context.Memory.Write(bufferPosition, BsdSockAddr.FromIPEndPoint(endPoint));
+            }
+            else
+            {
+                context.Memory.Write(bufferPosition, new BsdSockAddr());
+            }
         }
 
         [CommandCmif(0)]
@@ -433,8 +440,9 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Bsd
 
                     // If we are here, that mean nothing was available, sleep for 50ms
                     context.Device.System.KernelContext.Syscall.SleepThread(50 * 1000000);
+                    context.Thread.HandlePostSyscall();
                 }
-                while (PerformanceCounter.ElapsedMilliseconds < budgetLeftMilliseconds);
+                while (context.Thread.Context.Running && PerformanceCounter.ElapsedMilliseconds < budgetLeftMilliseconds);
             }
             else if (timeout == -1)
             {

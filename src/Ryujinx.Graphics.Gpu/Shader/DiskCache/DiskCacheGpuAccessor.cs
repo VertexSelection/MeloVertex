@@ -18,6 +18,8 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
         private readonly ShaderSpecializationState _newSpecState;
         private readonly int _stageIndex;
         private readonly bool _isVulkan;
+        private readonly bool _hasGeometryShader;
+        private readonly bool _supportsQuads;
 
         /// <summary>
         /// Creates a new instance of the cached GPU state accessor for shader translation.
@@ -27,7 +29,9 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
         /// <param name="cb1Data">The constant buffer 1 data of the shader</param>
         /// <param name="oldSpecState">Shader specialization state of the cached shader</param>
         /// <param name="newSpecState">Shader specialization state of the recompiled shader</param>
+        /// <param name="counts">Resource counts shared across all shader stages</param>
         /// <param name="stageIndex">Shader stage index</param>
+        /// <param name="hasGeometryShader">Indicates if a geometry shader is present</param>
         public DiskCacheGpuAccessor(
             GpuContext context,
             ReadOnlyMemory<byte> data,
@@ -35,7 +39,8 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
             ShaderSpecializationState oldSpecState,
             ShaderSpecializationState newSpecState,
             ResourceCounts counts,
-            int stageIndex) : base(context, counts, stageIndex)
+            int stageIndex,
+            bool hasGeometryShader) : base(context, counts, stageIndex)
         {
             _data = data;
             _cb1Data = cb1Data;
@@ -43,6 +48,8 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
             _newSpecState = newSpecState;
             _stageIndex = stageIndex;
             _isVulkan = context.Capabilities.Api == TargetApi.Vulkan;
+            _hasGeometryShader = hasGeometryShader;
+            _supportsQuads = context.Capabilities.SupportsQuads;
 
             if (stageIndex == (int)ShaderStage.Geometry - 1)
             {
@@ -99,7 +106,11 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
         /// <inheritdoc/>
         public GpuGraphicsState QueryGraphicsState()
         {
-            return _oldSpecState.GraphicsState.CreateShaderGraphicsState(!_isVulkan, _isVulkan || _oldSpecState.GraphicsState.YNegateEnabled);
+            return _oldSpecState.GraphicsState.CreateShaderGraphicsState(
+                !_isVulkan,
+                _supportsQuads,
+                _hasGeometryShader,
+                _isVulkan || _oldSpecState.GraphicsState.YNegateEnabled);
         }
 
         /// <inheritdoc/>
@@ -109,11 +120,10 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
         }
 
         /// <inheritdoc/>
-        public TextureFormat QueryTextureFormat(int handle, int cbufSlot)
+        /// <exception cref="DiskCacheLoadException">Pool length is not available on the cache</exception>
+        public int QuerySamplerArrayLengthFromPool()
         {
-            _newSpecState.RecordTextureFormat(_stageIndex, handle, cbufSlot);
-            (uint format, bool formatSrgb) = _oldSpecState.GetFormat(_stageIndex, handle, cbufSlot);
-            return ConvertToTextureFormat(format, formatSrgb);
+            return QueryArrayLengthFromPool(isSampler: true);
         }
 
         /// <inheritdoc/>
@@ -121,6 +131,36 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
         {
             _newSpecState.RecordTextureSamplerType(_stageIndex, handle, cbufSlot);
             return _oldSpecState.GetTextureTarget(_stageIndex, handle, cbufSlot).ConvertSamplerType();
+        }
+
+        /// <inheritdoc/>
+        /// <exception cref="DiskCacheLoadException">Constant buffer derived length is not available on the cache</exception>
+        public int QueryTextureArrayLengthFromBuffer(int slot)
+        {
+            if (!_oldSpecState.TextureArrayFromBufferRegistered(_stageIndex, 0, slot))
+            {
+                throw new DiskCacheLoadException(DiskCacheLoadResult.MissingTextureArrayLength);
+            }
+
+            int arrayLength = _oldSpecState.GetTextureArrayFromBufferLength(_stageIndex, 0, slot);
+            _newSpecState.RegisterTextureArrayLengthFromBuffer(_stageIndex, 0, slot, arrayLength);
+
+            return arrayLength;
+        }
+
+        /// <inheritdoc/>
+        /// <exception cref="DiskCacheLoadException">Pool length is not available on the cache</exception>
+        public int QueryTextureArrayLengthFromPool()
+        {
+            return QueryArrayLengthFromPool(isSampler: false);
+        }
+
+        /// <inheritdoc/>
+        public TextureFormat QueryTextureFormat(int handle, int cbufSlot)
+        {
+            _newSpecState.RecordTextureFormat(_stageIndex, handle, cbufSlot);
+            (uint format, bool formatSrgb) = _oldSpecState.GetFormat(_stageIndex, handle, cbufSlot);
+            return ConvertToTextureFormat(format, formatSrgb);
         }
 
         /// <inheritdoc/>
@@ -155,6 +195,7 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
         }
 
         /// <inheritdoc/>
+        /// <exception cref="DiskCacheLoadException">Texture information is not available on the cache</exception>
         public void RegisterTexture(int handle, int cbufSlot)
         {
             if (!_oldSpecState.TextureRegistered(_stageIndex, handle, cbufSlot))
@@ -166,6 +207,25 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
             TextureTarget target = _oldSpecState.GetTextureTarget(_stageIndex, handle, cbufSlot);
             bool coordNormalized = _oldSpecState.GetCoordNormalized(_stageIndex, handle, cbufSlot);
             _newSpecState.RegisterTexture(_stageIndex, handle, cbufSlot, format, formatSrgb, target, coordNormalized);
+        }
+
+        /// <summary>
+        /// Gets the cached texture or sampler pool capacity.
+        /// </summary>
+        /// <param name="isSampler">True to get sampler pool length, false for texture pool length</param>
+        /// <returns>Pool length</returns>
+        /// <exception cref="DiskCacheLoadException">Pool length is not available on the cache</exception>
+        private int QueryArrayLengthFromPool(bool isSampler)
+        {
+            if (!_oldSpecState.TextureArrayFromPoolRegistered(isSampler))
+            {
+                throw new DiskCacheLoadException(DiskCacheLoadResult.MissingTextureArrayLength);
+            }
+
+            int arrayLength = _oldSpecState.GetTextureArrayFromPoolLength(isSampler);
+            _newSpecState.RegisterTextureArrayLengthFromPool(isSampler, arrayLength);
+
+            return arrayLength;
         }
     }
 }

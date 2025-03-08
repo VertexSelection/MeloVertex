@@ -80,9 +80,10 @@ namespace Ryujinx.Graphics.Shader.Translation
                 return;
             }
 
-            if (TranslatorContext.Definitions.Stage == ShaderStage.Vertex && TranslatorContext.Options.TargetApi == TargetApi.Vulkan)
+            // Vulkan requires the point size to be always written on the shader if the primitive topology is points.
+            // OpenGL requires the point size to be always written on the shader if PROGRAM_POINT_SIZE is set.
+            if (TranslatorContext.Definitions.Stage == ShaderStage.Vertex)
             {
-                // Vulkan requires the point size to be always written on the shader if the primitive topology is points.
                 this.Store(StorageKind.Output, IoVariable.PointSize, null, ConstF(TranslatorContext.Definitions.PointSize));
             }
 
@@ -123,7 +124,7 @@ namespace Ryujinx.Graphics.Shader.Translation
                     this.TextureSample(
                         SamplerType.TextureBuffer,
                         TextureFlags.IntCoords,
-                        ResourceManager.Reservations.IndexBufferTextureBinding,
+                        ResourceManager.Reservations.GetIndexBufferTextureSetAndBinding(),
                         1,
                         new[] { vertexIndexVr },
                         new[] { this.IAdd(ibBaseOffset, outputVertexOffset) });
@@ -144,7 +145,7 @@ namespace Ryujinx.Graphics.Shader.Translation
                         this.TextureSample(
                             SamplerType.TextureBuffer,
                             TextureFlags.IntCoords,
-                            ResourceManager.Reservations.TopologyRemapBufferTextureBinding,
+                            ResourceManager.Reservations.GetTopologyRemapBufferTextureSetAndBinding(),
                             1,
                             new[] { vertexIndex },
                             new[] { this.IAdd(baseVertex, Const(index)) });

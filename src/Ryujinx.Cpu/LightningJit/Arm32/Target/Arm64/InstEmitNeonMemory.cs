@@ -717,6 +717,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             }
         }
 
+        [Conditional("DEBUG")]
         private static void AssertSequentialRegisters(ReadOnlySpan<ScopedRegister> registers)
         {
             for (int index = 1; index < registers.Length; index++)

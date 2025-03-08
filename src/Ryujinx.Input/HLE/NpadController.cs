@@ -203,8 +203,6 @@ namespace Ryujinx.Input.HLE
             new(Key.NumLock,      10),
         };
 
-        private bool _isValid;
-
         private MotionInput _leftMotionInput;
         private MotionInput _rightMotionInput;
 
@@ -222,7 +220,6 @@ namespace Ryujinx.Input.HLE
         {
             State = default;
             Id = null;
-            _isValid = false;
             _cemuHookClient = cemuHookClient;
         }
 
@@ -234,20 +231,19 @@ namespace Ryujinx.Input.HLE
 
             Id = config.Id;
             _gamepad = GamepadDriver.GetGamepad(Id);
-            _isValid = _gamepad != null;
 
             UpdateUserConfiguration(config);
 
-            return _isValid;
+            return _gamepad != null;
         }
 
         public void UpdateUserConfiguration(InputConfig config)
         {
             if (config is StandardControllerInputConfig controllerConfig)
             {
-                bool needsMotionInputUpdate = _config == null || (_config is StandardControllerInputConfig oldControllerConfig &&
-                                                                (oldControllerConfig.Motion.EnableMotion != controllerConfig.Motion.EnableMotion) &&
-                                                                (oldControllerConfig.Motion.MotionBackend != controllerConfig.Motion.MotionBackend));
+                bool needsMotionInputUpdate = _config is not StandardControllerInputConfig oldControllerConfig ||
+                    ((oldControllerConfig.Motion.EnableMotion != controllerConfig.Motion.EnableMotion) &&
+                    (oldControllerConfig.Motion.MotionBackend != controllerConfig.Motion.MotionBackend));
 
                 if (needsMotionInputUpdate)
                 {
@@ -262,10 +258,7 @@ namespace Ryujinx.Input.HLE
 
             _config = config;
 
-            if (_isValid)
-            {
-                _gamepad.SetConfiguration(config);
-            }
+            _gamepad?.SetConfiguration(config);
         }
 
         private void UpdateMotionInput(MotionConfigController motionConfig)
@@ -282,18 +275,21 @@ namespace Ryujinx.Input.HLE
 
         public void Update()
         {
-            if (_isValid && GamepadDriver != null)
+            // _gamepad may be altered by other threads
+            var gamepad = _gamepad;
+
+            if (gamepad != null && GamepadDriver != null)
             {
-                State = _gamepad.GetMappedStateSnapshot();
+                State = gamepad.GetMappedStateSnapshot();
 
                 if (_config is StandardControllerInputConfig controllerConfig && controllerConfig.Motion.EnableMotion)
                 {
                     if (controllerConfig.Motion.MotionBackend == MotionInputBackendType.GamepadDriver)
                     {
-                        if (_gamepad.Features.HasFlag(GamepadFeaturesFlag.Motion))
+                        if (gamepad.Features.HasFlag(GamepadFeaturesFlag.Motion))
                         {
-                            Vector3 accelerometer = _gamepad.GetMotionData(MotionInputId.Accelerometer);
-                            Vector3 gyroscope = _gamepad.GetMotionData(MotionInputId.Gyroscope);
+                            Vector3 accelerometer = gamepad.GetMotionData(MotionInputId.Accelerometer);
+                            Vector3 gyroscope = gamepad.GetMotionData(MotionInputId.Gyroscope);
 
                             accelerometer = new Vector3(accelerometer.X, -accelerometer.Z, accelerometer.Y);
                             gyroscope = new Vector3(gyroscope.X, -gyroscope.Z, gyroscope.Y);
@@ -491,38 +487,35 @@ namespace Ryujinx.Input.HLE
             return value;
         }
 
-        public KeyboardInput? GetHLEKeyboardInput()
+        public static KeyboardInput GetHLEKeyboardInput(IGamepadDriver KeyboardDriver)
         {
-            if (_gamepad is IKeyboard keyboard)
+            var keyboard = KeyboardDriver.GetGamepad("0") as IKeyboard;
+
+            KeyboardStateSnapshot keyboardState = keyboard.GetKeyboardStateSnapshot();
+
+            KeyboardInput hidKeyboard = new()
             {
-                KeyboardStateSnapshot keyboardState = keyboard.GetKeyboardStateSnapshot();
+                Modifier = 0,
+                Keys = new ulong[0x4],
+            };
 
-                KeyboardInput hidKeyboard = new()
-                {
-                    Modifier = 0,
-                    Keys = new ulong[0x4],
-                };
+            foreach (HLEKeyboardMappingEntry entry in _keyMapping)
+            {
+                ulong value = keyboardState.IsPressed(entry.TargetKey) ? 1UL : 0UL;
 
-                foreach (HLEKeyboardMappingEntry entry in _keyMapping)
-                {
-                    ulong value = keyboardState.IsPressed(entry.TargetKey) ? 1UL : 0UL;
-
-                    hidKeyboard.Keys[entry.Target / 0x40] |= (value << (entry.Target % 0x40));
-                }
-
-                foreach (HLEKeyboardMappingEntry entry in _keyModifierMapping)
-                {
-                    int value = keyboardState.IsPressed(entry.TargetKey) ? 1 : 0;
-
-                    hidKeyboard.Modifier |= value << entry.Target;
-                }
-
-                return hidKeyboard;
+                hidKeyboard.Keys[entry.Target / 0x40] |= (value << (entry.Target % 0x40));
             }
 
-            return null;
-        }
+            foreach (HLEKeyboardMappingEntry entry in _keyModifierMapping)
+            {
+                int value = keyboardState.IsPressed(entry.TargetKey) ? 1 : 0;
 
+                hidKeyboard.Modifier |= value << entry.Target;
+            }
+
+            return hidKeyboard;
+
+        }
 
         protected virtual void Dispose(bool disposing)
         {

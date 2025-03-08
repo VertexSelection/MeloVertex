@@ -1,8 +1,10 @@
 using Ryujinx.Audio.Backends.Common;
 using Ryujinx.Audio.Common;
 using Ryujinx.Common.Logging;
+using Ryujinx.Common.Memory;
 using Ryujinx.Memory;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Threading;
 
@@ -26,7 +28,7 @@ namespace Ryujinx.Audio.Backends.SDL2
         private float _volume;
         private readonly ushort _nativeSampleFormat;
 
-        public SDL2HardwareDeviceSession(SDL2HardwareDeviceDriver driver, IVirtualMemoryManager memoryManager, SampleFormat requestedSampleFormat, uint requestedSampleRate, uint requestedChannelCount, float requestedVolume) : base(memoryManager, requestedSampleFormat, requestedSampleRate, requestedChannelCount)
+        public SDL2HardwareDeviceSession(SDL2HardwareDeviceDriver driver, IVirtualMemoryManager memoryManager, SampleFormat requestedSampleFormat, uint requestedSampleRate, uint requestedChannelCount) : base(memoryManager, requestedSampleFormat, requestedSampleRate, requestedChannelCount)
         {
             _driver = driver;
             _updateRequiredEvent = _driver.GetUpdateRequiredEvent();
@@ -37,7 +39,7 @@ namespace Ryujinx.Audio.Backends.SDL2
             _nativeSampleFormat = SDL2HardwareDeviceDriver.GetSDL2Format(RequestedSampleFormat);
             _sampleCount = uint.MaxValue;
             _started = false;
-            _volume = requestedVolume;
+            _volume = 1f;
         }
 
         private void EnsureAudioStreamSetup(AudioBuffer buffer)
@@ -87,7 +89,9 @@ namespace Ryujinx.Audio.Backends.SDL2
                 return;
             }
 
-            byte[] samples = new byte[frameCount * _bytesPerFrame];
+            using SpanOwner<byte> samplesOwner = SpanOwner<byte>.Rent(frameCount * _bytesPerFrame);
+
+            Span<byte> samples = samplesOwner.Span;
 
             _ringBuffer.Read(samples, 0, samples.Length);
 
@@ -99,7 +103,7 @@ namespace Ryujinx.Audio.Backends.SDL2
                 streamSpan.Clear();
 
                 // Apply volume to written data
-                SDL_MixAudioFormat(stream, pStreamSrc, _nativeSampleFormat, (uint)samples.Length, (int)(_volume * SDL_MIX_MAXVOLUME));
+                SDL_MixAudioFormat(stream, pStreamSrc, _nativeSampleFormat, (uint)samples.Length, (int)(_driver.Volume * _volume * SDL_MIX_MAXVOLUME));
             }
 
             ulong sampleCount = GetSampleCount(samples.Length);

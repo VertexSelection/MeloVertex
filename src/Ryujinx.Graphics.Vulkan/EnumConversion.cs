@@ -376,7 +376,7 @@ namespace Ryujinx.Graphics.Vulkan
         {
             return format switch
             {
-                Format.D16Unorm or Format.D32Float => ImageAspectFlags.DepthBit,
+                Format.D16Unorm or Format.D32Float or Format.X8UintD24Unorm => ImageAspectFlags.DepthBit,
                 Format.S8Uint => ImageAspectFlags.StencilBit,
                 Format.D24UnormS8Uint or
                 Format.D32FloatS8Uint or
@@ -389,7 +389,7 @@ namespace Ryujinx.Graphics.Vulkan
         {
             return format switch
             {
-                Format.D16Unorm or Format.D32Float => ImageAspectFlags.DepthBit,
+                Format.D16Unorm or Format.D32Float or Format.X8UintD24Unorm => ImageAspectFlags.DepthBit,
                 Format.S8Uint => ImageAspectFlags.StencilBit,
                 Format.D24UnormS8Uint or
                 Format.D32FloatS8Uint or
@@ -424,9 +424,19 @@ namespace Ryujinx.Graphics.Vulkan
 
         public static BufferAllocationType Convert(this BufferAccess access)
         {
-            if (access.HasFlag(BufferAccess.FlushPersistent) || access.HasFlag(BufferAccess.Stream))
+            BufferAccess memType = access & BufferAccess.MemoryTypeMask;
+
+            if (memType == BufferAccess.HostMemory || access.HasFlag(BufferAccess.Stream))
             {
                 return BufferAllocationType.HostMapped;
+            }
+            else if (memType == BufferAccess.DeviceMemory)
+            {
+                return BufferAllocationType.DeviceLocal;
+            }
+            else if (memType == BufferAccess.DeviceMemoryMapped)
+            {
+                return BufferAllocationType.DeviceLocalMapped;
             }
 
             return BufferAllocationType.Auto;

@@ -17,14 +17,17 @@ namespace Ryujinx.Graphics.GAL
         void BackgroundContextAction(Action action, bool alwaysBackground = false);
 
         BufferHandle CreateBuffer(int size, BufferAccess access = BufferAccess.Default);
-        BufferHandle CreateBuffer(int size, BufferAccess access, BufferHandle storageHint);
         BufferHandle CreateBuffer(nint pointer, int size);
         BufferHandle CreateBufferSparse(ReadOnlySpan<BufferRange> storageBuffers);
+
+        IImageArray CreateImageArray(int size, bool isBuffer);
 
         IProgram CreateProgram(ShaderSource[] shaders, ShaderInfo info);
 
         ISampler CreateSampler(SamplerCreateInfo info);
         ITexture CreateTexture(TextureCreateInfo info);
+        ITextureArray CreateTextureArray(int size, bool isBuffer);
+
         bool PrepareHostMapping(nint address, ulong size);
 
         void CreateSync(ulong id, bool strict);
