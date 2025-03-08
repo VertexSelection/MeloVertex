@@ -113,6 +113,9 @@
 					CodeSignOnCopy,
 					RemoveHeadersOnCopy,
 				);
+				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib" = (
+					CodeSignOnCopy,
+				);
 				"Dependencies/Dynamic Libraries/RyujinxKeyboard.framework" = (
 					CodeSignOnCopy,
 					RemoveHeadersOnCopy,
@@ -173,6 +176,7 @@
 				"Dependencies/Dynamic Libraries/libavcodec.dylib",
 				"Dependencies/Dynamic Libraries/libavutil.dylib",
 				"Dependencies/Dynamic Libraries/libMoltenVK.dylib",
+				"Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib",
 				"Dependencies/Dynamic Libraries/RyujinxKeyboard.framework",
 				Dependencies/XCFrameworks/libavcodec.xcframework,
 				Dependencies/XCFrameworks/libavfilter.xcframework,
@@ -822,6 +826,7 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				MARKETING_VERSION = "$(VERSION)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
@@ -922,6 +927,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",

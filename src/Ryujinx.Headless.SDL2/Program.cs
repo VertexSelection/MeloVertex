@@ -987,7 +987,7 @@ namespace Ryujinx.Headless.SDL2
                 }
                 else
                 {   
-                    bool isNintendoStyle = gamepadName.Contains("Nintendo") || gamepadName.Contains("Joycons");
+                    bool isNintendoStyle = true; // gamepadName.Contains("Nintendo") || gamepadName.Contains("Joycons");
 
                     config = new StandardControllerInputConfig
                     {

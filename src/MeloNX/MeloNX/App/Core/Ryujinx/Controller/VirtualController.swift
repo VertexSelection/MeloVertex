@@ -174,10 +174,10 @@ class VirtualController {
 }
 
 enum VirtualControllerButton: Int {
-    case B
     case A
-    case Y
+    case B
     case X
+    case Y
     case back
     case guide
     case start
