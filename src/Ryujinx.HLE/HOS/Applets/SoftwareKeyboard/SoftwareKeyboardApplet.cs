@@ -109,7 +109,7 @@ namespace Ryujinx.HLE.HOS.Applets
                         _npads.NpadButtonDownEvent += HandleNpadButtonDownEvent;
                         _npads.NpadButtonUpEvent += HandleNpadButtonUpEvent;
 
-                        _keyboardRenderer = new SoftwareKeyboardRenderer(_device.UIHandler.HostUITheme);
+                        // _keyboardRenderer = new SoftwareKeyboardRenderer(_device.UIHandler.HostUITheme);
                     }
 
                     return ResultCode.Success;
@@ -177,9 +177,9 @@ namespace Ryujinx.HLE.HOS.Applets
         {
             _npads?.Update();
 
-            _keyboardRenderer?.SetSurfaceInfo(surfaceInfo);
+            // _keyboardRenderer?.SetSurfaceInfo(surfaceInfo);
 
-            return _keyboardRenderer?.DrawTo(destination, position) ?? false;
+            return true; // _keyboardRenderer?.DrawTo(destination, position) ?? false;
         }
 
 
@@ -470,7 +470,7 @@ namespace Ryujinx.HLE.HOS.Applets
                     if (updateText)
                     {
                         _dynamicTextInputHandler.SetText(_textValue, _cursorBegin);
-                        _keyboardRenderer.UpdateTextState(_textValue, _cursorBegin, _cursorBegin, null, null);
+                        // _keyboardRenderer.UpdateTextState(_textValue, _cursorBegin, _cursorBegin, null, null);
                     }
 
                     if ((newCalc.Flags & KeyboardCalcFlags.MustShow) != 0)
@@ -515,8 +515,8 @@ namespace Ryujinx.HLE.HOS.Applets
 
             _dynamicTextInputHandler.TextProcessingEnabled = true;
 
-            _keyboardRenderer.UpdateCommandState(null, null, true);
-            _keyboardRenderer.UpdateTextState(null, null, null, null, true);
+            // _keyboardRenderer.UpdateCommandState(null, null, true);
+            // _keyboardRenderer.UpdateTextState(null, null, null, null, true);
         }
 
         private void DeactivateFrontend()
@@ -534,7 +534,7 @@ namespace Ryujinx.HLE.HOS.Applets
         {
             Logger.Debug?.Print(LogClass.ServiceAm, "Destroying software keyboard frontend");
 
-            _keyboardRenderer?.Dispose();
+            // _keyboardRenderer?.Dispose();
             _keyboardRenderer = null;
 
             if (_dynamicTextInputHandler != null)
@@ -568,8 +568,8 @@ namespace Ryujinx.HLE.HOS.Applets
 
                         _dynamicTextInputHandler.TextProcessingEnabled = typingEnabled;
 
-                        _keyboardRenderer.UpdateTextState(null, null, null, null, typingEnabled);
-                        _keyboardRenderer.UpdateCommandState(null, null, controllerEnabled);
+                        // _keyboardRenderer.UpdateTextState(null, null, null, null, typingEnabled);
+                        // _keyboardRenderer.UpdateCommandState(null, null, controllerEnabled);
                     }
                 }
             }
@@ -596,7 +596,7 @@ namespace Ryujinx.HLE.HOS.Applets
 
                 _textValue = text;
                 _cursorBegin = cursorBegin;
-                _keyboardRenderer.UpdateTextState(text, cursorBegin, cursorEnd, overwriteMode, null);
+                // _keyboardRenderer.UpdateTextState(text, cursorBegin, cursorEnd, overwriteMode, null);
 
                 PushUpdatedState(text, cursorBegin, KeyboardResult.NotSet);
             }
@@ -614,10 +614,10 @@ namespace Ryujinx.HLE.HOS.Applets
                 switch (button)
                 {
                     case NpadButton.A:
-                        _keyboardRenderer.UpdateCommandState(_canAcceptController, null, null);
+                        // _keyboardRenderer.UpdateCommandState(_canAcceptController, null, null);
                         break;
                     case NpadButton.B:
-                        _keyboardRenderer.UpdateCommandState(null, _canAcceptController, null);
+                        // _keyboardRenderer.UpdateCommandState(null, _canAcceptController, null);
                         break;
                 }
             }
@@ -633,11 +633,11 @@ namespace Ryujinx.HLE.HOS.Applets
                 {
                     case NpadButton.A:
                         result = KeyboardResult.Accept;
-                        _keyboardRenderer.UpdateCommandState(false, null, null);
+                        // _keyboardRenderer.UpdateCommandState(false, null, null);
                         break;
                     case NpadButton.B:
                         result = KeyboardResult.Cancel;
-                        _keyboardRenderer.UpdateCommandState(null, false, null);
+                        // _keyboardRenderer.UpdateCommandState(null, false, null);
                         break;
                 }
 

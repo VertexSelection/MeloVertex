@@ -25,8 +25,8 @@ namespace Ryujinx.HLE.HOS.Applets.SoftwareKeyboard
         {
             _renderer = new SoftwareKeyboardRendererBase(uiTheme);
 
-            StartTextBoxBlinker(_textBoxBlinkTimedAction, _state, _stateLock);
-            StartRenderer(_renderAction, _renderer, _state, _stateLock);
+            // StartTextBoxBlinker(_textBoxBlinkTimedAction, _state, _stateLock);
+            // StartRenderer(_renderAction, _renderer, _state, _stateLock);
         }
 
         private static void StartTextBoxBlinker(TimedAction timedAction, SoftwareKeyboardUIState state, object stateLock)
