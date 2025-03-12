@@ -94,9 +94,8 @@ If having Issues installing firmware (Make sure your Keys are installed first)
 - **Input**
 
   We currently have support for keyboard, touch input, JoyCon input support, and nearly all controllers.
-  Motion controls are natively supported in most cases; for dual-JoyCon motion support, DS4Windows or BetterJoy are currently required.
-  In all scenarios, you can set up everything inside the input configuration menu.
-
+  Motion controls are natively supported in most cases.
+  
 - **DLC & Modifications**
 
   MeloNX supports DLC + Game Update Add-ons.
