@@ -66,7 +66,7 @@ struct SetupView: View {
             finished = false
             keysImported = Ryujinx.shared.checkIfKeysImported()
             print((Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0))
-            firmImported = ((Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0) != 0)
+            firmImported = (Ryujinx.shared.fetchFirmwareVersion() != "0")
         }
     }
     
@@ -371,7 +371,7 @@ struct SetupView: View {
             
             print(Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0)
             
-            firmImported = ((Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0) != 0)
+            firmImported = (Ryujinx.shared.fetchFirmwareVersion() != "0")
             alertMessage = "Firmware installed successfully"
             showAlert = true
             
