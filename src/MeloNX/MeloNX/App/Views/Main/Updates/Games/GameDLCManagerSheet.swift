@@ -132,6 +132,7 @@ struct DLCManagerSheet: View {
 private extension DLCManagerSheet {
     static func loadDlc(_ game: Game) -> [DownloadableContentContainer] {
         let jsonURL = dlcJsonPath(for: game)
+        try? FileManager.default.createDirectory(at: jsonURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         guard let data = try? Data(contentsOf: jsonURL),
               var result = try? JSONDecoder().decode([DownloadableContentContainer].self, from: data)
         else { return [] }

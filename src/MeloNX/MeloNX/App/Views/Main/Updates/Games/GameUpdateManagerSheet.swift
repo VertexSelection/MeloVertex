@@ -179,6 +179,7 @@ struct UpdateManagerSheet: View {
         
         do {
             let data = try Data(contentsOf: jsonURL)
+            try FileManager.default.createDirectory(at: jsonURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             var jsonDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] ?? [:]
             
             if let currentSelected = jsonDict["selected"] as? String, currentSelected == newSelection {
