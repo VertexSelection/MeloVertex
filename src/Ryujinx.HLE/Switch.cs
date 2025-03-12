@@ -44,7 +44,7 @@ namespace Ryujinx.HLE
 
             MemoryAllocationFlags memoryAllocationFlags = configuration.MemoryManagerMode == MemoryManagerMode.SoftwarePageTable
                 ? MemoryAllocationFlags.Reserve
-                : MemoryAllocationFlags.Reserve | MemoryAllocationFlags.Mirrorable;
+                : MemoryAllocationFlags.Reserve; //  | MemoryAllocationFlags.Mirrorable;
 
 #pragma warning disable IDE0055 // Disable formatting
             AudioDeviceDriver = AddAudioCompatLayers(Configuration.AudioDeviceDriver);

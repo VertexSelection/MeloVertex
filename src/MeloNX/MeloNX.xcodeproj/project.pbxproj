@@ -32,6 +32,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		4E2953AB2D803BC9000497CD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4E80A9852CD6F54500029585 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD43C6212D1B248D003BBC42;
+			remoteInfo = com.Stossy11.MeloNX.RyujinxAg;
+		};
 		4E80A99E2CD6F54700029585 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4E80A9852CD6F54500029585 /* Project object */;
@@ -45,13 +52,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 4E80A98C2CD6F54500029585;
 			remoteInfo = MeloNX;
-		};
-		4EE019E62D7CF7D600B7D583 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 4E80A9852CD6F54500029585 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BD43C6212D1B248D003BBC42;
-			remoteInfo = com.Stossy11.MeloNX.RyujinxAg;
 		};
 		BD43C6252D1B249E003BBC42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -294,7 +294,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				4EE019E72D7CF7D600B7D583 /* PBXTargetDependency */,
+				4E2953AC2D803BC9000497CD /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				4E80A98F2CD6F54500029585 /* MeloNX */,
@@ -362,7 +362,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1610;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					4E80A98C2CD6F54500029585 = {
 						CreatedOnToolsVersion = 16.1;
@@ -453,7 +453,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd ../..\nmv src/Ryujinx.Headless.SDL2/bin/Release/net8.0/ios-arm64/native/Ryujinx.Headless.SDL2.dylib src/MeloNX/MeloNX/Dependencies/Dynamic\\ Libraries/Ryujinx.Headless.SDL2.dylib\n";
+			shellScript = "cd ../..\nmv src/Ryujinx.Headless.SDL2/bin/Release/net8.0/ios-arm64/publish/Ryujinx.Headless.SDL2.dylib src/MeloNX/MeloNX/Dependencies/Dynamic\\ Libraries/Ryujinx.Headless.SDL2.dylib\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -482,6 +482,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		4E2953AC2D803BC9000497CD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD43C6212D1B248D003BBC42 /* com.Stossy11.MeloNX.RyujinxAg */;
+			targetProxy = 4E2953AB2D803BC9000497CD /* PBXContainerItemProxy */;
+		};
 		4E80A99F2CD6F54700029585 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4E80A98C2CD6F54500029585 /* MeloNX */;
@@ -491,11 +496,6 @@
 			isa = PBXTargetDependency;
 			target = 4E80A98C2CD6F54500029585 /* MeloNX */;
 			targetProxy = 4E80A9A82CD6F54700029585 /* PBXContainerItemProxy */;
-		};
-		4EE019E72D7CF7D600B7D583 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BD43C6212D1B248D003BBC42 /* com.Stossy11.MeloNX.RyujinxAg */;
-			targetProxy = 4EE019E62D7CF7D600B7D583 /* PBXContainerItemProxy */;
 		};
 		BD43C6262D1B249E003BBC42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -708,8 +708,12 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
-				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_OPTIMIZATION_LEVEL = z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeloNX/Info.plist;
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
@@ -822,6 +826,17 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
@@ -905,8 +920,12 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
-				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_OPTIMIZATION_LEVEL = z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeloNX/Info.plist;
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
@@ -1019,6 +1038,17 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",

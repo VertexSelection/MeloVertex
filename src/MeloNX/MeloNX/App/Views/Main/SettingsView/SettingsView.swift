@@ -183,7 +183,7 @@ struct SettingsView: View {
                     .padding(.vertical, 8)
 
                     Toggle(isOn: $performacehud) {
-                        labelWithIcon("Performance Overlay", iconName: "speedometer")
+                        labelWithIcon("Custom Performance Overlay", iconName: "speedometer")
                     }
                     .tint(.blue)
                 } header: {
@@ -452,7 +452,8 @@ struct SettingsView: View {
                         .tint(.blue)
                         .contextMenu {
                             Button {
-                                if let mainWindow = UIApplication.shared.windows.last {
+                                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                   let mainWindow = windowScene.windows.last {
                                     let alertController = UIAlertController(title: "About JitStreamer EB", message: "JitStreamer EB is an Amazing Application to Enable JIT on the go, made by one of the best iOS developers of all time jkcoxson <3", preferredStyle: .alert)
                                     
                                     let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
@@ -481,7 +482,8 @@ struct SettingsView: View {
                     }.tint(.blue)
                         .contextMenu() {
                             Button {
-                                if let mainWindow = UIApplication.shared.windows.last {
+                                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                   let mainWindow = windowScene.windows.last {
                                     let alertController = UIAlertController(title: "About MVK: Synchronous Queue Submits", message: "Enable this option if Mario Kart 8 is crashing at Grand Prix mode.", preferredStyle: .alert)
                                     
                                     let doneButton = UIAlertAction(title: "OK", style: .cancel, handler: nil)
@@ -546,7 +548,7 @@ struct SettingsView: View {
                     if ProcessInfo.processInfo.isiOSAppOnMac {
                         labelWithIcon("Memory: \(String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024)))", iconName: "memorychip.fill")
                     } else {
-                        labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024)))", iconName: "memorychip.fill")
+                        labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000))", iconName: "memorychip.fill")
                     }
                     
                     labelWithIcon("\(deviceType) \(UIDevice.current.systemVersion)", iconName: "applelogo")
@@ -577,7 +579,16 @@ struct SettingsView: View {
                             Spacer()
                             Text("\(String(Int(getpagesize())))")
                                 .foregroundColor(.secondary)
-                            
+                        }
+                        
+                        if MTLHud.shared.canMetalHud {
+                            Toggle(isOn: $metalHUDEnabled) {
+                                labelWithIcon("Metal Performance HUD", iconName: "speedometer")
+                            }
+                            .tint(.blue)
+                            .onChange(of: metalHUDEnabled) { newValue in
+                                MTLHud.shared.toggle()
+                            }
                         }
                         
                         Toggle(isOn: $ignoreJIT) {
@@ -617,7 +628,7 @@ struct SettingsView: View {
                         .textCase(nil)
                         .headerProminence(.increased)
                 } footer: {
-                    Text("For advanced users. See page size or add custom arguments for experimental features. (Please don't touch this if you don't know what you're doing). \n \n\(gamepo ? "the cake is a lie" : "")")
+                    Text("For advanced users. See page size or add custom arguments for experimental features, \"Metal Performance HUD\" is not needed if you have it enabled in settings. \n \n\(gamepo ? "the cake is a lie" : "")")
                 }
                 
             }

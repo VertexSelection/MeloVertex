@@ -10,7 +10,7 @@ import MetalKit
 
 struct TouchView: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {
-        var view = MeloMTKView()
+        let view = MeloMTKView()
         return view
     }
     

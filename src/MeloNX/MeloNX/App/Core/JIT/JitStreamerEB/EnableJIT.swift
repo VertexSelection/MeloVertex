@@ -19,12 +19,13 @@ func enableJITEB()  {
             return
         }
         
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            return
-        }
         DispatchQueue.main.async {
-            showLaunchAppAlert(jsonData: data!, in: UIApplication.shared.windows.last!.rootViewController!)
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let lastWindow = windowScene.windows.last {
+                showLaunchAppAlert(jsonData: data!, in: lastWindow.rootViewController!)
+            } else {
+                fatalError("Unable to get Window")
+            }
         }
         
         return

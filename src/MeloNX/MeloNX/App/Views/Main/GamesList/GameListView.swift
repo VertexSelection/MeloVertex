@@ -258,7 +258,7 @@ struct GameLibraryView: View {
                         let fileExtension = (url.pathExtension as NSString).utf8String
                         let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
                         
-                        var gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
+                        let gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
                         
                         let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: url)
                         

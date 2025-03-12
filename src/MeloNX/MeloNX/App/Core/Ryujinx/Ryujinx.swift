@@ -360,18 +360,13 @@ class Ryujinx {
     }
     
     func fetchFirmwareVersion() -> String {
-        do {
-            let firmwareVersionPointer = installed_firmware_version()
-            if let pointer = firmwareVersionPointer {
-                let firmwareVersion = String(cString: pointer)
-                DispatchQueue.main.async {
-                    self.firmwareversion = firmwareVersion
-                }
-                return firmwareVersion
+        let firmwareVersionPointer = installed_firmware_version()
+        if let pointer = firmwareVersionPointer {
+            let firmwareVersion = String(cString: pointer)
+            DispatchQueue.main.async {
+                self.firmwareversion = firmwareVersion
             }
-            
-        } catch {
-            print(error)
+            return firmwareVersion
         }
 
         return "0"
@@ -500,62 +495,6 @@ class Ryujinx {
         }
     }
     
-    
-    func repeatuntilfindLayer() {
-        Task { @MainActor in
-            while self.metalLayer == nil {
-                let layer = self.getMetalLayer(nil)
-                
-                if layer != nil {
-                    self.metalLayer = layer
-                    break
-                }
-                
-                Thread.sleep(forTimeInterval: 0.1)
-            }
-        }
-    }
-
-
-    @MainActor
-    func getMetalLayer(_ window: OpaquePointer?) -> CAMetalLayer? {
-        var window = window
-        if window == nil {
-            window = SDL_GetWindowFromID(1)
-        }
-
-        var windowInfo = SDL_SysWMinfo()
-        SDL_GetWindowWMInfo(window, &windowInfo)
-
-        
-        guard let uiWindow = windowInfo.info.uikit.window,
-              let rootView = uiWindow.takeUnretainedValue().rootViewController?.view else {
-            print("Unable to get root view")
-            return nil
-        }
-
-        func findMetalLayer(in view: UIView) -> CAMetalLayer? {
-            if let metalLayer = view.layer as? CAMetalLayer {
-                return metalLayer
-            }
-            
-            for subview in view.subviews {
-                if let metalLayer = findMetalLayer(in: subview) {
-                    return metalLayer
-                }
-            }
-            
-            return nil
-        }
-
-        if let existingLayer = findMetalLayer(in: rootView) {
-            print("Found Metal Layer")
-            return existingLayer
-        }
-        print("found nothing")
-        return nil
-    }
-
 
 
     static func log(_ message: String) {

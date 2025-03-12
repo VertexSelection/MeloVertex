@@ -11,7 +11,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "REPO_DIR=&quot;$(cd &quot;${SRCROOT}/../../&quot; &amp;&amp; pwd)&quot;&#10;SCRIPT_PATH=&quot;$REPO_DIR/distribution/ios/get_dotnet.sh&quot;&#10;&#10;sh &quot;${SCRIPT_PATH}&quot;&#10;"
+               scriptText = "REPO_DIR=&quot;$(cd &quot;${SRCROOT}/../../&quot; &amp;&amp; pwd)&quot;&#10;SCRIPT_PATH=&quot;$REPO_DIR/distribution/ios/get_dotnet.sh&quot;&#10;&#10;echo &quot;Xcode is located at: $DEVELOPER_DIR&quot;&#10;&#10;sh &quot;${SCRIPT_PATH}&quot;&#10;"
                shellToInvoke = "/bin/bash">
                <EnvironmentBuildable>
                   <BuildableReference

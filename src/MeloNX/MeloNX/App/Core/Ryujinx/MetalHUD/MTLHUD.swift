@@ -10,9 +10,7 @@ import Foundation
 
 class MTLHud {
     
-    var canMetalHud: Bool {
-        return openMetalDylib()
-    }
+    @Published var canMetalHud: Bool = false
     
     var isEnabled: Bool {
         if let getenv = getenv("MTL_HUD_ENABLED") {
@@ -24,7 +22,17 @@ class MTLHud {
     static let shared = MTLHud()
     
     private init() {
-        openMetalDylib()
+        let _ = openMetalDylib() // i'm fixing the warnings just because you said i suck at coding Autumn (propenchiefer,
+        https://youtu.be/tc65SNOTMz4 7:23)
+        if UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED") {
+            enable()
+        } else {
+            disable()
+        }
+    }
+    
+    func toggle() {
+        print(UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED"))
         if UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED") {
             enable()
         } else {
@@ -35,16 +43,15 @@ class MTLHud {
     func openMetalDylib() -> Bool {
         let path = "/usr/lib/libMTLHud.dylib"
 
-        // Load the dynamic library
         if dlopen(path, RTLD_NOW) != nil {
-            // Library loaded successfully
             print("Library loaded from \(path)")
+            canMetalHud = true
             return true
         } else {
-            // Handle error
             if let error = String(validatingUTF8: dlerror()) {
                 print("Error loading library: \(error)")
             }
+            canMetalHud = false
             return false
         }
     }

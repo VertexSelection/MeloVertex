@@ -65,7 +65,8 @@ struct SetupView: View {
             initialize()
             finished = false
             keysImported = Ryujinx.shared.checkIfKeysImported()
-            firmImported = (Ryujinx.shared.fetchFirmwareVersion() != "0")
+            print((Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0))
+            firmImported = ((Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0) != 0)
         }
     }
     
@@ -116,6 +117,9 @@ struct SetupView: View {
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
+                                .onTapGesture(count: 2) {
+                                    showSkipAlert = true
+                                }
                             
                             Text("Set up your Nintendo Switch emulation environment by importing keys and firmware.")
                                 .font(.subheadline)
@@ -365,8 +369,9 @@ struct SetupView: View {
             
             Ryujinx.shared.installFirmware(firmwarePath: fileURL.path)
             
+            print(Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0)
             
-            firmImported = (Ryujinx.shared.fetchFirmwareVersion() != "0")
+            firmImported = ((Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0) != 0)
             alertMessage = "Firmware installed successfully"
             showAlert = true
             

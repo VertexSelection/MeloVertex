@@ -15,7 +15,7 @@ struct MetalView: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {
         
         if Ryujinx.shared.emulationUIView == nil {
-            var view = MeloMTKView()
+            let view = MeloMTKView()
             
             guard let metalLayer = view.layer as? CAMetalLayer else {
                 fatalError("[Swift] Error: MTKView's layer is not a CAMetalLayer")
@@ -34,13 +34,19 @@ struct MetalView: UIViewRepresentable {
             return view
         }
         
-        let uiview = UIView()
-        
-        uiview.layer.addSublayer(Ryujinx.shared.metalLayer!)
-        
-        uiview.contentScaleFactor = Ryujinx.shared.metalLayer!.contentsScale
-        
-        return uiview
+        if Double(UIDevice.current.systemVersion)! < 17.0 {
+            
+            let uiview = MTKView()
+            let layer = Ryujinx.shared.metalLayer!
+            
+            layer.frame = uiview.bounds
+            
+            uiview.layer.addSublayer(layer)
+            
+            return uiview
+        } else {
+            return Ryujinx.shared.emulationUIView!
+        }
     }
     
     func updateUIView(_ uiView: UIView, context: Context) {

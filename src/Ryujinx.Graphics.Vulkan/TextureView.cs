@@ -769,46 +769,119 @@ namespace Ryujinx.Graphics.Vulkan
 
         private void SetData(ReadOnlySpan<byte> data, int layer, int level, int layers, int levels, bool singleSlice, Rectangle<int>? region = null)
         {
+            const int MaxChunkSize = 1024 * 1024 * 16; // 16MB chunks
+            
             int bufferDataLength = GetBufferDataLength(data.Length);
-
-            using var bufferHolder = _gd.BufferManager.Create(_gd, bufferDataLength);
-
-            Auto<DisposableImage> imageAuto = GetImage();
-
-            // Load texture data inline if the texture has been used on the current command buffer.
-
-            bool loadInline = Storage.HasCommandBufferDependency(_gd.PipelineInternal.CurrentCommandBuffer);
-
-            var cbs = loadInline ? _gd.PipelineInternal.CurrentCommandBuffer : _gd.PipelineInternal.GetPreloadCommandBuffer();
-
-            if (loadInline)
+            
+            if (bufferDataLength <= MaxChunkSize)
             {
-                _gd.PipelineInternal.EndRenderPass();
+                ProcessChunk(data, layer, level, layers, levels, singleSlice, region);
+                return;
             }
-
-            CopyDataToBuffer(bufferHolder.GetDataStorage(0, bufferDataLength), data);
-
-            var buffer = bufferHolder.GetBuffer(cbs.CommandBuffer).Get(cbs).Value;
-            var image = imageAuto.Get(cbs).Value;
-
-            if (region.HasValue)
+            
+            if (!region.HasValue && !singleSlice && layers > 1)
             {
-                CopyFromOrToBuffer(
-                    cbs.CommandBuffer,
-                    buffer,
-                    image,
-                    bufferDataLength,
-                    false,
-                    layer,
-                    level,
-                    region.Value.X,
-                    region.Value.Y,
-                    region.Value.Width,
-                    region.Value.Height);
+                int layerSize = data.Length / layers;
+                int offset = 0;
+                
+                for (int i = 0; i < layers; i++)
+                {
+                    int currentLayer = layer + i;
+                    int currentLayerSize = Math.Min(layerSize, data.Length - offset);
+                    var layerData = data.Slice(offset, currentLayerSize);
+                    
+                    ProcessChunk(layerData, currentLayer, level, 1, levels, true);
+                    offset += layerSize;
+                    
+                    if (offset >= data.Length)
+                        break;
+                }
+            }
+            else if (region.HasValue)
+            {
+                var rect = region.Value;
+                int dataPerPixel = data.Length / (rect.Width * rect.Height);
+                int rowStride = rect.Width * dataPerPixel;
+                
+                int rowsPerChunk = Math.Max(1, MaxChunkSize / rowStride);
+                int originalHeight = rect.Height;
+                int currentY = rect.Y;
+                int offset = 0;
+                
+                while (currentY < rect.Y + originalHeight)
+                {
+                    int chunkHeight = Math.Min(rowsPerChunk, rect.Y + originalHeight - currentY);
+                    var chunkRegion = new Rectangle<int>(rect.X, currentY, rect.Width, chunkHeight);
+                    
+                    int chunkSize = chunkHeight * rowStride;
+                    int safeChunkSize = Math.Min(chunkSize, data.Length - offset);
+                    var chunkData = data.Slice(offset, safeChunkSize);
+                    
+                    ProcessChunk(chunkData, layer, level, 1, 1, true, chunkRegion);
+                    
+                    currentY += chunkHeight;
+                    offset += chunkSize;
+                    
+                    if (offset >= data.Length)
+                        break;
+                }
             }
             else
             {
-                CopyFromOrToBuffer(cbs.CommandBuffer, buffer, image, bufferDataLength, false, layer, level, layers, levels, singleSlice);
+                ProcessChunk(data, layer, level, layers, levels, singleSlice, region);
+            }
+            
+            void ProcessChunk(ReadOnlySpan<byte> chunkData, int chunkLayer, int chunkLevel, int chunkLayers, int chunkLevels, bool chunkSingleSlice, Rectangle<int>? chunkRegion = null)
+            {
+                int chunkBufferLength = GetBufferDataLength(chunkData.Length);
+                
+                using var bufferHolder = _gd.BufferManager.Create(_gd, chunkBufferLength);
+                
+                using (var imageAuto = GetImage())
+                {
+                    bool loadInline = Storage.HasCommandBufferDependency(_gd.PipelineInternal.CurrentCommandBuffer);
+                    var cbs = loadInline ? _gd.PipelineInternal.CurrentCommandBuffer : _gd.PipelineInternal.GetPreloadCommandBuffer();
+                    
+                    if (loadInline)
+                    {
+                        _gd.PipelineInternal.EndRenderPass();
+                    }
+                    
+                    CopyDataToBuffer(bufferHolder.GetDataStorage(0, chunkBufferLength), chunkData);
+                    
+                    var buffer = bufferHolder.GetBuffer(cbs.CommandBuffer).Get(cbs).Value;
+                    var image = imageAuto.Get(cbs).Value;
+                    
+                    if (chunkRegion.HasValue)
+                    {
+                        CopyFromOrToBuffer(
+                            cbs.CommandBuffer,
+                            buffer,
+                            image,
+                            chunkBufferLength,
+                            false,
+                            chunkLayer,
+                            chunkLevel,
+                            chunkRegion.Value.X,
+                            chunkRegion.Value.Y,
+                            chunkRegion.Value.Width,
+                            chunkRegion.Value.Height);
+                    }
+                    else
+                    {
+                        CopyFromOrToBuffer(
+                            cbs.CommandBuffer, 
+                            buffer, 
+                            image, 
+                            chunkBufferLength, 
+                            false, 
+                            chunkLayer, 
+                            chunkLevel, 
+                            chunkLayers, 
+                            chunkLevels, 
+                            chunkSingleSlice);
+                    }
+                } 
             }
         }
 

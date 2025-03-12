@@ -78,8 +78,6 @@ class NativeController: Hashable {
             return
         }
 
-        // Open a game controller for the virtual joystick
-        let joystick = SDL_JoystickFromInstanceID(instanceID)
         controller = SDL_GameControllerOpen(Int32(instanceID))
 
         if controller == nil {
