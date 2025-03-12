@@ -6,11 +6,6 @@
 
 <h1 align="center">MeloNX</h1>
 
-## Documentation
-
-If you are planning to contribute or just want to learn more about this project please read through our [documentation](docs/README.md).
-
-
 <p align="center">
     MeloNX enables Nintendo Switch game emulation on iOS using the Ryujinx iOS code base.
 </p>
