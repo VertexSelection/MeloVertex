@@ -2,11 +2,11 @@
 //  LatestVersionResponse.swift
 //  MeloNX
 //
-//  Created by Stossy11 on 12/03/2025.
+//  Created by Bella on 12/03/2025.
 //
 
 
-		struct LatestVersionResponse: Codable {
+struct LatestVersionResponse: Codable {
     let version_number: String
     let version_number_stripped: String
     let changelog: String
