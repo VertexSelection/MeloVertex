@@ -49,11 +49,12 @@ MeloNX works on iPhone XS/XR and later and iPad 8th Gen and later. Check out the
 
 4. **Enable JIT**  
    - Use your preferred method to enable Just-In-Time (JIT) compilation.  
+   - We reccomend using [JitStreamer](https://jkcoxson.com/jitstreamer)
 
 5. **Add Necessary Files**  
 
 If having Issues installing firmware (Make sure your Keys are installed first)
-   - If needed, install firmware and keys from **Ryujinx Desktop**.  
+   - If needed, install firmware and keys from **Ryujinx Desktop** (or forks).  
    - Copy the **bis** and **system** folders  
    
 ### Free Developer Account (Experimental)
@@ -82,6 +83,15 @@ If having Issues installing firmware (Make sure your Keys are installed first)
 7. **Verify Increased Memory Limit**  
    - Open MeloNX and check if the **Increased Memory Limit** is enabled.  
 
+8. **Add Necessary Files**  
+
+If having Issues installing firmware (Make sure your keys are installed first)
+   - If needed, install firmware and keys from **Ryujinx Desktop** (or forks).  
+   - Copy the **bis** and **system** folders  
+   
+9. **Enable JIT**  
+   - Use your preferred method to enable Just-In-Time (JIT) compilation. 
+   - We reccomend using [JitStreamer](https://jkcoxson.com/jitstreamer)
 
 ### Free Developer Account (Xcode)
 
@@ -92,8 +102,8 @@ If having Issues installing firmware (Make sure your Keys are installed first)
 
 2. **Add Necessary Files**  
 
-If having Issues installing firmware (Make sure your Keys are installed first)
-   - If needed, install firmware and keys from **Ryujinx Desktop**.  
+If having Issues installing firmware (Make sure your keys are installed first)
+   - If needed, install firmware and keys from **Ryujinx Desktop** (or forks).  
    - Copy the **bis** and **system** folders  
    
 ## Features
