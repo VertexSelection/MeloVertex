@@ -23,7 +23,7 @@ MeloNX works on iPhone XS/XR and later and iPad 8th Gen and later. Check out the
 
 ## FAQ
 - MeloNX is made for iOS 17+, on iOS 15 - 16 MeloNX can be installed but may have issues or not work at all.
-- MeloNX needs Xcode or a Paid Apple Developer Account. SideStore support may come soon (SideStore Side Issue)
+- MeloNX needs Xcode or a Paid Apple Developer Account, However there is an experimental Installation Guide.
 - MeloNX needs JIT
 - Recommended Device: iPhone 15 Pro or newer.
 - Low-End Recommended Device**: iPhone 13 Pro. 
@@ -55,8 +55,35 @@ MeloNX works on iPhone XS/XR and later and iPad 8th Gen and later. Check out the
 If having Issues installing firmware (Make sure your Keys are installed first)
    - If needed, install firmware and keys from **Ryujinx Desktop**.  
    - Copy the **bis** and **system** folders  
+   
+### Free Developer Account (Experimental)
 
-### Xcode
+1. **Sideload MeloNX**  
+   - Use [SideStore](https://sidestore.io/) or [AltStore](https://altstore.io/) (**NOT** AltStore PAL).  
+
+2. **Sideload the Entitlement App**  
+   - Install [this app](https://github.com/hugeBlack/GetMoreRam/releases/download/nightly/Entitlement.ipa) using [SideStore](https://sidestore.io/) or [AltStore](https://altstore.io/) (**NOT** AltStore PAL).  
+
+3. **Sign In to Your Account**  
+   - Open **Settings** in the entitlement app and sign in with your Apple ID.  
+
+4. **Refresh App IDs**  
+   - Navigate to the **App IDs** page.  
+   - Tap **Refresh** to update the list.  
+
+5. **Enable Increased Memory Limit**  
+   - Select **MeloNX** from the list.  
+   - Tap **Add Increased Memory Limit**.  
+
+6. **Reinstall MeloNX**  
+   - Delete the existing installation.  
+   - Sideload the app again using SideStore or AltStore.  
+
+7. **Verify Increased Memory Limit**  
+   - Open MeloNX and check if the **Increased Memory Limit** is enabled.  
+
+
+### Free Developer Account (Xcode)
 
 **NOTE: These Xcode builds are nightly and may have unfinished features.**
 
