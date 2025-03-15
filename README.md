@@ -72,7 +72,7 @@ If having Issues installing firmware (Make sure your Keys are installed first)
    - Tap **Refresh** to update the list.  
 
 5. **Enable Increased Memory Limit**  
-   - Select **MeloNX** from the list.  
+   - Select **MeloNX** (should be like "com.stossy11.MeloNX" or some variation) from the list.  
    - Tap **Add Increased Memory Limit**.  
 
 6. **Reinstall MeloNX**  
