@@ -23,11 +23,10 @@ MeloNX works on iPhone XS/XR and later and iPad 8th Gen and later. Check out the
 
 ## FAQ
 - MeloNX is made for iOS 17+, on iOS 15 - 16 MeloNX can be installed but may have issues or not work at all.
-- MeloNX needs Xcode or a Paid Apple Developer Account, However there is an experimental Installation Guide.
-- MeloNX needs JIT
+- MeloNX cannot be Sideloaded normally and requires the use of the following Installation Guide(s).
+- MeloNX requires JIT
 - Recommended Device: iPhone 15 Pro or newer.
-- Low-End Recommended Device**: iPhone 13 Pro. 
-- Lowest Supported Device: iPhone XR
+- Low-End Recommended Device: iPhone 13 Pro. 
 
 
 ## How to install
@@ -92,6 +91,22 @@ If having Issues installing firmware (Make sure your keys are installed first)
 9. **Enable JIT**  
    - Use your preferred method to enable Just-In-Time (JIT) compilation. 
    - We reccomend using [JitStreamer](https://jkcoxson.com/jitstreamer)
+   
+
+### TrollStore
+As Said in FAQ:
+> MeloNX is made for iOS 17+, on iOS 15 - 16 MeloNX can be installed but may have issues or not work at all.
+
+1. **Install MeloNX with TrollStore**
+
+2. **Add Necessary Files** 
+
+3. **Enable TrollStore JIT**
+   - MeloNX includes automatic JIT using the TrollStore URL Scheme
+   - Open MeloNX Settings
+   - Scroll down and enable the "TrollStore JIT" toggle
+   - Profit
+
 
 ### Free Developer Account (Xcode)
 
