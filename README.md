@@ -90,7 +90,7 @@ If having Issues installing firmware (Make sure your keys are installed first)
    
 9. **Enable JIT**  
    - Use your preferred method to enable Just-In-Time (JIT) compilation. 
-   - We reccomend using [JitStreamer](https://jkcoxson.com/jitstreamer)
+   - We recommend using [JitStreamer](https://jkcoxson.com/jitstreamer)
    
 
 ### TrollStore
