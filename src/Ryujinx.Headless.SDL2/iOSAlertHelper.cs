@@ -7,13 +7,16 @@ namespace Ryujinx.Headless.SDL2
 {
     public static class AlertHelper
     {
-        [DllImport("RyujinxKeyboard.framework/RyujinxKeyboard", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("RyujinxHelper.framework/RyujinxHelper", CallingConvention = CallingConvention.Cdecl)]
         public static extern void showKeyboardAlert(string title, string message, string placeholder);
 
-        [DllImport("RyujinxKeyboard.framework/RyujinxKeyboard", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("RyujinxHelper.framework/RyujinxHelper", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void showAlert(string title, string message, bool showCancel);
+
+        [DllImport("RyujinxHelper.framework/RyujinxHelper", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr getKeyboardInput();
 
-        [DllImport("RyujinxKeyboard.framework/RyujinxKeyboard", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("RyujinxHelper.framework/RyujinxHelper", CallingConvention = CallingConvention.Cdecl)]
         private static extern void clearKeyboardInput();
 
         public static void ShowAlertWithTextInput(string title, string message, string placeholder, Action<string> onTextEntered)
@@ -37,6 +40,11 @@ namespace Ryujinx.Headless.SDL2
                     }
                 }
             });
+        }
+
+
+        public static void ShowAlert(string title, string message, bool cancel) {
+            showAlert(title, message, cancel);
         }
     }
 }

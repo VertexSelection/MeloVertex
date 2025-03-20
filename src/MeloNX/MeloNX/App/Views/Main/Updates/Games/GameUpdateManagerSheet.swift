@@ -9,149 +9,169 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct UpdateManagerSheet: View {
-    @State private var items: [String] = []
-    @State private var paths: [URL] = []
-    @State private var selectedItem: String? = nil
+    // MARK: - Properties
+    @State private var updates: [UpdateItem] = []
     @Binding var game: Game?
     @State private var isSelectingGameUpdate = false
     @State private var jsonURL: URL? = nil
+    @Environment(\.dismiss) private var dismiss
+    
+    // MARK: - Models
+    class UpdateItem: Identifiable, ObservableObject {
+        let id = UUID()
+        let url: URL
+        let filename: String
+        let path: String
 
+        @Published var isSelected: Bool = false
+
+        init(url: URL, filename: String, path: String, isSelected: Bool = false) {
+            self.url = url
+            self.filename = filename
+            self.path = path
+            self.isSelected = isSelected
+        }
+    }
+    
+    // MARK: - Body
     var body: some View {
-        NavigationView {
-            List(paths, id: \..self, selection: $selectedItem) { item in
-                Button(action: {
-                    selectItem(item.lastPathComponent)
-                }) {
-                    HStack {
-                        Text(item.lastPathComponent)
-                            .foregroundStyle(Color(uiColor: .label))
-                        Spacer()
-                        if selectedItem == "updates/\(game!.titleId)/\(item.lastPathComponent)" {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(Color.accentColor)
-                                .font(.system(size: 24))
-                        } else {
-                            Image(systemName: "circle")
-                                .foregroundStyle(Color(uiColor: .secondaryLabel))
-                                .font(.system(size: 24))
-                        }
+        iOSNav {
+            List {
+                if updates.isEmpty {
+                    emptyStateView
+                } else {
+                    ForEach(updates) { update in
+                        updateRow(update)
+                    }
+                    .onDelete(perform: removeUpdates)
+                }
+            }
+            .navigationTitle("\(game?.titleName ?? "Game") Updates")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Done") {
+                        dismiss()
                     }
                 }
-                .contextMenu {
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        removeUpdate(item)
+                        isSelectingGameUpdate = true
                     } label: {
-                        Text("Remove Update")
+                        Label("Add Update", systemImage: "plus")
                     }
                 }
             }
             .onAppear {
-                print(URL.documentsDirectory.appendingPathComponent("games").appendingPathComponent(game!.titleId).appendingPathComponent("updates.json"))
-                
-                loadJSON(URL.documentsDirectory.appendingPathComponent("games").appendingPathComponent(game!.titleId).appendingPathComponent("updates.json"))
-            }
-            .navigationTitle("\(game!.titleName) Updates")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                Button("Add", systemImage: "plus") {
-                    isSelectingGameUpdate = true
-                }
+                loadData()
             }
         }
-        .fileImporter(isPresented: $isSelectingGameUpdate, allowedContentTypes: [.item]) { result in
-            switch result {
-            case .success(let url):
-                guard url.startAccessingSecurityScopedResource() else {
-                    print("Failed to access security-scoped resource")
-                    return
-                }
-                defer { url.stopAccessingSecurityScopedResource() }
-                
-                let gameInfo = game!
-                
-                do {
-                    let fileManager = FileManager.default
-                    let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-                    let updatedDirectory = documentsDirectory.appendingPathComponent("updates")
-                    let romUpdatedDirectory = updatedDirectory.appendingPathComponent(gameInfo.titleId)
+        .fileImporter(isPresented: $isSelectingGameUpdate, allowedContentTypes: [.item], onCompletion: handleFileImport)
+    }
+    
+    // MARK: - Views
+    private var emptyStateView: some View {
+        Group {
+            if #available(iOS 17, *) {
+                ContentUnavailableView(
+                    "No Updates Found",
+                    systemImage: "arrow.down.circle",
+                    description: Text("Tap the + button to add game updates.")
+                )
+            } else {
+                VStack(spacing: 20) {
+                    Spacer()
                     
-                    if !fileManager.fileExists(atPath: updatedDirectory.path) {
-                        try fileManager.createDirectory(at: updatedDirectory, withIntermediateDirectories: true, attributes: nil)
-                    }
-
-                    if !fileManager.fileExists(atPath: romUpdatedDirectory.path) {
-                        try fileManager.createDirectory(at: romUpdatedDirectory, withIntermediateDirectories: true, attributes: nil)
-                    }
-
-                    let destinationURL = romUpdatedDirectory.appendingPathComponent(url.lastPathComponent)
-                    try? fileManager.copyItem(at: url, to: destinationURL)
-
-                    items.append("updates/" + gameInfo.titleId + "/" + url.lastPathComponent)
-                    selectItem(url.lastPathComponent)
-                    Ryujinx.shared.games = Ryujinx.shared.loadGames()
-                    loadJSON(jsonURL!)
-                } catch {
-                    print("Error copying game file: \(error)")
+                    Image(systemName: "arrow.down.circle")
+                        .font(.system(size: 64))
+                        .foregroundColor(.secondary)
+                    
+                    Text("No Updates Found")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    Text("Tap the + button to add game updates.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    Spacer()
                 }
-            case .failure(let err):
-                print("File import failed: \(err.localizedDescription)")
+                .frame(maxWidth: .infinity)
+                .listRowInsets(EdgeInsets())
             }
         }
     }
     
-    func removeUpdate(_ game: URL) {
-        let gameString = "updates/\(self.game!.titleId)/\(game.lastPathComponent)"
-        paths.removeAll { $0 == game }
-        items.removeAll { $0 == gameString }
-        
-        if selectedItem == gameString {
-            selectedItem = nil
+    private func updateRow(_ update: UpdateItem) -> some View {
+        Button {
+            toggleSelection(update)
+        } label: {
+            HStack {
+                Text(update.filename)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: update.isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(update.isSelected ? .primary : .secondary)
+                    .imageScale(.large)
+            }
+            .contentShape(Rectangle())
         }
-        
-        do {
-            try FileManager.default.removeItem(at: game)
-        } catch {
-            print(error)
+        .buttonStyle(.plain)
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                if let index = updates.firstIndex(where: { $0.path == update.path }) {
+                    removeUpdate(at: IndexSet(integer: index))
+                }
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
         }
-        
-        saveJSON(selectedItem: selectedItem ?? "")
-        Ryujinx.shared.games = Ryujinx.shared.loadGames()
     }
     
-    func saveJSON(selectedItem: String?) {
+    // MARK: - Functions
+    private func loadData() {
+        guard let game = game else { return }
+        
+        let documentsDirectory = URL.documentsDirectory
+        jsonURL = documentsDirectory
+            .appendingPathComponent("games")
+            .appendingPathComponent(game.titleId)
+            .appendingPathComponent("updates.json")
+        
+        loadJSON()
+    }
+    
+    private func loadJSON() {
         guard let jsonURL = jsonURL else { return }
-        do {
-            let jsonDict = ["paths": items, "selected": selectedItem ?? self.selectedItem ?? ""] as [String: Any]
-            let newData = try JSONSerialization.data(withJSONObject: jsonDict, options: .prettyPrinted)
-            try newData.write(to: jsonURL)
-        } catch {
-            print("Failed to update JSON: \(error)")
-        }
-    }
-    
-    func loadJSON(_ json: URL) {
-        self.jsonURL = json
-        
-        guard let jsonURL else { return }
         
         do {
+            if !FileManager.default.fileExists(atPath: jsonURL.path) {
+                createDefaultJSON()
+                return
+            }
+            
             let data = try Data(contentsOf: jsonURL)
             if let jsonDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let list = jsonDict["paths"] as? [String]
-            {
-
-                let filteredList = list.filter { relativePath in
+               let paths = jsonDict["paths"] as? [String],
+               let selected = jsonDict["selected"] as? String {
+                
+                let filteredPaths = paths.filter { relativePath in
                     let path = URL.documentsDirectory.appendingPathComponent(relativePath)
                     return FileManager.default.fileExists(atPath: path.path)
                 }
-
-                let urls: [URL] = filteredList.map { relativePath in
-                    URL.documentsDirectory.appendingPathComponent(relativePath)
+                
+                updates = filteredPaths.map { relativePath in
+                    let url = URL.documentsDirectory.appendingPathComponent(relativePath)
+                    return UpdateItem(
+                        url: url,
+                        filename: url.lastPathComponent,
+                        path: relativePath,
+                        isSelected: selected == relativePath
+                    )
                 }
-
-                items = filteredList
-                paths = urls
-                selectedItem = jsonDict["selected"] as? String
             }
         } catch {
             print("Failed to read JSON: \(error)")
@@ -159,42 +179,119 @@ struct UpdateManagerSheet: View {
         }
     }
     
-    func createDefaultJSON() {
+    private func createDefaultJSON() {
         guard let jsonURL = jsonURL else { return }
-        let defaultData: [String: Any] = ["selected": "", "paths": []]
+        
         do {
+            try FileManager.default.createDirectory(at: jsonURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            
+            let defaultData: [String: Any] = ["selected": "", "paths": []]
             let newData = try JSONSerialization.data(withJSONObject: defaultData, options: .prettyPrinted)
             try newData.write(to: jsonURL)
-            items = []
-            selectedItem = ""
+            updates = []
         } catch {
             print("Failed to create default JSON: \(error)")
         }
     }
     
-    func selectItem(_ item: String) {
-        let newSelection = "updates/\(game!.titleId)/\(item)"
-
-        guard let jsonURL else { return }
-        
-        do {
-            let data = try Data(contentsOf: jsonURL)
-            try FileManager.default.createDirectory(at: jsonURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-            var jsonDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] ?? [:]
-            
-            if let currentSelected = jsonDict["selected"] as? String, currentSelected == newSelection {
-                jsonDict["selected"] = ""
-                selectedItem = ""
-            } else {
-                jsonDict["selected"] = "\(newSelection)"
-                selectedItem = newSelection
+    private func handleFileImport(result: Result<URL, Error>) {
+        switch result {
+        case .success(let selectedURL):
+            guard let game = game,
+                  selectedURL.startAccessingSecurityScopedResource() else {
+                print("Failed to access security-scoped resource")
+                return
             }
             
-            jsonDict["paths"] = items
-
+            defer { selectedURL.stopAccessingSecurityScopedResource() }
+            
+            do {
+                let fileManager = FileManager.default
+                let updatesDirectory = URL.documentsDirectory.appendingPathComponent("updates")
+                let gameUpdatesDirectory = updatesDirectory.appendingPathComponent(game.titleId)
+                
+                // Create directories if needed
+                try fileManager.createDirectory(at: gameUpdatesDirectory, withIntermediateDirectories: true)
+                
+                // Copy the file
+                let destinationURL = gameUpdatesDirectory.appendingPathComponent(selectedURL.lastPathComponent)
+                try? fileManager.removeItem(at: destinationURL) // Remove if exists
+                try fileManager.copyItem(at: selectedURL, to: destinationURL)
+                
+                // Add to updates
+                let relativePath = "updates/\(game.titleId)/\(selectedURL.lastPathComponent)"
+                let newUpdate = UpdateItem(
+                    url: destinationURL,
+                    filename: selectedURL.lastPathComponent,
+                    path: relativePath
+                )
+                
+                updates.append(newUpdate)
+                toggleSelection(newUpdate)
+                
+                // Reload games
+                Ryujinx.shared.games = Ryujinx.shared.loadGames()
+            } catch {
+                print("Error copying update file: \(error)")
+            }
+            
+        case .failure(let error):
+            print("File import failed: \(error.localizedDescription)")
+        }
+    }
+    
+    private func toggleSelection(_ update: UpdateItem) {
+        print("toggle selection \(update.path)")
+        
+        updates = updates.map { item in
+            var mutableItem = item
+            mutableItem.isSelected = item.path == update.path && !update.isSelected
+            print(mutableItem.isSelected)
+            print(update.isSelected)
+            return mutableItem
+        }
+        
+        print(updates)
+        
+        saveJSON()
+    }
+    
+    private func removeUpdates(at offsets: IndexSet) {
+        offsets.forEach { removeUpdate(at: IndexSet(integer: $0)) }
+    }
+    
+    private func removeUpdate(at indexSet: IndexSet) {
+        guard let index = indexSet.first else { return }
+        
+        let updateToRemove = updates[index]
+        
+        do {
+            // Remove the file
+            try FileManager.default.removeItem(at: updateToRemove.url)
+            
+            // Remove from updates array
+            updates.remove(at: index)
+            
+            // Save changes
+            saveJSON()
+            
+            // Reload games
+            Ryujinx.shared.games = Ryujinx.shared.loadGames()
+        } catch {
+            print("Failed to remove update: \(error)")
+        }
+    }
+    
+    private func saveJSON() {
+        guard let jsonURL = jsonURL else { return }
+        
+        do {
+            let paths = updates.map { $0.path }
+            let selected = updates.first(where: { $0.isSelected })?.path ?? ""
+            
+            let jsonDict = ["paths": paths, "selected": selected] as [String: Any]
             let newData = try JSONSerialization.data(withJSONObject: jsonDict, options: .prettyPrinted)
             try newData.write(to: jsonURL)
-            Ryujinx.shared.games = Ryujinx.shared.loadGames()
         } catch {
             print("Failed to update JSON: \(error)")
         }

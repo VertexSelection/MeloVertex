@@ -189,6 +189,24 @@ enum VirtualControllerButton: Int {
     case dPadRight
     case leftTrigger
     case rightTrigger
+    
+    var isTrigger: Bool {
+        switch self {
+        case .leftTrigger, .rightTrigger, .leftShoulder, .rightShoulder:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    var isSmall: Bool {
+        switch self {
+        case .back, .start, .guide:
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 enum ThumbstickType: Int {

@@ -11,101 +11,155 @@ import SwiftUIJoystick
 import CoreMotion
 
 struct ControllerView: View {
+    // MARK: - Properties
+    @AppStorage("On-ScreenControllerScale") private var controllerScale: Double = 1.0
+    @AppStorage("stick-button") private var stickButton = false
+    @State private var isPortrait = true
+    @Environment(\.verticalSizeClass) var verticalSizeClass
+
+    
+    // MARK: - Body
     var body: some View {
-        GeometryReader { geometry in
-            if geometry.size.height > geometry.size.width && UIDevice.current.userInterfaceIdiom != .pad {
-                VStack {
-                    
-                    Spacer()
-                    VStack {
-                        HStack {
-                            VStack {
-                                ShoulderButtonsViewLeft()
-                                ZStack {
-                                    Joystick()
-                                    DPadView()
-                                }
-                            }
-                            Spacer()
-                            VStack {
-                                ShoulderButtonsViewRight()
-                                ZStack {
-                                    Joystick(iscool: true) // hope this works
-                                    ABXYView()
-                                }
-                            }
+        Group {
+            let isPad =  UIDevice.current.userInterfaceIdiom == .pad
+            
+            if isPortrait && !isPad {
+                portraitLayout
+            } else {
+                landscapeLayout
+            }
+        }
+        .padding()
+        .onChange(of: verticalSizeClass) { _ in
+            updateOrientation()
+        }
+        .onAppear(perform: updateOrientation)
+    }
+    
+    // MARK: - Layouts
+    private var portraitLayout: some View {
+        VStack {
+            Spacer()
+            VStack(spacing: 20) {
+                HStack(spacing: 30) {
+                    VStack(spacing: 15) {
+                        ShoulderButtonsViewLeft()
+                        ZStack {
+                            Joystick()
+                            DPadView()
                         }
-                        
-                        HStack {
-                            ButtonView(button: .start) // Adding the + button
-                                .padding(.horizontal, 40)
-                            ButtonView(button: .back) // Adding the - button
-                                .padding(.horizontal, 40)
+                    }
+                    
+                    VStack(spacing: 15) {
+                        ShoulderButtonsViewRight()
+                        ZStack {
+                            Joystick(iscool: true)
+                            ABXYView()
                         }
                     }
                 }
                 
-            } else {
-                // could be landscape
-                VStack {
-                    
-                    Spacer()
-                    VStack {
-                        HStack {
-                            
-                            // gotta fuckin add + and - now
-                            VStack {
-                                ShoulderButtonsViewLeft()
-                                ZStack {
-                                    Joystick()
-                                    DPadView()
-                                }
-                            }
-                            HStack {
-                                // Spacer()
-                                VStack {
-                                    // Spacer()
-                                    ButtonView(button: .back) // Adding the - button
-                                }
-                                Spacer()
-                                VStack {
-                                    // Spacer()
-                                    ButtonView(button: .start) // Adding the + button
-                                }
-                                // Spacer()
-                            }
-                            VStack {
-                                ShoulderButtonsViewRight()
-                                ZStack {
-                                    Joystick(iscool: true) // hope this work s
-                                    ABXYView()
-                                }
-                            }
-                        }
-                        
+                HStack(spacing: 60) {
+                    HStack {
+                        ButtonView(button: .leftStick)
+                            .padding()
+                        ButtonView(button: .start)
                     }
-                    // .padding(.bottom, geometry.size.height / 11) // also extremally broken (
+                    
+                    HStack {
+                        ButtonView(button: .back)
+                        ButtonView(button: .rightStick)
+                            .padding()
+                    }
                 }
             }
         }
-        .padding()
+    }
+    
+    private var landscapeLayout: some View {
+        VStack {
+            Spacer()
+            
+            HStack {
+                VStack(spacing: 15) {
+                    ShoulderButtonsViewLeft()
+                    ZStack {
+                        Joystick()
+                        DPadView()
+                    }
+                }
+                
+                Spacer()
+                
+                centerButtons
+                
+                Spacer()
+                
+                VStack(spacing: 15) {
+                    ShoulderButtonsViewRight()
+                    ZStack {
+                        Joystick(iscool: true)
+                        ABXYView()
+                    }
+                }
+            }
+        }
+    }
+    
+    private var centerButtons: some View {
+        Group {
+            if stickButton {
+                VStack {
+                    HStack(spacing: 50) {
+                        ButtonView(button: .leftStick)
+                            .padding()
+                        Spacer()
+                        ButtonView(button: .rightStick)
+                            .padding()
+                    }
+                    .padding(.top, 30)
+                    
+                    HStack(spacing: 50) {
+                        ButtonView(button: .back)
+                        Spacer()
+                        ButtonView(button: .start)
+                    }
+                }
+                .padding(.bottom, 20)
+            } else {
+                HStack(spacing: 50) {
+                    ButtonView(button: .back)
+                    Spacer()
+                    ButtonView(button: .start)
+                }
+                .padding(.bottom, 20)
+            }
+        }
+    }
+    
+    // MARK: - Methods
+    
+    private func updateOrientation() {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            isPortrait = window.bounds.size.height > window.bounds.size.width
+        }
     }
 }
 
+
 struct ShoulderButtonsViewLeft: View {
-    @State var width: CGFloat = 160
-    @State var height: CGFloat = 20
+    @State private var width: CGFloat = 160
+    @State private var height: CGFloat = 20
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
     var body: some View {
-        HStack {
+        HStack(spacing: 20) {
             ButtonView(button: .leftTrigger)
-                .padding(.horizontal)
             ButtonView(button: .leftShoulder)
-                .padding(.horizontal)
         }
         .frame(width: width, height: height)
-        .onAppear() {
+        .onAppear {
             if UIDevice.current.systemName.contains("iPadOS") {
                 width *= 1.2
                 height *= 1.2
@@ -118,19 +172,17 @@ struct ShoulderButtonsViewLeft: View {
 }
 
 struct ShoulderButtonsViewRight: View {
-    @State var width: CGFloat = 160
-    @State var height: CGFloat = 20
+    @State private var width: CGFloat = 160
+    @State private var height: CGFloat = 20
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
     var body: some View {
-        HStack {
+        HStack(spacing: 20) {
             ButtonView(button: .rightShoulder)
-                .padding(.horizontal)
             ButtonView(button: .rightTrigger)
-                .padding(.horizontal)
         }
         .frame(width: width, height: height)
-        .onAppear() {
+        .onAppear {
             if UIDevice.current.systemName.contains("iPadOS") {
                 width *= 1.2
                 height *= 1.2
@@ -143,21 +195,21 @@ struct ShoulderButtonsViewRight: View {
 }
 
 struct DPadView: View {
-    @State var size: CGFloat = 145
+    @State private var size: CGFloat = 145
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
+    
     var body: some View {
-        VStack {
+        VStack(spacing: 5) {
             ButtonView(button: .dPadUp)
-            HStack {
+            HStack(spacing: 20) {
                 ButtonView(button: .dPadLeft)
                 Spacer(minLength: 20)
                 ButtonView(button: .dPadRight)
             }
             ButtonView(button: .dPadDown)
-                .padding(.horizontal)
         }
         .frame(width: size, height: size)
-        .onAppear() {
+        .onAppear {
             if UIDevice.current.systemName.contains("iPadOS") {
                 size *= 1.2
             }
@@ -168,22 +220,21 @@ struct DPadView: View {
 }
 
 struct ABXYView: View {
-    @State var size: CGFloat = 145
+    @State private var size: CGFloat = 145
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
     var body: some View {
-        VStack {
+        VStack(spacing: 5) {
             ButtonView(button: .X)
-            HStack {
+            HStack(spacing: 20) {
                 ButtonView(button: .Y)
                 Spacer(minLength: 20)
                 ButtonView(button: .A)
             }
             ButtonView(button: .B)
-                .padding(.horizontal)
         }
         .frame(width: size, height: size)
-        .onAppear() {
+        .onAppear {
             if UIDevice.current.systemName.contains("iPadOS") {
                 size *= 1.2
             }
@@ -195,58 +246,90 @@ struct ABXYView: View {
 
 struct ButtonView: View {
     var button: VirtualControllerButton
-    @State var width: CGFloat = 45
-    @State var height: CGFloat = 45
-    @State var isPressed = false
+    @State private var width: CGFloat = 45
+    @State private var height: CGFloat = 45
+    @State private var isPressed = false
     @AppStorage("onscreenhandheld") var onscreenjoy: Bool = false
-    @Environment(\.colorScheme) var colorScheme
     @Environment(\.presentationMode) var presentationMode
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
-    
-
+    @State private var debounceTimer: Timer?
     
     var body: some View {
         Image(systemName: buttonText)
             .resizable()
+            .scaledToFit()
             .frame(width: width, height: height)
-            .foregroundColor(colorScheme == .dark ? Color.gray : Color.gray)
-            .opacity(isPressed ? 0.4 : 0.7)
+            .foregroundColor(true ? Color.white.opacity(0.9) : Color.black.opacity(0.9))
+            .background(
+                Group {
+                    if !button.isTrigger {
+                        Circle()
+                            .fill(true ? Color.gray.opacity(0.4) : Color.gray.opacity(0.3))
+                            .frame(width: width * 1.25, height: height * 1.25)
+                    } else {
+                        Image(systemName: buttonText)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: width * 1.25, height: height * 1.25)
+                            .foregroundColor(true ? Color.gray.opacity(0.4) : Color.gray.opacity(0.3))
+                    }
+                }
+            )
+            .opacity(isPressed ? 0.6 : 1.0)
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in
-                        if !self.isPressed {
-                            self.isPressed = true
-                            Ryujinx.shared.virtualController.setButtonState(1, for: button)
-                            Haptics.shared.play(.heavy)
-                        }
+                        handleButtonPress()
                     }
                     .onEnded { _ in
-                        self.isPressed = false
-                        Ryujinx.shared.virtualController.setButtonState(0, for: button)
+                        handleButtonRelease()
                     }
-                )
-            .onAppear() {
-                if button == .leftTrigger || button == .rightTrigger || button == .leftShoulder || button == .rightShoulder {
-                    width = 65
-                }
-            
-                
-                if button == .back || button == .start || button == .guide {
-                    width = 35
-                    height = 35
-                }
-                
-                if UIDevice.current.systemName.contains("iPadOS") {
-                    width *= 1.2
-                    height *= 1.2
-                }
-                
-                width *= CGFloat(controllerScale)
-                height *= CGFloat(controllerScale)
+            )
+            .onAppear {
+                configureSizeForButton()
             }
     }
     
-
+    private func handleButtonPress() {
+        if !isPressed {
+            isPressed = true
+            
+            debounceTimer?.invalidate()
+            
+            Ryujinx.shared.virtualController.setButtonState(1, for: button)
+            
+            Haptics.shared.play(.medium)
+        }
+    }
+    
+    private func handleButtonRelease() {
+        if isPressed {
+            isPressed = false
+            
+            debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in
+                Ryujinx.shared.virtualController.setButtonState(0, for: button)
+            }
+        }
+    }
+    
+    private func configureSizeForButton() {
+        if button.isTrigger {
+            width = 70
+            height = 40
+        } else if button.isSmall {
+            width = 35
+            height = 35
+        }
+        
+        // Adjust for iPad
+        if UIDevice.current.systemName.contains("iPadOS") {
+            width *= 1.2
+            height *= 1.2
+        }
+        
+        width *= CGFloat(controllerScale)
+        height *= CGFloat(controllerScale)
+    }
     
     private var buttonText: String {
         switch button {
@@ -258,6 +341,10 @@ struct ButtonView: View {
             return "x.circle.fill"
         case .Y:
             return "y.circle.fill"
+        case .leftStick:
+            return "l.joystick.press.down.fill"
+        case .rightStick:
+            return "r.joystick.press.down.fill"
         case .dPadUp:
             return "arrowtriangle.up.circle.fill"
         case .dPadDown:
@@ -267,7 +354,7 @@ struct ButtonView: View {
         case .dPadRight:
             return "arrowtriangle.right.circle.fill"
         case .leftTrigger:
-            return"zl.rectangle.roundedtop.fill"
+            return "zl.rectangle.roundedtop.fill"
         case .rightTrigger:
             return "zr.rectangle.roundedtop.fill"
         case .leftShoulder:
@@ -275,16 +362,11 @@ struct ButtonView: View {
         case .rightShoulder:
             return "r.rectangle.roundedbottom.fill"
         case .start:
-            return "plus.circle.fill" // System symbol for +
+            return "plus.circle.fill"
         case .back:
-            return "minus.circle.fill" // System symbol for -
+            return "minus.circle.fill"
         case .guide:
             return "house.circle.fill"
-        // This should be all the cases
-        default:
-            return ""
         }
     }
 }
-
-

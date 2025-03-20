@@ -31,7 +31,7 @@ struct iOSNav<Content: View>: View {
 }
 
 
-class Ryujinx {
+class Ryujinx : ObservableObject {
     private var isRunning = false
     
     let virtualController = VirtualController()
@@ -44,6 +44,10 @@ class Ryujinx {
     @Published var games: [Game] = []
     
     @Published var defMLContentSize: CGFloat?
+    
+    var thread: Thread!
+    
+    @Published var jitenabled = false
     
     var shouldMetal: Bool {
         metalLayer == nil
@@ -145,7 +149,7 @@ class Ryujinx {
         
         self.config = config
         
-        RunLoop.current.perform { [self] in
+        thread = Thread { [self] in
             
             isRunning = true
             
@@ -178,6 +182,10 @@ class Ryujinx {
                 Self.log("Emulation failed to start: \(error)")
             }
         }
+        
+        thread.qualityOfService = .background
+        thread.name = "MeloNX"
+        thread.start()
     }
 
 
@@ -192,6 +200,7 @@ class Ryujinx {
         self.metalLayer = nil
         
         stop_emulation()
+        thread.cancel()
     }
 
     var running: Bool {
@@ -499,6 +508,11 @@ class Ryujinx {
 
     static func log(_ message: String) {
         print("[Ryujinx] \(message)")
+    }
+    
+    func ryuIsJITEnabled() {
+        jitenabled = isJITEnabled()
+        print("JIT \(jitenabled)")
     }
 }
 

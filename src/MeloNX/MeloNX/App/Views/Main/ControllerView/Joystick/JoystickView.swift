@@ -11,7 +11,7 @@ import SwiftUIJoystick
 
 public struct Joystick: View {
     @State var iscool: Bool? = nil
-    
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject public var joystickMonitor = JoystickMonitor()
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     var dragDiameter: CGFloat {
@@ -36,8 +36,13 @@ public struct Joystick: View {
                         .hidden()
                 },
                 foreground: {
-                    Circle().fill(Color.gray)
-                        .opacity(0.7)
+                    Circle()
+                        .fill(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
+                        .background(
+                            Circle()
+                                .fill(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
+                                .frame(width: (dragDiameter / 4) * 1.2, height: (dragDiameter / 4) * 1.2)
+                        )
                 },
                 locksInPlace: false)
             .onChange(of: self.joystickMonitor.xyPoint) { newValue in

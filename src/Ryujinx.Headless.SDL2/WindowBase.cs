@@ -486,7 +486,12 @@ namespace Ryujinx.Headless.SDL2
 
         public bool DisplayMessageDialog(string title, string message)
         {
-            SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags.SDL_MESSAGEBOX_INFORMATION, title, message, WindowHandle);
+            if (OperatingSystem.IsIOS()) 
+            {
+                AlertHelper.ShowAlert(title, message, false);
+            } else {
+                SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags.SDL_MESSAGEBOX_INFORMATION, title, message, WindowHandle);
+            }
 
             return true;
         }

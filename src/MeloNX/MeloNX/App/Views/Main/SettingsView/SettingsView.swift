@@ -48,11 +48,15 @@ struct SettingsView: View {
     
     @AppStorage("showlogsgame") var showlogsgame: Bool = false
     
+    @AppStorage("stick-button") var stickButton = false
+    @AppStorage("waitForVPN") var waitForVPN = false
+    
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
     @State private var showControllerInfo = false
     @State private var searchText = ""
     @AppStorage("portal") var gamepo = false
+    @StateObject var ryujinx = Ryujinx.shared
     
     var filteredMemoryModes: [(String, String)] {
         guard !searchText.isEmpty else { return memoryManagerModes }
@@ -286,6 +290,11 @@ struct SettingsView: View {
                     }.tint(.blue)
                         
                     
+                    Toggle(isOn: $stickButton) {
+                        labelWithIcon("Show Stick Buttons", iconName: "l.joystick.press.down")
+                    }.tint(.blue)
+                    
+                    
                     Toggle(isOn: $ryuDemo) {
                         labelWithIcon("On-Screen Controller (Demo)", iconName: "hand.draw")
                     }
@@ -452,9 +461,21 @@ struct SettingsView: View {
                         .tint(.blue)
                         .contextMenu {
                             Button {
+                                waitForVPN.toggle()
+                            } label: {
+                                Label {
+                                    Text("Wait for VPN")
+                                } icon: {
+                                    if waitForVPN {
+                                        Image(systemName:  "checkmark")
+                                    }
+                                }
+
+                            }
+                            Button {
                                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                                    let mainWindow = windowScene.windows.last {
-                                    let alertController = UIAlertController(title: "About JitStreamer EB", message: "JitStreamer EB is an Amazing Application to Enable JIT on the go, made by one of the best iOS developers of all time jkcoxson <3", preferredStyle: .alert)
+                                    let alertController = UIAlertController(title: "About JitStreamer EB", message: "JitStreamer EB is an Amazing Application to Enable JIT on the go, made by one of the best, most kind, helpful and nice developers of all time jkcoxson <3", preferredStyle: .alert)
                                     
                                     let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
                                         UIApplication.shared.open(URL(string: "https://jkcoxson.com/jitstreamer")!)
@@ -539,7 +560,11 @@ struct SettingsView: View {
                     model.hasPrefix("iPhone") ? "iphone" :
                     "macwindow"
                     
-                    labelWithIcon("JIT Acquisition: \(isJITEnabled() ? "Acquired" : "Not Acquired" )", iconName: "bolt.fill")
+                    labelWithIcon("JIT Acquisition: \(ryujinx.jitenabled ? "Acquired" : "Not Acquired" )", iconName: "bolt.fill")
+                        .onAppear() {
+                            print("JIY ;(((((")
+                            ryujinx.ryuIsJITEnabled()
+                        }
                     
                     labelWithIcon("Increased Memory Limit Entitlement: \(checkAppEntitlement("com.apple.developer.kernel.increased-memory-limit") ? "Enabled" : "Disabled")", iconName: "memorychip")
                     
@@ -565,10 +590,6 @@ struct SettingsView: View {
                 // Advanced
                 Section {
                     DisclosureGroup {
-                        
-                        Toggle(isOn: $mVKPreFillBuffer) {
-                            labelWithIcon("MVK: Pre-Fill Metal Command Buffers", iconName: "gearshape")
-                        }.tint(.blue)
                         
                         Toggle(isOn: $config.dfsIntegrityChecks) {
                             labelWithIcon("Disable FS Integrity Checks", iconName: "checkmark.shield")
@@ -637,6 +658,8 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .listStyle(.insetGrouped)
             .onAppear {
+                mVKPreFillBuffer = false
+                
                 if let configs = loadSettings() {
                     self.config = configs
                 } else {

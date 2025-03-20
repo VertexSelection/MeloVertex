@@ -1,0 +1,6 @@
+framework module RyujinxHelper {
+  umbrella header "RyujinxHelper.h"
+  export *
+
+  module * { export * }
+}

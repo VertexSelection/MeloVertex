@@ -21,7 +21,7 @@ struct SetupView: View {
     var body: some View {
         iOSNav {
             ZStack {
-                if UIDevice.current.userInterfaceIdiom == .pad {
+                if UIDevice.current.systemName.contains("iPadOS") {
                     iPadSetupView(
                         finished: $finished,
                         isImportingKeys: $isImportingKeys,
@@ -65,8 +65,9 @@ struct SetupView: View {
             initialize()
             finished = false
             keysImported = Ryujinx.shared.checkIfKeysImported()
-            print((Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0))
-            firmImported = (Ryujinx.shared.fetchFirmwareVersion() != "0")
+            
+            let firmware = Ryujinx.shared.fetchFirmwareVersion()
+            firmImported = (firmware == "" ? "0" : firmware) != "0"
         }
     }
     
@@ -369,9 +370,8 @@ struct SetupView: View {
             
             Ryujinx.shared.installFirmware(firmwarePath: fileURL.path)
             
-            print(Double(Ryujinx.shared.fetchFirmwareVersion()) ?? 0)
-            
-            firmImported = (Ryujinx.shared.fetchFirmwareVersion() != "0")
+            let firmware = Ryujinx.shared.fetchFirmwareVersion()
+            firmImported = (firmware == "" ? "0" : firmware) != "0"
             alertMessage = "Firmware installed successfully"
             showAlert = true
             

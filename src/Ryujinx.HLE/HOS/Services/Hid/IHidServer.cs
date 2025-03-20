@@ -561,7 +561,7 @@ namespace Ryujinx.HLE.HOS.Services.Hid
 
             context.ResponseData.Write((int)_gyroscopeZeroDriftMode);
 
-            Logger.Stub?.PrintStub(LogClass.ServiceHid, new { appletResourceUserId, sixAxisSensorHandle, _gyroscopeZeroDriftMode });
+            // Logger.Stub?.PrintStub(LogClass.ServiceHid, new { appletResourceUserId, sixAxisSensorHandle, _gyroscopeZeroDriftMode });
 
             return ResultCode.Success;
         }

@@ -29,6 +29,7 @@ struct GameLibraryView: View {
     @State var isViewingGameInfo: Bool = false
     @State var isSelectingGameUpdate: Bool = false
     @State var isSelectingGameDLC: Bool = false
+    @StateObject var ryujinx = Ryujinx.shared
     @State var gameInfo: Game?
     var games: Binding<[Game]> {
         Binding(
@@ -201,6 +202,13 @@ struct GameLibraryView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .foregroundColor(.blue)
+                    }
+                }
+                
+                ToolbarItem(placement: .topBarLeading) {
+                    if ryujinx.jitenabled {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(.green)
                     }
                 }
             }

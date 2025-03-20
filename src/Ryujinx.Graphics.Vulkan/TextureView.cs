@@ -769,7 +769,7 @@ namespace Ryujinx.Graphics.Vulkan
 
         private void SetData(ReadOnlySpan<byte> data, int layer, int level, int layers, int levels, bool singleSlice, Rectangle<int>? region = null)
         {
-            const int MaxChunkSize = 1024 * 1024 * 16; // 16MB chunks
+            const int MaxChunkSize = 1024 * 1024;
             
             int bufferDataLength = GetBufferDataLength(data.Length);
             
@@ -786,21 +786,39 @@ namespace Ryujinx.Graphics.Vulkan
                 
                 for (int i = 0; i < layers; i++)
                 {
-                    int currentLayer = layer + i;
-                    int currentLayerSize = Math.Min(layerSize, data.Length - offset);
-                    var layerData = data.Slice(offset, currentLayerSize);
-                    
-                    ProcessChunk(layerData, currentLayer, level, 1, levels, true);
-                    offset += layerSize;
-                    
                     if (offset >= data.Length)
                         break;
+                        
+                    int currentLayer = layer + i;
+                    int currentLayerSize = Math.Min(layerSize, data.Length - offset);
+                    
+                    if (currentLayerSize <= 0)
+                        break;
+                        
+                    try
+                    {
+                        var layerData = data.Slice(offset, currentLayerSize);
+                        ProcessChunk(layerData, currentLayer, level, 1, levels, true);
+                        offset += layerSize;
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        break;
+                    }
                 }
             }
             else if (region.HasValue)
             {
                 var rect = region.Value;
+                
+                if (rect.Width <= 0 || rect.Height <= 0)
+                    return;
+                    
                 int dataPerPixel = data.Length / (rect.Width * rect.Height);
+                
+                if (dataPerPixel <= 0)
+                    return;
+                    
                 int rowStride = rect.Width * dataPerPixel;
                 
                 int rowsPerChunk = Math.Max(1, MaxChunkSize / rowStride);
@@ -811,42 +829,63 @@ namespace Ryujinx.Graphics.Vulkan
                 while (currentY < rect.Y + originalHeight)
                 {
                     int chunkHeight = Math.Min(rowsPerChunk, rect.Y + originalHeight - currentY);
+                    
+                    if (chunkHeight <= 0)
+                        break;
+                        
                     var chunkRegion = new Rectangle<int>(rect.X, currentY, rect.Width, chunkHeight);
                     
                     int chunkSize = chunkHeight * rowStride;
-                    int safeChunkSize = Math.Min(chunkSize, data.Length - offset);
-                    var chunkData = data.Slice(offset, safeChunkSize);
-                    
-                    ProcessChunk(chunkData, layer, level, 1, 1, true, chunkRegion);
-                    
-                    currentY += chunkHeight;
-                    offset += chunkSize;
                     
                     if (offset >= data.Length)
                         break;
+                        
+                    int safeChunkSize = Math.Min(chunkSize, data.Length - offset);
+                    
+                    if (safeChunkSize <= 0)
+                        break;
+                        
+                    try
+                    {
+                        var chunkData = data.Slice(offset, safeChunkSize);
+                        ProcessChunk(chunkData, layer, level, 1, 1, true, chunkRegion);
+                        
+                        currentY += chunkHeight;
+                        offset += chunkSize;
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        break;
+                    }
                 }
             }
             else
             {
                 ProcessChunk(data, layer, level, layers, levels, singleSlice, region);
             }
+        }
+
+        private void ProcessChunk(ReadOnlySpan<byte> chunkData, int chunkLayer, int chunkLevel, int chunkLayers, int chunkLevels, bool chunkSingleSlice, Rectangle<int>? chunkRegion = null)
+        {
+            int chunkBufferLength = GetBufferDataLength(chunkData.Length);
             
-            void ProcessChunk(ReadOnlySpan<byte> chunkData, int chunkLayer, int chunkLevel, int chunkLayers, int chunkLevels, bool chunkSingleSlice, Rectangle<int>? chunkRegion = null)
+            if (chunkBufferLength <= 0)
+                return;
+                
+            using var bufferHolder = _gd.BufferManager.Create(_gd, chunkBufferLength);
+            
+            using (var imageAuto = GetImage())
             {
-                int chunkBufferLength = GetBufferDataLength(chunkData.Length);
+                bool loadInline = Storage.HasCommandBufferDependency(_gd.PipelineInternal.CurrentCommandBuffer);
+                var cbs = loadInline ? _gd.PipelineInternal.CurrentCommandBuffer : _gd.PipelineInternal.GetPreloadCommandBuffer();
                 
-                using var bufferHolder = _gd.BufferManager.Create(_gd, chunkBufferLength);
-                
-                using (var imageAuto = GetImage())
+                if (loadInline)
                 {
-                    bool loadInline = Storage.HasCommandBufferDependency(_gd.PipelineInternal.CurrentCommandBuffer);
-                    var cbs = loadInline ? _gd.PipelineInternal.CurrentCommandBuffer : _gd.PipelineInternal.GetPreloadCommandBuffer();
-                    
-                    if (loadInline)
-                    {
-                        _gd.PipelineInternal.EndRenderPass();
-                    }
-                    
+                    _gd.PipelineInternal.EndRenderPass();
+                }
+                
+                try
+                {
                     CopyDataToBuffer(bufferHolder.GetDataStorage(0, chunkBufferLength), chunkData);
                     
                     var buffer = bufferHolder.GetBuffer(cbs.CommandBuffer).Get(cbs).Value;
@@ -854,6 +893,11 @@ namespace Ryujinx.Graphics.Vulkan
                     
                     if (chunkRegion.HasValue)
                     {
+                        var region = chunkRegion.Value;
+                        
+                        if (region.Width <= 0 || region.Height <= 0)
+                            return;
+                            
                         CopyFromOrToBuffer(
                             cbs.CommandBuffer,
                             buffer,
@@ -862,10 +906,10 @@ namespace Ryujinx.Graphics.Vulkan
                             false,
                             chunkLayer,
                             chunkLevel,
-                            chunkRegion.Value.X,
-                            chunkRegion.Value.Y,
-                            chunkRegion.Value.Width,
-                            chunkRegion.Value.Height);
+                            region.X,
+                            region.Y,
+                            region.Width,
+                            region.Height);
                     }
                     else
                     {
@@ -881,7 +925,11 @@ namespace Ryujinx.Graphics.Vulkan
                             chunkLevels, 
                             chunkSingleSlice);
                     }
-                } 
+                }
+                catch (Exception e)
+                {
+
+                }
             }
         }
 

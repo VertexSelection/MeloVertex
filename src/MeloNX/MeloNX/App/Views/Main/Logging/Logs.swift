@@ -96,13 +96,14 @@ struct LogFileView: View {
     
     private func startLogFileWatching() {
         showingLogs = true
-        self.readLatestLogFile()
+        
         Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
             if showingLogs {
                 self.readLatestLogFile()
             }
             
             if isfps {
+                sleep(1)
                 if get_current_fps() != 0 {
                     stopLogFileWatching()
                     timer.invalidate()

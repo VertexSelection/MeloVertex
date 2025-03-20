@@ -4,22 +4,22 @@
 <dict>
 	<key>files</key>
 	<dict>
-		<key>Headers/RyujinxKeyboard.h</key>
+		<key>Headers/RyujinxHelper.h</key>
 		<data>
 		5P7GN4g050n199pV6/+SpfMBgJc=
 		</data>
 		<key>Info.plist</key>
 		<data>
-		hYdI/ktAKwjBSfaJpt6Yc8UKLCY=
+		UOH9NuuEcz5NQiQlrM2LNFaG2pI=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
-		0kFAMoTn+4Q1J/dM6uMLe3EhbL0=
+		JDij7psMD6pZZpigUfkSQldib+I=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
-		<key>Headers/RyujinxKeyboard.h</key>
+		<key>Headers/RyujinxHelper.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
@@ -30,7 +30,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			K+ZyxKhTI4bMVZuHBIspvd2PFqvCOlVUFYmwF96O5NQ=
+			5t/lQcpkzC5bwJqFQqIf6h1ldlhHouYzDawRVrnUeyM=
 			</data>
 		</dict>
 	</dict>

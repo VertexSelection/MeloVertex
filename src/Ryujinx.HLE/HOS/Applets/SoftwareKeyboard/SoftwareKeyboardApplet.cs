@@ -239,6 +239,7 @@ namespace Ryujinx.HLE.HOS.Applets
                     StringLengthMax = _keyboardForegroundConfig.StringLengthMax,
                     InitialText = initialText,
                 };
+                
                 _device.UIHandler.DisplayInputDialog(args, inputText => 
                 {
                     Console.WriteLine($"User entered: {inputText}");

@@ -37,6 +37,8 @@ struct JITPopover: View {
                 if isJIT {
                     dismiss()
                     onJITEnabled()
+                    
+                    Ryujinx.shared.ryuIsJITEnabled()
                 }
             }
         }

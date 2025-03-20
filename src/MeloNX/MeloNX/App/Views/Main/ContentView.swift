@@ -53,7 +53,7 @@ struct ContentView: View {
     private let animationDuration: Double = 1.0
     @State private var isAnimating = false
     @State var isLoading = true
-    @State var jitNotEnabled = false
+    @StateObject var ryujinx = Ryujinx.shared
     
     // MARK: - SDL
     var sdlInitFlags: UInt32 = SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO | SDL_INIT_VIDEO
@@ -79,14 +79,16 @@ struct ContentView: View {
         
         _settings = State(initialValue: defaultSettings)
         
+        print(SDL_CONTROLLER_BUTTON_LEFTSTICK.rawValue)
+        
         initializeSDL()
     }
     
     // MARK: - Body
     var body: some View {
-        if game != nil && (!jitNotEnabled || ignoreJIT) {
+        if game != nil && (ryujinx.jitenabled || ignoreJIT) {
             gameView
-        } else if game != nil && jitNotEnabled {
+        } else if game != nil && !ryujinx.jitenabled {
             jitErrorView
         } else {
             mainMenuView
@@ -117,9 +119,16 @@ struct ContentView: View {
     
     private var jitErrorView: some View {
         Text("")
-            .sheet(isPresented: $jitNotEnabled) {
+            .sheet(isPresented:Binding(
+                get: { !ryujinx.jitenabled },
+                set: { newValue in
+                    ryujinx.jitenabled = newValue
+                    
+                    ryujinx.ryuIsJITEnabled()
+                })
+            ) {
                 JITPopover() {
-                    jitNotEnabled = false
+                    ryujinx.jitenabled = false
                 }
                 .interactiveDismissDisabled()
             }
@@ -308,9 +317,9 @@ struct ContentView: View {
     }
     
     private func refreshControllersList() {
-        controllersList = Ryujinx.shared.getConnectedControllers()
+        controllersList = ryujinx.getConnectedControllers()
         
-        if let onscreen = controllersList.first(where: { $0.name == Ryujinx.shared.virtualController.controllername }) {
+        if let onscreen = controllersList.first(where: { $0.name == ryujinx.virtualController.controllername }) {
             self.onscreencontroller = onscreen
         }
         
@@ -343,7 +352,7 @@ struct ContentView: View {
         }
         
         do {
-            try Ryujinx.shared.start(with: config)
+            try ryujinx.start(with: config)
         } catch {
             print("Error: \(error.localizedDescription)")
         }
@@ -351,7 +360,8 @@ struct ContentView: View {
     
     private func configureEnvironmentVariables() {
         if mVKPreFillBuffer {
-            setenv("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", "2", 1)
+            mVKPreFillBuffer = false
+            // setenv("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS", "2", 1)
         }
         
         if syncqsubmits {
@@ -366,8 +376,8 @@ struct ContentView: View {
     }
     
     private func checkJitStatus() {
-        jitNotEnabled = !isJITEnabled()
-        if jitNotEnabled {
+        ryujinx.ryuIsJITEnabled()
+        if !ryujinx.jitenabled {
             if useTrollStore {
                 askForJIT()
             } else if jitStreamerEB {
@@ -382,9 +392,9 @@ struct ContentView: View {
         if let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
            components.host == "game" {
             if let text = components.queryItems?.first(where: { $0.name == "id" })?.value {
-                game = Ryujinx.shared.games.first(where: { $0.titleId == text })
+                game = ryujinx.games.first(where: { $0.titleId == text })
             } else if let text = components.queryItems?.first(where: { $0.name == "name" })?.value {
-                game = Ryujinx.shared.games.first(where: { $0.titleName == text })
+                game = ryujinx.games.first(where: { $0.titleName == text })
             }
         }
     }

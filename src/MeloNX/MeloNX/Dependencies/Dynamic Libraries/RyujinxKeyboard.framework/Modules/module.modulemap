@@ -1,6 +1,0 @@
-framework module RyujinxKeyboard {
-  umbrella header "RyujinxKeyboard.h"
-  export *
-
-  module * { export * }
-}

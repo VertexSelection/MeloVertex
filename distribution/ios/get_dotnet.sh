@@ -41,4 +41,6 @@ ESCAPED_PATH=$(echo "$DOTNET_PATH" | sed 's/\//\\\//g')
 # Update the xcconfig file
 sed -i '' "s/^DOTNET = .*/DOTNET = $ESCAPED_PATH/g" "$XCCONFIG_FILE"
 
+$DOTNET_PATH clean
+
 echo "Updated MeloNX.xcconfig with DOTNET path: $DOTNET_PATH"
