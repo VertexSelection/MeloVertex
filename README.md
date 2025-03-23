@@ -54,7 +54,7 @@ MeloNX works on iPhone XS/XR and later and iPad 8th Gen and later. Check out the
 
 If having Issues installing firmware (Make sure your Keys are installed first)
    - If needed, install firmware and keys from **Ryujinx Desktop** (or forks).  
-   - Copy the **bios** and **system** folders  
+   - Copy the **bis** and **system** folders  
    
 ### Free Developer Account (Experimental)
 
