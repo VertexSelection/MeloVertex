@@ -31,6 +31,7 @@ struct GameLibraryView: View {
     @State var isSelectingGameDLC: Bool = false
     @StateObject var ryujinx = Ryujinx.shared
     @State var gameInfo: Game?
+    @State var gameRequirements: [GameRequirements] = []
     var games: Binding<[Game]> {
         Binding(
             get: { Ryujinx.shared.games },
@@ -79,7 +80,7 @@ struct GameLibraryView: View {
                     if !isSearching && !realRecentGames.isEmpty {
                         Section {
                             ForEach(realRecentGames) { game in
-                                GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
+                                GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameRequirements: $gameRequirements, gameInfo: $gameInfo)
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                         Button(role: .destructive) {
                                             removeFromRecentGames(game)
@@ -94,14 +95,14 @@ struct GameLibraryView: View {
 
                         Section {
                             ForEach(filteredGames) { game in
-                                GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
+                                GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameRequirements: $gameRequirements,  gameInfo: $gameInfo)
                             }
                         } header: {
                             Text("Others")
                         }
                     } else {
                         ForEach(filteredGames) { game in
-                            GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameInfo: $gameInfo)
+                            GameListRow(game: game, startemu: $startemu, games: games, isViewingGameInfo: $isViewingGameInfo, isSelectingGameUpdate: $isSelectingGameUpdate, isSelectingGameDLC: $isSelectingGameDLC, gameRequirements: $gameRequirements,  gameInfo: $gameInfo)
                         }
                     }
                 }
@@ -113,6 +114,15 @@ struct GameLibraryView: View {
                     
                 let firmware = Ryujinx.shared.fetchFirmwareVersion()
                 firmwareversion = (firmware == "" ? "0" : firmware)
+                
+                pullGameCompatibility() { game in
+                    switch game {
+                    case .success(let sucees):
+                        gameRequirements = sucees
+                    case .failure(_):
+                        print("uhohh stinki")
+                    }
+                }
             }
             .fileImporter(isPresented: $firmwareInstaller, allowedContentTypes: [.item]) { result in
                 switch result {
@@ -367,7 +377,6 @@ extension Game: Codable {
         version = try container.decode(String.self, forKey: .version)
         fileURL = try container.decode(URL.self, forKey: .fileURL)
         
-        // Initialize other properties
         self.containerFolder = fileURL.deletingLastPathComponent()
         self.fileType = .item
     }
@@ -386,10 +395,11 @@ extension Game: Codable {
 struct GameListRow: View {
     let game: Game
     @Binding var startemu: Game?
-    @Binding var games: [Game] // Add this binding
+    @Binding var games: [Game]
     @Binding var isViewingGameInfo: Bool
     @Binding var isSelectingGameUpdate: Bool
     @Binding var isSelectingGameDLC: Bool
+    @Binding var gameRequirements: [GameRequirements]
     @Binding var gameInfo: Game?
     @State var gametoDelete: Game?
     @State var showGameDeleteConfirmation: Bool = false
@@ -433,7 +443,30 @@ struct GameListRow: View {
                         .foregroundColor(.secondary)
                 }
                 
+                
                 Spacer()
+                
+                if let game = gameRequirements.first(where: { $0.game_id == game.titleId }) {
+                    let totalMemory = ProcessInfo.processInfo.physicalMemory
+                    
+                    VStack(spacing: 10) {
+                        Capsule().fill(game.memoryInt <= Int(String(format: "%.0f", Double(totalMemory) / 1_000_000_000)) ?? 0 ? Color.green : Color.red)
+                            .frame(width: 70 / 1.5, height: 35 / 1.5)
+                            .overlay {
+                                Text(game.device_memory)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 11))
+                            }
+                        
+                        Capsule().fill(game.color)
+                            .frame(width: 70 / 1.5, height: 35 / 1.5)
+                            .overlay {
+                                Text(game.compatibility)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 10))
+                            }
+                    }
+                }
                 
                 Image(systemName: "play.circle.fill")
                     .font(.title2)
@@ -500,6 +533,7 @@ struct GameListRow: View {
         }
     }
     
+    
     private func deleteGame(game: Game) {
         let fileManager = FileManager.default
         do {
@@ -509,4 +543,67 @@ struct GameListRow: View {
             print("Error deleting game: \(error)")
         }
     }
+}
+
+struct GameRequirements: Codable {
+    var game_id: String
+    var compatibility: String
+    var device_memory: String
+    var memoryInt: Int {
+        var devicemem = device_memory
+        devicemem.removeLast(2)
+        print(devicemem)
+        return Int(devicemem) ?? 0
+    }
+    
+    var color: Color {
+        switch compatibility {
+        case "Perfect":
+            return .green
+        case "Playable":
+            return .yellow
+        case "Menu":
+            return .orange
+        case "Boots":
+            return .red
+        case "Nothing":
+            return .black
+        default:
+            return .clear
+        }
+    }
+}
+
+func pullGameCompatibility(completion: @escaping (Result<[GameRequirements], Error>) -> Void) {
+    if let cachedData = GameCompatibiliryCache.shared.getCachedData() {
+        completion(.success(cachedData))
+        return
+    }
+
+    guard let url = URL(string: "https://melonx.org/api/game_entries") else {
+        completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
+        return
+    }
+
+    let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        if let error = error {
+            completion(.failure(error))
+            return
+        }
+
+        guard let data = data else {
+            completion(.failure(NSError(domain: "No data", code: 0, userInfo: nil)))
+            return
+        }
+
+        do {
+            let decodedData = try JSONDecoder().decode([GameRequirements].self, from: data)
+            GameCompatibiliryCache.shared.setCachedData(decodedData)
+            completion(.success(decodedData))
+        } catch {
+            completion(.failure(error))
+        }
+    }
+
+    task.resume()
 }

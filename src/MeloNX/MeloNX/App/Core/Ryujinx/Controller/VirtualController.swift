@@ -131,10 +131,8 @@ class VirtualController {
     }
     
     func thumbstickMoved(_ stick: ThumbstickType, x: Double, y: Double) {
-        let scaleFactor = 32767.0 / 160
-
-        let scaledX = Int16(min(32767.0, max(-32768.0, x * scaleFactor)))
-        let scaledY = Int16(min(32767.0, max(-32768.0, y * scaleFactor)))
+        let scaledX = Int16(min(32767.0, max(-32768.0, x * 32767.0)))
+        let scaledY = Int16(min(32767.0, max(-32768.0, y * 32767.0)))
         
         if stick == .right {
             updateAxisValue(value: scaledX, forAxis: SDL_GameControllerAxis(SDL_CONTROLLER_AXIS_RIGHTX.rawValue))

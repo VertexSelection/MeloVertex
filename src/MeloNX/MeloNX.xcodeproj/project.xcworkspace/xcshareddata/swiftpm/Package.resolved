@@ -1,5 +1,5 @@
 {
-  "originHash" : "d611b071fbe94fdc9900a07a218340eab4ce2c3c7168bf6542f2830c0400a72b",
+  "originHash" : "fedf09a893a63378a2e53f631cd833ae83a0c9ee7338eb8d153b04fd34aaf805",
   "pins" : [
     {
       "identity" : "swiftsvg",
@@ -8,15 +8,6 @@
       "state" : {
         "branch" : "master",
         "revision" : "88b9ee086b29019e35f6f49c8e30e5552eb8fa9d"
-      }
-    },
-    {
-      "identity" : "swiftuijoystick",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/michael94ellis/SwiftUIJoystick",
-      "state" : {
-        "revision" : "5bd303cdafb369a70a45c902538b42dd3c5f4d65",
-        "version" : "1.5.0"
       }
     }
   ],

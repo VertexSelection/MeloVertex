@@ -51,6 +51,8 @@ struct SettingsView: View {
     @AppStorage("stick-button") var stickButton = false
     @AppStorage("waitForVPN") var waitForVPN = false
     
+    @AppStorage("HideButtons") var hideButtonsJoy = false
+    
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
     @State private var showControllerInfo = false

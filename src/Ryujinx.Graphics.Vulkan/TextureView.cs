@@ -606,25 +606,66 @@ namespace Ryujinx.Graphics.Vulkan
         {
             return new TextureView(_gd, _device, info, Storage, FirstLayer + firstLayer, FirstLevel + firstLevel);
         }
-
+        
         public byte[] GetData(int x, int y, int width, int height)
         {
+            const int MaxChunkSize = 1024 * 1024 * 96; // 96MB Chunks
+            
             int size = width * height * Info.BytesPerPixel;
-            using var bufferHolder = _gd.BufferManager.Create(_gd, size);
-
-            using (var cbs = _gd.CommandBufferPool.Rent())
-            {
-                var buffer = bufferHolder.GetBuffer(cbs.CommandBuffer).Get(cbs).Value;
-                var image = GetImage().Get(cbs).Value;
-
-                CopyFromOrToBuffer(cbs.CommandBuffer, buffer, image, size, true, 0, 0, x, y, width, height);
-            }
-
-            bufferHolder.WaitForFences();
             byte[] bitmap = new byte[size];
-            GetDataFromBuffer(bufferHolder.GetDataStorage(0, size), size, Span<byte>.Empty).CopyTo(bitmap);
+            
+            if (size <= MaxChunkSize)
+            {
+                using var bufferHolder = _gd.BufferManager.Create(_gd, size);
+                using (var cbs = _gd.CommandBufferPool.Rent())
+                {
+                    var buffer = bufferHolder.GetBuffer(cbs.CommandBuffer).Get(cbs).Value;
+                    var image = GetImage().Get(cbs).Value;
+                    CopyFromOrToBuffer(cbs.CommandBuffer, buffer, image, size, true, 0, 0, x, y, width, height);
+                }
+                
+                bufferHolder.WaitForFences();
+                GetDataFromBuffer(bufferHolder.GetDataStorage(0, size), size, Span<byte>.Empty).CopyTo(bitmap);
+                return bitmap;
+            }
+            
+
+            int dataPerPixel = Info.BytesPerPixel;
+            int rowStride = width * dataPerPixel;
+            int rowsPerChunk = Math.Max(1, MaxChunkSize / rowStride);
+            int originalHeight = height;
+            int currentY = y;
+            int bitmapOffset = 0;
+            
+            while (currentY < y + originalHeight)
+            {
+                int chunkHeight = Math.Min(rowsPerChunk, y + originalHeight - currentY);
+                
+                if (chunkHeight <= 0)
+                    break;
+                    
+                int chunkSize = chunkHeight * rowStride;
+                
+                // Process this chunk
+                using var bufferHolder = _gd.BufferManager.Create(_gd, chunkSize);
+                using (var cbs = _gd.CommandBufferPool.Rent())
+                {
+                    var buffer = bufferHolder.GetBuffer(cbs.CommandBuffer).Get(cbs).Value;
+                    var image = GetImage().Get(cbs).Value;
+                    CopyFromOrToBuffer(cbs.CommandBuffer, buffer, image, chunkSize, true, 0, 0, x, currentY, width, chunkHeight);
+                }
+                
+                bufferHolder.WaitForFences();
+                GetDataFromBuffer(bufferHolder.GetDataStorage(0, chunkSize), chunkSize, Span<byte>.Empty)
+                    .CopyTo(new Span<byte>(bitmap, bitmapOffset, chunkSize));
+                
+                currentY += chunkHeight;
+                bitmapOffset += chunkSize;
+            }
+            
             return bitmap;
         }
+
 
         public PinnedSpan<byte> GetData()
         {
@@ -738,13 +779,27 @@ namespace Ryujinx.Graphics.Vulkan
             return GetDataFromBuffer(result, size, result);
         }
 
-        private ReadOnlySpan<byte> GetData(CommandBufferPool cbp, PersistentFlushBuffer flushBuffer, int layer, int level)
+       private ReadOnlySpan<byte> GetData(CommandBufferPool cbp, PersistentFlushBuffer flushBuffer, int layer = 0, int level = 0)
         {
+            const int MaxChunkSize = 1024 * 1024 * 96;  // 96MB Chunks
+            
             int size = GetBufferDataLength(Info.GetMipSize(level));
 
-            Span<byte> result = flushBuffer.GetTextureData(cbp, this, size, layer, level);
-            return GetDataFromBuffer(result, size, result);
+            if (size <= MaxChunkSize)
+            {
+                Span<byte> result = flushBuffer.GetTextureData(cbp, this, size, layer, level);
+                return GetDataFromBuffer(result, size, result);
+            }
+
+            byte[] fullResult = new byte[size];
+            
+            Span<byte> fullTextureData = flushBuffer.GetTextureData(cbp, this, size, layer, level);
+            
+            GetDataFromBuffer(fullTextureData, size, fullTextureData).CopyTo(fullResult);
+            
+            return fullResult;
         }
+
 
         /// <inheritdoc/>
         public void SetData(MemoryOwner<byte> data)
@@ -769,7 +824,7 @@ namespace Ryujinx.Graphics.Vulkan
 
         private void SetData(ReadOnlySpan<byte> data, int layer, int level, int layers, int levels, bool singleSlice, Rectangle<int>? region = null)
         {
-            const int MaxChunkSize = 1024 * 1024;
+            const int MaxChunkSize = 1024 * 1024 * 96; // 96MB Chunks
             
             int bufferDataLength = GetBufferDataLength(data.Length);
             

@@ -38,6 +38,7 @@ class Ryujinx : ObservableObject {
     
     @Published var controllerMap: [Controller] = []
     @Published var metalLayer: CAMetalLayer? = nil
+    @Published var isPortrait = false
     @Published var firmwareversion = "0"
     @Published var emulationUIView: MeloMTKView? = nil
     @Published var config: Ryujinx.Configuration? = nil
@@ -510,9 +511,16 @@ class Ryujinx : ObservableObject {
         print("[Ryujinx] \(message)")
     }
     
+    public func updateOrientation() -> Bool {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            return (window.bounds.size.height > window.bounds.size.width)
+        }
+        return false
+    }
+    
     func ryuIsJITEnabled() {
         jitenabled = isJITEnabled()
-        print("JIT \(jitenabled)")
     }
 }
 

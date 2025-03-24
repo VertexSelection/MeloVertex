@@ -7,7 +7,6 @@
 
 import SwiftUI
 import GameController
-import SwiftUIJoystick
 import CoreMotion
 
 struct ControllerView: View {
@@ -15,6 +14,8 @@ struct ControllerView: View {
     @AppStorage("On-ScreenControllerScale") private var controllerScale: Double = 1.0
     @AppStorage("stick-button") private var stickButton = false
     @State private var isPortrait = true
+    @State var hideDpad = false
+    @State var hideABXY = false
     @Environment(\.verticalSizeClass) var verticalSizeClass
 
     
@@ -45,16 +46,22 @@ struct ControllerView: View {
                     VStack(spacing: 15) {
                         ShoulderButtonsViewLeft()
                         ZStack {
-                            Joystick()
-                            DPadView()
+                            JoystickController(showBackground: $hideDpad)
+                            if !hideDpad {
+                                DPadView()
+                                    .animation(.easeInOut(duration: 0.2), value: hideDpad)
+                            }
                         }
                     }
                     
                     VStack(spacing: 15) {
                         ShoulderButtonsViewRight()
                         ZStack {
-                            Joystick(iscool: true)
-                            ABXYView()
+                            JoystickController(iscool: true, showBackground: $hideABXY)
+                            if !hideABXY {
+                                ABXYView()
+                                    .animation(.easeInOut(duration: 0.2), value: hideABXY)
+                            }
                         }
                     }
                 }
@@ -81,11 +88,14 @@ struct ControllerView: View {
             Spacer()
             
             HStack {
-                VStack(spacing: 15) {
+                VStack(spacing: 20) {
                     ShoulderButtonsViewLeft()
                     ZStack {
-                        Joystick()
-                        DPadView()
+                        JoystickController(showBackground: $hideDpad)
+                        if !hideDpad {
+                            DPadView()
+                                .animation(.easeInOut(duration: 0.2), value: hideDpad)
+                        }
                     }
                 }
                 
@@ -95,11 +105,14 @@ struct ControllerView: View {
                 
                 Spacer()
                 
-                VStack(spacing: 15) {
+                VStack(spacing: 20) {
                     ShoulderButtonsViewRight()
                     ZStack {
-                        Joystick(iscool: true)
-                        ABXYView()
+                        JoystickController(iscool: true, showBackground: $hideABXY)
+                        if !hideABXY {
+                            ABXYView()
+                                .animation(.easeInOut(duration: 0.2), value: hideABXY)
+                        }
                     }
                 }
             }
@@ -199,11 +212,11 @@ struct DPadView: View {
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 7) {
             ButtonView(button: .dPadUp)
-            HStack(spacing: 20) {
+            HStack(spacing: 22) {
                 ButtonView(button: .dPadLeft)
-                Spacer(minLength: 20)
+                Spacer(minLength: 22)
                 ButtonView(button: .dPadRight)
             }
             ButtonView(button: .dPadDown)
@@ -224,11 +237,11 @@ struct ABXYView: View {
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 7) {
             ButtonView(button: .X)
-            HStack(spacing: 20) {
+            HStack(spacing: 22) {
                 ButtonView(button: .Y)
-                Spacer(minLength: 20)
+                Spacer(minLength: 22)
                 ButtonView(button: .A)
             }
             ButtonView(button: .B)
@@ -259,15 +272,21 @@ struct ButtonView: View {
             .resizable()
             .scaledToFit()
             .frame(width: width, height: height)
-            .foregroundColor(true ? Color.white.opacity(0.9) : Color.black.opacity(0.9))
+            .foregroundColor(true ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
             .background(
                 Group {
-                    if !button.isTrigger {
+                    if !button.isTrigger && button != .leftStick && button != .rightStick {
                         Circle()
                             .fill(true ? Color.gray.opacity(0.4) : Color.gray.opacity(0.3))
                             .frame(width: width * 1.25, height: height * 1.25)
-                    } else {
+                    } else if button == .leftStick || button == .rightStick {
                         Image(systemName: buttonText)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: width * 1.25, height: height * 1.25)
+                            .foregroundColor(true ? Color.gray.opacity(0.4) : Color.gray.opacity(0.3))
+                    } else if button.isTrigger {
+                        Image(systemName: "" + String(turntobutton(buttonText)))
                             .resizable()
                             .scaledToFit()
                             .frame(width: width * 1.25, height: height * 1.25)
@@ -286,8 +305,22 @@ struct ButtonView: View {
                     }
             )
             .onAppear {
+                print(String(buttonText.dropFirst(2)))
                 configureSizeForButton()
             }
+    }
+    
+    private func turntobutton(_ string: String) -> String {
+        var sting = string
+        if string.hasPrefix("zl") || string.hasPrefix("zr") {
+            sting = String(string.dropFirst(3))
+        } else {
+            sting = String(string.dropFirst(2))
+        }
+        sting = sting.replacingOccurrences(of: "rectangle", with: "button")
+        sting = sting.replacingOccurrences(of: ".fill", with: ".horizontal.fill")
+        
+        return sting
     }
     
     private func handleButtonPress() {
