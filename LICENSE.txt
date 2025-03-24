@@ -1,3 +1,10 @@
+Currently licensed under the GNU AFFERO GENERAL PUBLIC LICENSE version 3, or any later version, at your choice.
+You may obtain a copy of the license at <https://gnu.org/>
+
+Copyright (c) Rhajune Park and contributors, 2025
+
+Previously licensed under the MeloNX License.
+
 MeloNX License
 
 Copyright (c) MeloNX Team and Contributors
