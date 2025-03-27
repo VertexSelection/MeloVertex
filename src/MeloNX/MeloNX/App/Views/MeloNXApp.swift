@@ -8,8 +8,13 @@
 import SwiftUI
 import UIKit
 import CryptoKit
+import UniformTypeIdentifiers
 
-
+extension UIDocumentPickerViewController {
+    @objc func fix_init(forOpeningContentTypes contentTypes: [UTType], asCopy: Bool) -> UIDocumentPickerViewController {
+        return fix_init(forOpeningContentTypes: contentTypes, asCopy: true)
+    }
+}
 
 @main
 struct MeloNXApp: App {
