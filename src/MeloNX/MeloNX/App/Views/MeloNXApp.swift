@@ -29,6 +29,13 @@ struct MeloNXApp: App {
     @State var finished = false
     @AppStorage("hasbeenfinished") var finishedStorage: Bool = false
     
+    init() {
+        let fixMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.fix_init(forOpeningContentTypes:asCopy:)))!
+        let origMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.init(forOpeningContentTypes:asCopy:)))!
+        method_exchangeImplementations(origMethod, fixMethod)
+    }
+
+    
     var body: some Scene {
         WindowGroup {
             if finishedStorage {
