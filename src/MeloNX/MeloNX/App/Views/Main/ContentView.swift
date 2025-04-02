@@ -37,6 +37,7 @@ struct ContentView: View {
     
     // JIT
     @AppStorage("jitStreamerEB") var jitStreamerEB: Bool = false
+    @AppStorage("stikJIT") var stikJIT: Bool = false
     
     // Other Configuration
     @State var isMK8: Bool = false
@@ -377,9 +378,14 @@ struct ContentView: View {
     
     private func checkJitStatus() {
         ryujinx.ryuIsJITEnabled()
+        if jitStreamerEB {
+            jitStreamerEB = false // byee jitstreamer eb
+        }
         if !ryujinx.jitenabled {
             if useTrollStore {
                 askForJIT()
+            } else if stikJIT {
+                enableJITStik()
             } else if jitStreamerEB {
                 enableJITEB()
             } else {

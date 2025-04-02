@@ -16,6 +16,8 @@ struct Joystick: View {
     @State private var offset: CGSize = .zero
     @Binding var showBackground: Bool
     
+    let sensitivity: CGFloat = 1.5
+
     var dragGesture: some Gesture {
         DragGesture()
             .onChanged { value in
@@ -34,12 +36,16 @@ struct Joystick: View {
                     let angle = atan2(translation.height, translation.width)
                     offset = CGSize(width: cos(angle) * extendedRadius, height: sin(angle) * extendedRadius)
                 }
-                position = CGPoint(x: offset.width / extendedRadius, y: offset.height / extendedRadius)
+                
+                position = CGPoint(
+                    x: max(-1, min(1, (offset.width / extendedRadius) * sensitivity)),
+                    y: max(-1, min(1, (offset.height / extendedRadius) * sensitivity))
+                )
             }
             .onEnded { _ in
-                offset = .zero // Reset to center
+                offset = .zero
                 position = .zero
-                withAnimation(.easeOut) {  // Smooth animation when hiding the background
+                withAnimation(.easeOut) {
                     showBackground = false
                 }
             }
@@ -50,7 +56,6 @@ struct Joystick: View {
             Circle()
                 .fill(Color.clear.opacity(0))
                 .frame(width: boundarySize, height: boundarySize)
-            
             
             if showBackground {
                 Circle()

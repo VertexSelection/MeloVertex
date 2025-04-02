@@ -29,6 +29,17 @@ namespace Ryujinx.Headless.SDL2
         [Option("exclusive-fullscreen-height", Required = false, Default = 1080, HelpText = "Set vertical resolution for exclusive fullscreen mode.")]
         public int ExclusiveFullscreenHeight { get; set; }
 
+        // Host Information
+
+        [Option("device-model", Required = false, HelpText = "Set the current iDevice Model")]
+        public string DeviceModel { get; set; }
+
+        [Option("has-memory-entitlement", Required = false, HelpText = "If the increased memory entitlement exists.")]
+        public bool MemoryEnt { get; set; }
+
+        [Option("device-display-name", Required = false, HelpText = "Set the current iDevice display name.")]
+        public string DisplayName { get; set; }
+
         // Input
 
         [Option("correct-controller", Required = false, Default = false, HelpText = "Makes the on-screen controller (iOS) buttons correspond to what they show.")]

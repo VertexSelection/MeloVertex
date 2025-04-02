@@ -266,7 +266,6 @@ namespace Ryujinx.Headless.SDL2
         [UnmanagedCallersOnly(EntryPoint = "initialize")]
         public static unsafe void Initialize() 
         {
-
             AppDataManager.Initialize(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
 
             if (_virtualFileSystem == null)
@@ -1152,6 +1151,11 @@ namespace Ryujinx.Headless.SDL2
             if (_inputManager == null)
             {
                 _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
+            }
+
+            if (OperatingSystem.IsIOS()) {
+                Logger.Info?.Print(LogClass.Application, $"Current Device: {option.DisplayName} ({option.DeviceModel}) {Environment.OSVersion.Version}");
+                Logger.Info?.Print(LogClass.Application, $"Increased Memory Limit: {option.MemoryEnt}");
             }
 
             GraphicsConfig.EnableShaderCache = true;

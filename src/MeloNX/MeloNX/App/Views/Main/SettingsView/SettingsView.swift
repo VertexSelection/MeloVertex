@@ -19,6 +19,7 @@ struct SettingsView: View {
     @AppStorage("useTrollStore") var useTrollStore: Bool = false
     
     @AppStorage("jitStreamerEB") var jitStreamerEB: Bool = false
+    @AppStorage("stikJIT") var stikJIT: Bool = false
     
     @AppStorage("ignoreJIT") var ignoreJIT: Bool = false
     
@@ -457,6 +458,8 @@ struct SettingsView: View {
                     .tint(.blue)
                     
                     if #available(iOS 17.0.1, *) {
+                        // You will stay in our hearts, JitStreamer EB. one of the first public JIT enablers, that didn't need a computer after initial install
+                        /*
                         Toggle(isOn: $jitStreamerEB) {
                             labelWithIcon("JitStreamer EB", iconName: "bolt.heart")
                         }
@@ -481,6 +484,32 @@ struct SettingsView: View {
                                     
                                     let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
                                         UIApplication.shared.open(URL(string: "https://jkcoxson.com/jitstreamer")!)
+                                    }
+                                    alertController.addAction(learnMoreButton)
+                                    
+                                    let doneButton = UIAlertAction(title: "Done", style: .cancel, handler: nil)
+                                    alertController.addAction(doneButton)
+                                    
+                                    mainWindow.rootViewController?.present(alertController, animated: true)
+                                }
+                            } label: {
+                                Text("About")
+                            }
+                        }
+                         */
+                        
+                        Toggle(isOn: $stikJIT) {
+                            labelWithIcon("StikJIT", iconName: "bolt.heart")
+                        }
+                        .tint(.blue)
+                        .contextMenu {
+                            Button {
+                                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                   let mainWindow = windowScene.windows.last {
+                                    let alertController = UIAlertController(title: "About StikJIT", message: "StikJIT is a really amazing iOS Application to Enable JIT on the go on-device, made by the best, most kind, helpful and nice developers of all time jkcoxson and Blu <3", preferredStyle: .alert)
+                                    
+                                    let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
+                                        UIApplication.shared.open(URL(string: "https://github.com/0-Blu/StikJIT")!)
                                     }
                                     alertController.addAction(learnMoreButton)
                                     
@@ -554,9 +583,6 @@ struct SettingsView: View {
                 Section {
                     let totalMemory = ProcessInfo.processInfo.physicalMemory
                     let model = getDeviceModel()
-                    let deviceType = model.hasPrefix("iPad") ? "iPadOS" :
-                    model.hasPrefix("iPhone") ? "iOS" :
-                    "macOS"
                     
                     let iconName = model.hasPrefix("iPad") ? "ipad.landscape" :
                     model.hasPrefix("iPhone") ? "iphone" :
@@ -570,7 +596,7 @@ struct SettingsView: View {
                     
                     labelWithIcon("Increased Memory Limit Entitlement: \(checkAppEntitlement("com.apple.developer.kernel.increased-memory-limit") ? "Enabled" : "Disabled")", iconName: "memorychip")
                     
-                    labelWithIcon("Device: \(getDeviceModel())", iconName: iconName)
+                    labelWithIcon("Device: \(UIDevice.modelName)", iconName: iconName)
                     
                     if ProcessInfo.processInfo.isiOSAppOnMac {
                         labelWithIcon("Memory: \(String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024)))", iconName: "memorychip.fill")
@@ -578,7 +604,8 @@ struct SettingsView: View {
                         labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000))", iconName: "memorychip.fill")
                     }
                     
-                    labelWithIcon("\(deviceType) \(UIDevice.current.systemVersion)", iconName: "applelogo")
+                    
+                    labelWithIcon("\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)", iconName: "applelogo")
                     
                 } header: {
                     Text("Information")

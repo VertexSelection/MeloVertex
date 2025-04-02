@@ -11,7 +11,7 @@ namespace Ryujinx.Cpu.LightningJit.Cache
     class NoWxCache : IDisposable
     {
         private const int CodeAlignment = 4; // Bytes.
-        private const int SharedCacheSize = 2047 * 1024 * 1024;
+        private const int SharedCacheSize = 512 * 1024 * 1024;
         private const int LocalCacheSize = 128 * 1024 * 1024;
 
         // How many calls to the same function we allow until we pad the shared cache to force the function to become available there
