@@ -15,8 +15,8 @@
           "bundleIdentifier": "com.stossy11.MeloNX",
           "developerName": "Stossy11",
           "subtitle": "An NX Emulator.",
-          "localizedDescription": "MeloNX is an iOS Nintendo Switch emulator based on Ryujinx, written primarily in C#. Designed to bring accurate performance and a user-friendly interface to iOS, MeloNX makes Switch games accessible on Apple devices. Developed from the ground up, MeloNX is open-source and available on Github under the MeloNX license (Based on MIT) (requires increased memory limit)",
-          "iconURL": "https://example.com/myapp_icon.png",
+          "localizedDescription": "MeloNX is an iOS Nintendo Switch emulator based on Ryujinx, written primarily in C#. Designed to bring accurate performance and a user-friendly interface to iOS, MeloNX makes Switch games accessible on Apple devices. Developed from the ground up, MeloNX is open-source and available on a custom Gitea server under the MeloNX license (Based on MIT) (requires increased memory limit)",
+          "iconURL": "https://git.743378673.xyz/CycloKid/assets/media/branch/main/Melo/AppIcons/MeloNX.png",
           "tintColor": "#AE34EB",
           "category": "games",
           "screenshots": [
