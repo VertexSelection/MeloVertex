@@ -32,7 +32,7 @@ class MTLHud {
     }
     
     func toggle() {
-        print(UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED"))
+        // print(UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED"))
         if UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED") {
             enable()
         } else {
@@ -44,12 +44,12 @@ class MTLHud {
         let path = "/usr/lib/libMTLHud.dylib"
 
         if dlopen(path, RTLD_NOW) != nil {
-            print("Library loaded from \(path)")
+            // print("Library loaded from \(path)")
             canMetalHud = true
             return true
         } else {
             if let error = String(validatingUTF8: dlerror()) {
-                print("Error loading library: \(error)")
+                // print("Error loading library: \(error)")
             }
             canMetalHud = false
             return false

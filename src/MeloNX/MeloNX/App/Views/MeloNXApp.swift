@@ -29,13 +29,6 @@ struct MeloNXApp: App {
     @State var finished = false
     @AppStorage("hasbeenfinished") var finishedStorage: Bool = false
     
-    init() {
-        let fixMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.fix_init(forOpeningContentTypes:asCopy:)))!
-        let origMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.init(forOpeningContentTypes:asCopy:)))!
-        method_exchangeImplementations(origMethod, fixMethod)
-    }
-
-    
     var body: some Scene {
         WindowGroup {
             if finishedStorage {
@@ -80,18 +73,18 @@ struct MeloNXApp: App {
         #endif
         
         guard let url = URL(string: urlString) else {
-            print("Invalid URL")
+            // print("Invalid URL")
             return
         }
         
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
-                print("Error checking for new version: \(error)")
+                // print("Error checking for new version: \(error)")
                 return
             }
             
             guard let data = data else {
-                print("No data received")
+                // print("No data received")
                 return
             }
             
@@ -106,7 +99,7 @@ struct MeloNXApp: App {
                     }
                 }
             } catch {
-                print("Failed to decode response: \(error)")
+                // print("Failed to decode response: \(error)")
             }
         }
         

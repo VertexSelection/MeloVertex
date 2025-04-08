@@ -100,7 +100,7 @@ class MeloMTKView: MTKView {
             let index = activeTouches.firstIndex(of: touch)!
             
             let scaledLocation = scaleToTargetResolution(location)!
-            print("Touch began at: \(scaledLocation) and \(self.aspectRatio)")
+            // // print("Touch began at: \(scaledLocation) and \(self.aspectRatio)")
             touch_began(Float(scaledLocation.x), Float(scaledLocation.y), Int32(index))
         }
     }
@@ -119,7 +119,7 @@ class MeloMTKView: MTKView {
             if let index = activeTouches.firstIndex(of: touch) {
                 activeTouches.remove(at: index)
                 
-                print("Touch ended for index \(index)")
+                // // print("Touch ended for index \(index)")
                 touch_ended(Int32(index))
             }
         }
@@ -139,14 +139,14 @@ class MeloMTKView: MTKView {
             guard let scaledLocation = scaleToTargetResolution(location) else {
                 if let index = activeTouches.firstIndex(of: touch) {
                     activeTouches.remove(at: index)
-                    print("Touch left active area, removed index \(index)")
+                    // // print("Touch left active area, removed index \(index)")
                     touch_ended(Int32(index))
                 }
                 continue
             }
             
             if let index = activeTouches.firstIndex(of: touch) {
-                print("Touch moved to: \(scaledLocation)")
+                // // print("Touch moved to: \(scaledLocation)")
                 touch_moved(Float(scaledLocation.x), Float(scaledLocation.y), Int32(index))
             }
         }

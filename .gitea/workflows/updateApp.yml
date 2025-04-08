@@ -1,0 +1,49 @@
+name: Update apps.json on new release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update:
+    runs-on: debian-trixie
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y jq
+
+    - name: Extract release data
+      id: release
+      run: |
+        echo "VERSION=${GITEA_REF_NAME}" >> $GITHUB_OUTPUT
+        echo "DESCRIPTION=$(echo '${GITEA_EVENT_RELEASE_BODY}' | jq -Rs .)" >> $GITHUB_OUTPUT
+        echo "DATE=$(date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+        IPA_URL=$(echo '${GITEA_EVENT_RELEASE_ASSETS}' | jq -r '.[0].browser_download_url')
+        echo "DOWNLOAD_URL=$IPA_URL" >> $GITHUB_OUTPUT
+
+    - name: Update apps.json
+      run: |
+        jq --arg version "${{ steps.release.outputs.VERSION }}" \
+           --arg buildVersion "1" \
+           --arg date "${{ steps.release.outputs.DATE }}" \
+           --arg localizedDescription "${{ steps.release.outputs.DESCRIPTION }}" \
+           --arg downloadURL "${{ steps.release.outputs.DOWNLOAD_URL }}" \
+           '.apps[0].versions |= [{"version": $version, "buildVersion": $buildVersion, "date": $date, "localizedDescription": $localizedDescription, "downloadURL": $downloadURL, "minOSVersion": "15.0"}]' \
+           apps.json > tmp.json && mv tmp.json apps.json
+
+    - name: Commit and push
+      run: |
+        git config user.name "gitea-actions"
+        git config user.email "gitea-actions@localhost"
+        git add apps.json
+        git commit -m "Update apps.json for release ${{ steps.release.outputs.VERSION }}"
+        git push
+      env:
+        GIT_AUTHOR_NAME: gitea-actions
+        GIT_AUTHOR_EMAIL: gitea-actions@localhost
+        GIT_COMMITTER_NAME: gitea-actions
+        GIT_COMMITTER_EMAIL: gitea-actions@localhost

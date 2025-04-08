@@ -305,7 +305,6 @@ struct ButtonView: View {
                     }
             )
             .onAppear {
-                print(String(buttonText.dropFirst(2)))
                 configureSizeForButton()
             }
     }

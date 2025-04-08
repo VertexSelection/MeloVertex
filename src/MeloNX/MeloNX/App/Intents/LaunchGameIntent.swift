@@ -35,7 +35,7 @@ struct LaunchGameIntentDef: AppIntent {
         let name = findClosestGameName(input: gameName, games: ryujinx.compactMap(\.titleName))
         
         let urlString = "melonx://game?name=\(name ?? gameName)"
-        print(urlString)
+        // print(urlString)
         if let url = URL(string: urlString) {
             UIApplication.shared.open(url, options: [:], completionHandler: nil)
         }

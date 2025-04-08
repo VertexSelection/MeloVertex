@@ -15,7 +15,6 @@ class Haptics {
     private init() { }
 
     func play(_ feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle) {
-        print("haptics")
         UIImpactFeedbackGenerator(style: feedbackStyle).impactOccurred()
     }
     

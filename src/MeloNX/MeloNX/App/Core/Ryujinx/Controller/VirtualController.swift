@@ -41,39 +41,39 @@ class VirtualController {
                     // Update joystick state here
                 },
                 SetPlayerIndex: { userdata, playerIndex in
-                    print("Player index set to \(playerIndex)")
+                    // print("Player index set to \(playerIndex)")
                 },
                 Rumble: { userdata, lowFreq, highFreq in
-                    print("Rumble with \(lowFreq), \(highFreq)")
+                    // print("Rumble with \(lowFreq), \(highFreq)")
                     if UIDevice.current.userInterfaceIdiom == .phone {
                         VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq))
                     }
                     return 0
                 },
                 RumbleTriggers: { userdata, leftRumble, rightRumble in
-                    print("Trigger rumble with \(leftRumble), \(rightRumble)")
+                    // print("Trigger rumble with \(leftRumble), \(rightRumble)")
                     return 0
                 },
                 SetLED: { userdata, red, green, blue in
-                    print("Set LED to RGB(\(red), \(green), \(blue))")
+                    // print("Set LED to RGB(\(red), \(green), \(blue))")
                     return 0
                 },
                 SendEffect: { userdata, data, size in
-                    print("Effect sent with size \(size)")
+                    // print("Effect sent with size \(size)")
                     return 0
                 }
             )
         
         instanceID = SDL_JoystickAttachVirtualEx(&joystickDesc)// SDL_JoystickAttachVirtual(SDL_JoystickType(SDL_JOYSTICK_TYPE_GAMECONTROLLER.rawValue), 6, 15, 1)
         if instanceID < 0 {
-            print("Failed to create virtual joystick: \(String(cString: SDL_GetError()))")
+            // print("Failed to create virtual joystick: \(String(cString: SDL_GetError()))")
             return
         }
         
         controller = SDL_GameControllerOpen(Int32(instanceID))
         
         if controller == nil {
-            print("Failed to create virtual controller: \(String(cString: SDL_GetError()))")
+            // print("Failed to create virtual controller: \(String(cString: SDL_GetError()))")
             return
         }
     }
@@ -107,7 +107,7 @@ class VirtualController {
             }
 
             guard let engine else {
-                return print("Error creating haptic patterns: hapticEngine is nil")
+                return // print("Error creating haptic patterns: hapticEngine is nil")
             }
 
             let lowFreqPlayer = try engine.makePlayer(with: lowFreqPattern)
@@ -117,7 +117,7 @@ class VirtualController {
             try highFreqPlayer.start(atTime: 0)
 
         } catch {
-            print("Error creating haptic patterns: \(error)")
+            // print("Error creating haptic patterns: \(error)")
         }
     }
 
@@ -146,7 +146,7 @@ class VirtualController {
     func setButtonState(_ state: Uint8, for button: VirtualControllerButton) {
         guard controller != nil else { return }
         
-        print("Button: \(button.rawValue) {state: \(state)}")
+        // // print("Button: \(button.rawValue) {state: \(state)}")
         if (button == .leftTrigger || button == .rightTrigger) && (state == 1 || state == 0) {
             let axis: SDL_GameControllerAxis = (button == .leftTrigger) ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT
             let value: Int = (state == 1) ? 32767 : 0

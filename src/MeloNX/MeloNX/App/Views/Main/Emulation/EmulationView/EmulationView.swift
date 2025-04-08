@@ -91,7 +91,7 @@ struct EmulationView: View {
             Air.shared.connectionCallbacks.append { cool in
                 DispatchQueue.main.async {
                     isAirplaying = cool
-                    print(cool)
+                    // print(cool)
                 }
             }
         }

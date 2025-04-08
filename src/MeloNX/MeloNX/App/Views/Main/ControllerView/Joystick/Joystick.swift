@@ -61,8 +61,7 @@ struct Joystick: View {
                 Circle()
                     .fill(Color.gray.opacity(0.4))
                     .frame(width: boundarySize, height: boundarySize)
-                    .animation(.easeInOut(duration: 0.05), value: showBackground)
-                    .transition(.scale)
+                    .animation(.easeInOut(duration: 0.1), value: showBackground)
             }
             
             Circle()

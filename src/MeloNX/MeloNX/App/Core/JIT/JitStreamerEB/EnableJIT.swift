@@ -23,7 +23,7 @@ func enableJITEB() {
 
 func enableJITEBRequest() {
     let pid = Int(getpid())
-    print(pid)
+    // print(pid)
     
     let address = URL(string: "http://[fd00::]:9172/attach/\(pid)")!
     var request = URLRequest(url: address)
@@ -90,7 +90,7 @@ func pingSite(host: String = "http://[fd00::]:9172/hello", completion: @escaping
     
     let task = session.dataTask(with: request) { _, response, error in
         if let error = error {
-            print("Ping failed: \(error.localizedDescription)")
+            // print("Ping failed: \(error.localizedDescription)")
             completion(false)
         } else if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
             completion(true)
@@ -140,12 +140,12 @@ func showLaunchAppAlert(jsonData: Data, in viewController: UIViewController) {
                 viewController.present(alert, animated: true)
             }
         } else {
-            print("Hopefully JIT is enabled now...")
+            // print("Hopefully JIT is enabled now...")
             Ryujinx.shared.ryuIsJITEnabled()
         }
         
     } catch {
-        print(String(data: jsonData, encoding: .utf8))
+        // print(String(data: jsonData, encoding: .utf8))
         let alert = UIAlertController(title: "Decoding Error", message: error.localizedDescription, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         

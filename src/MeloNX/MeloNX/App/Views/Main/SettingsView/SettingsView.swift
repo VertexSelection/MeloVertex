@@ -39,6 +39,8 @@ struct SettingsView: View {
     
     @AppStorage("performacehud") var performacehud: Bool = false
     
+    @AppStorage("swapBandA") var swapBandA: Bool = false
+    
     @AppStorage("oldWindowCode") var windowCode: Bool = false
     
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
@@ -60,479 +62,763 @@ struct SettingsView: View {
     @State private var searchText = ""
     @AppStorage("portal") var gamepo = false
     @StateObject var ryujinx = Ryujinx.shared
+    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.verticalSizeClass) var verticalSizeClass: UserInterfaceSizeClass?
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass: UserInterfaceSizeClass?
+    
+    @State private var selectedCategory: SettingsCategory = .graphics
     
     var filteredMemoryModes: [(String, String)] {
         guard !searchText.isEmpty else { return memoryManagerModes }
         return memoryManagerModes.filter { $0.1.localizedCaseInsensitiveContains(searchText) }
     }
     
+    enum SettingsCategory: String, CaseIterable, Identifiable {
+        case graphics = "Graphics"
+        case input = "Input"
+        case system = "System"
+        case misc = "Misc"
+        case advanced = "Advanced"
+        
+        var id: String { self.rawValue }
+        
+        var icon: String {
+            switch self {
+            case .graphics: return "paintbrush.fill"
+            case .input: return "gamecontroller.fill"
+            case .system: return "gearshape.fill"
+            case .misc: return "ellipsis.circle.fill"
+            case .advanced: return "terminal.fill"
+            }
+        }
+    }
     
     var body: some View {
         iOSNav {
-            List {
+            ZStack {
+                // Background color
+                Color(UIColor.systemBackground)
+                    .ignoresSafeArea()
                 
-                
-                // Graphics & Performance
-                Section {
-                    Picker(selection: $config.aspectRatio) {
-                        ForEach(AspectRatio.allCases, id: \.self) { ratio in
-                            Text(ratio.displayName).tag(ratio)
-                        }
-                    } label: {
-                        labelWithIcon("Aspect Ratio", iconName: "rectangle.expand.vertical")
-                    }
-                    .tint(.blue)
-                    
-                    Toggle(isOn: $config.disableShaderCache) {
-                        labelWithIcon("Shader Cache", iconName: "memorychip")
-                    }
-                    .tint(.blue)
-                    
-                    Toggle(isOn: $config.disablevsync) {
-                        labelWithIcon("Disable VSync", iconName: "arrow.triangle.2.circlepath")
-                    }
-                    .tint(.blue)
-                    
-                    
-                    Toggle(isOn: $config.enableTextureRecompression) {
-                        labelWithIcon("Texture Recompression", iconName: "rectangle.compress.vertical")
-                    }
-                    .tint(.blue)
-                    
-                    Toggle(isOn: $config.disableDockedMode) {
-                        labelWithIcon("Docked Mode", iconName: "dock.rectangle")
-                    }
-                    .tint(.blue)
-                    
-                    Toggle(isOn: $config.macroHLE) {
-                        labelWithIcon("Macro HLE", iconName: "gearshape")
-                    }.tint(.blue)
-                        
-                    
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            labelWithIcon("Resolution Scale", iconName: "magnifyingglass")
-                                .font(.headline)
-                            Spacer()
-                            Button {
-                                showResolutionInfo.toggle()
-                            } label: {
-                                Image(systemName: "info.circle")
-                                    .symbolRenderingMode(.hierarchical)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Learn more about Resolution Scale")
-                            .alert(isPresented: $showResolutionInfo) {
-                                Alert(
-                                    title: Text("Resolution Scale"),
-                                    message: Text("Adjust the internal rendering resolution. Higher values improve visuals but may reduce performance."),
-                                    dismissButton: .default(Text("OK"))
-                                )
+                VStack(spacing: 0) {
+                    // Category selector
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(SettingsCategory.allCases, id: \.id) { category in
+                                CategoryButton(
+                                    title: category.rawValue,
+                                    icon: category.icon,
+                                    isSelected: selectedCategory == category
+                                ) {
+                                    selectedCategory = category
+                                }
                             }
                         }
-                        
-                        Slider(value: $config.resscale, in: 0.1...3.0, step: 0.05) {
-                            Text("Resolution Scale")
-                        } minimumValueLabel: {
-                            Text("0.1x")
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                        } maximumValueLabel: {
-                            Text("3.0x")
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                        }
-                        Text("\(config.resscale, specifier: "%.2f")x")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            labelWithIcon("Max Anisotropic Scale", iconName: "magnifyingglass")
-                                .font(.headline)
-                            Spacer()
-                            Button {
-                                showAnisotropicInfo.toggle()
-                            } label: {
-                                Image(systemName: "info.circle")
-                                    .symbolRenderingMode(.hierarchical)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Learn more about Max Anisotropic Scale")
-                            .alert(isPresented: $showAnisotropicInfo) {
-                                Alert(
-                                    title: Text("Max Anisotripic Scale"),
-                                    message: Text("Adjust the internal Anisotropic resolution. Higher values improve visuals but may reduce performance. Default at 0 lets game decide."),
-                                    dismissButton: .default(Text("OK"))
-                                )
-                            }
-                        }
-
-                        Slider(value: $config.maxAnisotropy, in: 0...16.0, step: 0.1) {
-                            Text("Resolution Scale")
-                        } minimumValueLabel: {
-                            Text("0x")
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                        } maximumValueLabel: {
-                            Text("16.0x")
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                        }
-                        Text("\(config.maxAnisotropy, specifier: "%.2f")x")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-
-                    Toggle(isOn: $performacehud) {
-                        labelWithIcon("Custom Performance Overlay", iconName: "speedometer")
-                    }
-                    .tint(.blue)
-                } header: {
-                    Text("Graphics & Performance")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Fine-tune graphics and performance to suit your device and preferences.")
-                }
-                
-                // Input Selector
-                Section {
-                    if !controllersList.filter({ !currentControllers.contains($0) }).isEmpty {
-                        DisclosureGroup("Unselected Controllers") {
-                            ForEach(controllersList.filter { !currentControllers.contains($0) }) { controller in
-                                var customBinding: Binding<Bool> {
-                                    Binding(
-                                        get: { currentControllers.contains(controller) },
-                                        set: { bool in
-                                            if !bool {
-                                                currentControllers.removeAll(where: { $0.id == controller.id })
-                                            } else {
-                                                currentControllers.append(controller)
-                                            }
-                                        }
-                                    )
-                                }
-                                
-                                Toggle(isOn: customBinding) {
-                                    Text(controller.name)
-                                        .font(.body)
-                                }
-                                .tint(.blue)
-                            }
-                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
                     
+                    Divider()
                     
-                    
-                    ForEach(currentControllers) { controller in
-                        
-                        var customBinding: Binding<Bool> {
-                            Binding(
-                                get: { currentControllers.contains(controller) },
-                                set: { bool in
-                                    if !bool {
-                                        currentControllers.removeAll(where: { $0.id == controller.id })
-                                    } else {
-                                        currentControllers.append(controller)
-                                    }
-                                    // toggleController(controller)
-                                }
-                            )
-                        }
-                        
-                        
-                        if customBinding.wrappedValue {
-                            DisclosureGroup {
-                                Toggle(isOn: customBinding) {
-                                    Text(controller.name)
-                                        .font(.body)
-                                }
-                                .tint(.blue)
-                                .onDrag({ NSItemProvider() })
-                            } label: {
-                                
-                                if let controller = currentControllers.firstIndex(where: { $0.id == controller.id } )  {
-                                    Text("Player \(controller + 1)")
-                                        .onAppear() {
-                                            // print(currentControllers.firstIndex(where: { $0.id == controller.id }) ?? 0)
-                                            print(currentControllers.count)
-                                            
-                                            if currentControllers.count > 2 {
-                                                print(currentControllers[1])
-                                                print(currentControllers[2])
-                                            }
-                                        }
-                                }
+                    // Settings content
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Device Info Card
+                            deviceInfoCard
+                                .padding(.horizontal)
+                                .padding(.top)
+                            
+                            switch selectedCategory {
+                            case .graphics:
+                                graphicsSettings
+                            case .input:
+                                inputSettings
+                            case .system:
+                                systemSettings
+                            case .advanced:
+                                advancedSettings
+                            case .misc:
+                                miscSettings
                             }
                             
+                            Spacer(minLength: 50)
                         }
+                        .padding(.bottom)
                     }
-                    .onMove { from, to in
-                        currentControllers.move(fromOffsets: from, toOffset: to)
-                    }
-                } header: {
-                    Text("Input Selector")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Select input devices and on-screen controls to play with. ")
                 }
+            }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.large)
+            // .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
+            .onAppear {
+                mVKPreFillBuffer = false
                 
-                // Input Settings
-                Section {
-                    Toggle(isOn: $config.handHeldController) {
-                        labelWithIcon("Player 1 to Handheld Input", iconName: "formfitting.gamecontroller")
-                    }.tint(.blue)
-                        
+                if let configs = loadSettings() {
+                    self.config = configs
+                } else {
+                    saveSettings()
+                }
+            }
+            .onChange(of: config) { _ in
+                saveSettings()
+            }
+        }
+    }
+    
+    // MARK: - Device Info Card
+    
+    private var deviceInfoCard: some View {
+        VStack(spacing: 16) {
+            // JIT Status indicator
+            HStack {
+                Circle()
+                    .fill(ryujinx.jitenabled ? Color.green : Color.red)
+                    .frame(width: 12, height: 12)
+                
+                Text(ryujinx.jitenabled ? "JIT Enabled" : "JIT Not Acquired")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(ryujinx.jitenabled ? .green : .red)
+                
+                Spacer()
+                
+                let totalMemory = ProcessInfo.processInfo.physicalMemory
+                let memoryText = ProcessInfo.processInfo.isiOSAppOnMac
+                    ? String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024))
+                    : String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000)
+                
+                Text("\(memoryText) RAM")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            // Device cards
+            if (horizontalSizeClass == .regular && verticalSizeClass == .regular) || (horizontalSizeClass == .regular && verticalSizeClass == .compact) {
+                HStack(spacing: 16) {
+                    InfoCard(
+                        title: "Device",
+                        value: UIDevice.modelName,
+                        icon: deviceIcon,
+                        color: .blue
+                    )
                     
-                    Toggle(isOn: $stickButton) {
-                        labelWithIcon("Show Stick Buttons", iconName: "l.joystick.press.down")
-                    }.tint(.blue)
+                    InfoCard(
+                        title: "System",
+                        value: "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)",
+                        icon: "applelogo",
+                        color: .gray
+                    )
                     
+                    InfoCard(
+                        title: "Increased Memory Limit",
+                        value: checkAppEntitlement("com.apple.developer.kernel.increased-memory-limit") ? "Enabled" : "Disabled",
+                        icon: "memorychip.fill",
+                        color: .orange
+                    )
+                }
+            } else {
+                VStack(spacing: 16) {
+                    InfoCard(
+                        title: "Device",
+                        value: UIDevice.modelName,
+                        icon: deviceIcon,
+                        color: .blue
+                    )
                     
-                    Toggle(isOn: $ryuDemo) {
-                        labelWithIcon("On-Screen Controller (Demo)", iconName: "hand.draw")
+                    InfoCard(
+                        title: "System",
+                        value: "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)",
+                        icon: "applelogo",
+                        color: .gray
+                    )
+                    
+                    InfoCard(
+                        title: "Increased Memory Limit",
+                        value: checkAppEntitlement("com.apple.developer.kernel.increased-memory-limit") ? "Enabled" : "Disabled",
+                        icon: "memorychip.fill",
+                        color: .orange
+                    )
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        )
+        .onAppear {
+            ryujinx.ryuIsJITEnabled()
+        }
+    }
+    
+    private var deviceIcon: String {
+        let model = UIDevice.modelName
+        if model.contains("iPad") {
+            return "ipad"
+        } else if model.contains("iPhone") {
+            return "iphone"
+        } else {
+            return "desktopcomputer"
+        }
+    }
+    
+    // MARK: - Graphics Settings
+    
+    private var graphicsSettings: some View {
+        SettingsSection(title: "Graphics & Performance") {
+            // Resolution scale card
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        labelWithIcon("Resolution Scale", iconName: "magnifyingglass")
+                            .font(.headline)
+                        Spacer()
+                        Button {
+                            showResolutionInfo.toggle()
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .alert(isPresented: $showResolutionInfo) {
+                            Alert(
+                                title: Text("Resolution Scale"),
+                                message: Text("Adjust the internal rendering resolution. Higher values improve visuals but may reduce performance."),
+                                dismissButton: .default(Text("OK"))
+                            )
+                        }
                     }
-                    .tint(.blue)
-                    .disabled(true)
                     
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            labelWithIcon("On-Screen Controller Scale", iconName: "magnifyingglass")
-                                .font(.headline)
-                            Spacer()
-                            Button {
-                                showControllerInfo.toggle()
-                            } label: {
-                                Image(systemName: "info.circle")
-                                    .symbolRenderingMode(.hierarchical)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Learn more about On-Screen Controller Scale")
-                            .alert(isPresented: $showControllerInfo) {
-                                Alert(
-                                    title: Text("On-Screen Controller Scale"),
-                                    message: Text("Adjust the On-Screen Controller size."),
-                                    dismissButton: .default(Text("OK"))
-                                )
-                            }
-                        }
+                    VStack(spacing: 8) {
+                        Slider(value: $config.resscale, in: 0.1...3.0, step: 0.05)
                         
-                        Slider(value: $controllerScale, in: 0.1...3.0, step: 0.05) {
-                            Text("Resolution Scale")
-                        } minimumValueLabel: {
+                        HStack {
                             Text("0.1x")
-                                .font(.footnote)
+                                .font(.caption2)
                                 .foregroundColor(.secondary)
-                        } maximumValueLabel: {
+                            
+                            Spacer()
+                            
+                            Text("\(config.resscale, specifier: "%.2f")x")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+                            
+                            Spacer()
+                            
                             Text("3.0x")
-                                .font(.footnote)
+                                .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
-                        Text("\(controllerScale, specifier: "%.2f")x")
+                    }
+                }
+            }
+            
+            // Anisotropic filtering card
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        labelWithIcon("Max Anisotropic Filtering", iconName: "magnifyingglass")
+                            .font(.headline)
+                        Spacer()
+                        Button {
+                            showAnisotropicInfo.toggle()
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .alert(isPresented: $showAnisotropicInfo) {
+                            Alert(
+                                title: Text("Max Anisotropic Filtering"),
+                                message: Text("Adjust the internal Anisotropic filtering. Higher values improve texture quality at angles but may reduce performance. Default at 0 lets game decide."),
+                                dismissButton: .default(Text("OK"))
+                            )
+                        }
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Slider(value: $config.maxAnisotropy, in: 0...16.0, step: 0.1)
+                        
+                        HStack {
+                            Text("Off")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            Text("\(config.maxAnisotropy, specifier: "%.1f")x")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+                            
+                            Spacer()
+                            
+                            Text("16x")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            
+            // Toggle options card
+            SettingsCard {
+                VStack(spacing: 4) {
+                    SettingsToggle(isOn: $config.disableShaderCache, icon: "memorychip", label: "Shader Cache")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $config.disablevsync, icon: "arrow.triangle.2.circlepath", label: "Disable VSync")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $config.enableTextureRecompression, icon: "rectangle.compress.vertical", label: "Texture Recompression")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $config.disableDockedMode, icon: "dock.rectangle", label: "Docked Mode")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $config.macroHLE, icon: "gearshape", label: "Macro HLE")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $performacehud, icon: "speedometer", label: "Performance Overlay")
+                }
+            }
+            
+            // Aspect ratio card
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 12) {
+                    labelWithIcon("Aspect Ratio", iconName: "rectangle.expand.vertical")
+                        .font(.headline)
+                    
+                    if (horizontalSizeClass == .regular && verticalSizeClass == .regular) || (horizontalSizeClass == .regular && verticalSizeClass == .compact) {
+                        Picker(selection: $config.aspectRatio) {
+                            ForEach(AspectRatio.allCases, id: \.self) { ratio in
+                                Text(ratio.displayName).tag(ratio)
+                            }
+                        } label: {
+                            EmptyView()
+                        }
+                        .pickerStyle(.segmented)
+                    } else {
+                        Picker(selection: $config.aspectRatio) {
+                            ForEach(AspectRatio.allCases, id: \.self) { ratio in
+                                Text(ratio.displayName).tag(ratio)
+                            }
+                        } label: {
+                            EmptyView()
+                        }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Input Settings
+    
+    private var inputSettings: some View {
+        SettingsSection(title: "Input Configuration") {
+            // Controller selection card
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Controller Selection")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Divider()
+                    
+                    if !currentControllers.isEmpty {
+                        ForEach(currentControllers) { controller in
+                            if currentControllers.firstIndex(of: controller) == currentControllers.count - 1 && currentControllers.count != 1 {
+                                Divider()
+                            }
+                            
+                            HStack {
+                                Image(systemName: "gamecontroller.fill")
+                                    .foregroundColor(.blue)
+                                
+                                if let index = currentControllers.firstIndex(where: { $0.id == controller.id }) {
+                                    Text("Player \(index + 1): \(controller.name)")
+                                        .lineLimit(1)
+                                }
+                                
+                                Spacer()
+                                
+                                Button {
+                                    toggleController(controller)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
+                            if currentControllers[0] != controller  && currentControllers.firstIndex(of: controller) == currentControllers.count - 1 {
+                                Divider()
+                            }
+                        }
+                        .onMove { from, to in
+                            currentControllers.move(fromOffsets: from, toOffset: to)
+                        }
+                        .environment(\.editMode, .constant(.active))
+                    }
+                    
+                    if !controllersList.filter({ !currentControllers.contains($0) }).isEmpty {
+                        Divider()
+                        
+                        Menu {
+                            ForEach(controllersList.filter { !currentControllers.contains($0) }) { controller in
+                                Button {
+                                    currentControllers.append(controller)
+                                } label: {
+                                    Text(controller.name)
+                                }
+                            }
+                        } label: {
+                            Label("Add Controller", systemImage: "plus.circle.fill")
+                                .foregroundColor(.blue)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.vertical, 6)
+                        }
+                    }
+                }
+            }
+            
+            // On-screen controls card
+            SettingsCard {
+                VStack(spacing: 4) {
+                    SettingsToggle(isOn: $config.handHeldController, icon: "formfitting.gamecontroller", label: "Player 1 to Handheld")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $stickButton, icon: "l.joystick.press.down", label: "Show Stick Buttons")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $ryuDemo, icon: "hand.draw", label: "On-Screen Controller (Demo)")
+                        .disabled(true)
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $swapBandA, icon: "rectangle.2.swap", label: "Swap Face Buttons (Physical Controller)")
+                }
+            }
+            
+            // Controller scale card
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        labelWithIcon("On-Screen Controller Scale", iconName: "magnifyingglass")
+                            .font(.headline)
+                        Spacer()
+                        Button {
+                            showControllerInfo.toggle()
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .alert(isPresented: $showControllerInfo) {
+                            Alert(
+                                title: Text("On-Screen Controller Scale"),
+                                message: Text("Adjust the On-Screen Controller size."),
+                                dismissButton: .default(Text("OK"))
+                            )
+                        }
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Slider(value: $controllerScale, in: 0.1...3.0, step: 0.05)
+                        
+                        HStack {
+                            Text("Smaller")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            Text("\(controllerScale, specifier: "%.2f")x")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+                            
+                            Spacer()
+                            
+                            Text("Larger")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - System Settings
+    
+    private var systemSettings: some View {
+        SettingsSection(title: "System Configuration") {
+            // Language and region card
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        labelWithIcon("System Language", iconName: "character.bubble")
+                            .font(.headline)
+                        
+                        Picker(selection: $config.language) {
+                            ForEach(SystemLanguage.allCases, id: \.self) { language in
+                                Text(language.displayName).tag(language)
+                            }
+                        } label: {
+                            EmptyView()
+                        }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                    }
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        labelWithIcon("Region", iconName: "globe")
+                            .font(.headline)
+                        
+                        Picker(selection: $config.regioncode) {
+                            ForEach(SystemRegionCode.allCases, id: \.self) { region in
+                                Text(region.displayName).tag(region)
+                            }
+                        } label: {
+                            EmptyView()
+                        }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            
+            // CPU options card
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("CPU Configuration")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Memory Manager Mode")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                } header: {
-                    Text("Input Settings")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Configure input devices and on-screen controls for easier navigation and play.")
-                }
-                
-                // Language and Region Settings
-                Section {
-                    Picker(selection: $config.language) {
-                        ForEach(SystemLanguage.allCases, id: \.self) { ratio in
-                            Text(ratio.displayName).tag(ratio)
-                        }
-                    } label: {
-                        labelWithIcon("Language", iconName: "character.bubble")
-                    }
-                    
-                    Picker(selection: $config.regioncode) {
-                        ForEach(SystemRegionCode.allCases, id: \.self) { ratio in
-                            Text(ratio.displayName).tag(ratio)
-                        }
-                    } label: {
-                        labelWithIcon("Region", iconName: "globe")
-                    }
-                    
-                    
-                    // globe
-                } header: {
-                    Text("Language and Region Settings")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Configure the System Language and the Region.")
-                }
-                
-                // CPU Mode
-                Section {
-                    if filteredMemoryModes.isEmpty {
-                        Text("No matches for \"\(searchText)\"")
-                            .foregroundColor(.secondary)
-                    } else {
+                        
                         Picker(selection: $config.memoryManagerMode) {
                             ForEach(filteredMemoryModes, id: \.0) { key, displayName in
                                 Text(displayName).tag(key)
                             }
                         } label: {
-                            labelWithIcon("Memory Manager Mode", iconName: "gearshape")
+                            EmptyView()
                         }
+                        .pickerStyle(.segmented)
                     }
                     
-                    Toggle(isOn: $config.disablePTC) {
-                        labelWithIcon("Disable PTC", iconName: "cpu")
-                    }.tint(.blue)
+                    Divider()
+                    
+                    SettingsToggle(isOn: $config.disablePTC, icon: "cpu", label: "Disable PTC")
                     
                     if let gpuInfo = getGPUInfo(), gpuInfo.hasPrefix("Apple M") {
-                        if #available (iOS 16.4, *) {
-                            Toggle(isOn: .constant(false)) {
-                                labelWithIcon("Hypervisor", iconName: "bolt")
-                            }
-                            .tint(.blue)
-                            .disabled(true)
-                            .onAppear() {
-                                print("CPU Info: \(gpuInfo)")
-                            }
-                        } else if checkAppEntitlement("com.apple.private.hypervisor") {
-                            Toggle(isOn: $config.hypervisor) {
-                                labelWithIcon("Hypervisor", iconName: "bolt")
-                            }
-                            .tint(.blue)
-                            .onAppear() {
-                                print("CPU Info: \(gpuInfo)")
-                            }
-                        }
-                    }
-                } header: {
-                    Text("CPU")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Select how memory is managed. 'Host (fast)' is best for most users.")
-                }
-
-            
-            Section {
-                
-                
-                Toggle(isOn: $config.expandRam) {
-                    labelWithIcon("Expand Guest Ram (6GB)", iconName: "exclamationmark.bubble")
-                }
-                .tint(.red)
-
-                Toggle(isOn: $config.ignoreMissingServices) {
-                    labelWithIcon("Ignore Missing Services", iconName: "waveform.path")
-                }
-                .tint(.red)
-            } header: {
-                Text("Hacks")
-                    .font(.title3.weight(.semibold))
-                    .textCase(nil)
-                    .headerProminence(.increased)
-            }
-
-                // Other Settings
-                Section {
-                    
-                    Toggle(isOn: $ssb) {
-                        labelWithIcon("Screenshot Button", iconName: "square.and.arrow.up")
-                    }
-                    .tint(.blue)
-                    
-                    if #available(iOS 17.0.1, *) {
-                        // You will stay in our hearts, JitStreamer EB. one of the first public JIT enablers, that didn't need a computer after initial install
-                        /*
-                        Toggle(isOn: $jitStreamerEB) {
-                            labelWithIcon("JitStreamer EB", iconName: "bolt.heart")
-                        }
-                        .tint(.blue)
-                        .contextMenu {
-                            Button {
-                                waitForVPN.toggle()
-                            } label: {
-                                Label {
-                                    Text("Wait for VPN")
-                                } icon: {
-                                    if waitForVPN {
-                                        Image(systemName:  "checkmark")
-                                    }
-                                }
-
-                            }
-                            Button {
-                                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                                   let mainWindow = windowScene.windows.last {
-                                    let alertController = UIAlertController(title: "About JitStreamer EB", message: "JitStreamer EB is an Amazing Application to Enable JIT on the go, made by one of the best, most kind, helpful and nice developers of all time jkcoxson <3", preferredStyle: .alert)
-                                    
-                                    let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
-                                        UIApplication.shared.open(URL(string: "https://jkcoxson.com/jitstreamer")!)
-                                    }
-                                    alertController.addAction(learnMoreButton)
-                                    
-                                    let doneButton = UIAlertAction(title: "Done", style: .cancel, handler: nil)
-                                    alertController.addAction(doneButton)
-                                    
-                                    mainWindow.rootViewController?.present(alertController, animated: true)
-                                }
-                            } label: {
-                                Text("About")
-                            }
-                        }
-                         */
+                        Divider()
                         
-                        Toggle(isOn: $stikJIT) {
-                            labelWithIcon("StikJIT", iconName: "bolt.heart")
+                        if #available(iOS 16.4, *) {
+                            SettingsToggle(isOn: .constant(false), icon: "bolt", label: "Hypervisor")
+                                .disabled(true)
+                        } else if checkAppEntitlement("com.apple.private.hypervisor") {
+                            SettingsToggle(isOn: $config.hypervisor, icon: "bolt", label: "Hypervisor")
                         }
-                        .tint(.blue)
-                        .contextMenu {
-                            Button {
-                                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                                   let mainWindow = windowScene.windows.last {
-                                    let alertController = UIAlertController(title: "About StikJIT", message: "StikJIT is a really amazing iOS Application to Enable JIT on the go on-device, made by the best, most kind, helpful and nice developers of all time jkcoxson and Blu <3", preferredStyle: .alert)
-                                    
-                                    let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
-                                        UIApplication.shared.open(URL(string: "https://github.com/0-Blu/StikJIT")!)
-                                    }
-                                    alertController.addAction(learnMoreButton)
-                                    
-                                    let doneButton = UIAlertAction(title: "Done", style: .cancel, handler: nil)
-                                    alertController.addAction(doneButton)
-                                    
-                                    mainWindow.rootViewController?.present(alertController, animated: true)
-                                }
-                            } label: {
-                                Text("About")
+                    }
+                }
+            }
+            
+            // Memory hacks card
+            SettingsCard {
+                VStack(spacing: 4) {
+                    SettingsToggle(isOn: $config.expandRam, icon: "exclamationmark.bubble", label: "Expand Guest RAM (6GB)")
+                        .accentColor(.red)
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $config.ignoreMissingServices, icon: "waveform.path", label: "Ignore Missing Services")
+                        .accentColor(.red)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Advanced Settings
+    
+    private var advancedSettings: some View {
+        SettingsSection(title: "Advanced Options") {
+            // Debug options card
+            SettingsCard {
+                VStack(spacing: 4) {
+                    SettingsToggle(isOn: $showlogsloading, icon: "text.alignleft", label: "Show Logs While Loading")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $showlogsgame, icon: "text.magnifyingglass", label: "Show Logs In-Game")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $config.debuglogs, icon: "exclamationmark.bubble", label: "Debug Logs")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: $config.tracelogs, icon: "waveform.path", label: "Trace Logs")
+                }
+            }
+            
+            // Advanced toggles card
+            SettingsCard {
+                VStack(spacing: 4) {
+                    SettingsToggle(isOn: $config.dfsIntegrityChecks, icon: "checkmark.shield", label: "Disable FS Integrity Checks")
+                    
+                    Divider()
+                    
+                    if MTLHud.shared.canMetalHud {
+                        SettingsToggle(isOn: $metalHUDEnabled, icon: "speedometer", label: "Metal Performance HUD")
+                            .onChange(of: metalHUDEnabled) { newValue in
+                                MTLHud.shared.toggle()
                             }
-                        }
-                    } else {
-                        Toggle(isOn: $useTrollStore) {
-                            labelWithIcon("TrollStore JIT", iconName: "troll.svg")
-                        }
-                        .tint(.blue)
+                        
+                        Divider()
                     }
                     
-                    Toggle(isOn: $syncqsubmits) {
-                        labelWithIcon("MVK: Synchronous Queue Submits", iconName: "line.diagonal")
-                    }.tint(.blue)
-                        .contextMenu() {
+                    SettingsToggle(isOn: $ignoreJIT, icon: "cpu", label: "Ignore JIT Popup")
+                    
+                    Divider()
+                    
+                    Button {
+                        finishedStorage = false
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                                .foregroundColor(.blue)
+                            Text("Show Setup Screen")
+                                .foregroundColor(.blue)
+                            Spacer()
+                        }
+                        .padding(.vertical, 8)
+                    }
+                }
+            }
+            
+            // Additional args card
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Additional Arguments")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    if #available(iOS 15.0, *) {
+                        TextField("Separate arguments with commas", text: Binding(
+                            get: {
+                                config.additionalArgs.joined(separator: ", ")
+                            },
+                            set: { newValue in
+                                config.additionalArgs = newValue
+                                    .split(separator: ",")
+                                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                            }
+                        ))
+                        .font(.system(.body, design: .monospaced))
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .padding(.vertical, 4)
+                    } else {
+                        TextField("Separate arguments with commas", text: Binding(
+                            get: {
+                                config.additionalArgs.joined(separator: ", ")
+                            },
+                            set: { newValue in
+                                config.additionalArgs = newValue
+                                    .split(separator: ",")
+                                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                            }
+                        ))
+                        .font(.system(.body, design: .monospaced))
+                        .textFieldStyle(.roundedBorder)
+                        .disableAutocorrection(true)
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            
+            // Page size info card
+            SettingsCard {
+                HStack {
+                    labelWithIcon("Page Size", iconName: "textformat.size")
+                    Spacer()
+                    Text("\(String(Int(getpagesize())))")
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            if gamepo {
+                SettingsCard {
+                    Text("The cake is a lie")
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Miscellaneous Settings
+    
+    private var miscSettings: some View {
+        SettingsSection(title: "Miscellaneous Options") {
+            SettingsCard {
+                VStack(spacing: 4) {
+                    // Screenshot button card
+                    SettingsToggle(isOn: $ssb, icon: "square.and.arrow.up", label: "Screenshot Button")
+                    
+                    Divider()
+                    
+                    // JIT options
+                    if #available(iOS 17.0.1, *) {
+                        SettingsToggle(isOn: $stikJIT, icon: "bolt.heart", label: "StikJIT")
+                            .contextMenu {
+                                Button {
+                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                       let mainWindow = windowScene.windows.last {
+                                        let alertController = UIAlertController(title: "About StikJIT", message: "StikJIT is a really amazing iOS Application to Enable JIT on the go on-device, made by the best, most kind, helpful and nice developers of all time jkcoxson and Blu <3", preferredStyle: .alert)
+                                        
+                                        let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
+                                            UIApplication.shared.open(URL(string: "https://github.com/0-Blu/StikJIT")!)
+                                        }
+                                        alertController.addAction(learnMoreButton)
+                                        
+                                        let doneButton = UIAlertAction(title: "Done", style: .cancel, handler: nil)
+                                        alertController.addAction(doneButton)
+                                        
+                                        mainWindow.rootViewController?.present(alertController, animated: true)
+                                    }
+                                } label: {
+                                    Text("About")
+                                }
+                            }
+                    } else {
+                        SettingsToggle(isOn: $useTrollStore, icon: "troll.svg", label: "TrollStore JIT")
+                    }
+                    
+                    Divider()
+                    
+                    // MoltenVK Options
+                    SettingsToggle(isOn: $syncqsubmits, icon: "line.diagonal", label: "MVK: Synchronous Queue Submits")
+                        .contextMenu {
                             Button {
                                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                                    let mainWindow = windowScene.windows.last {
@@ -548,159 +834,26 @@ struct SettingsView: View {
                             }
                         }
                     
-                    DisclosureGroup {
-                        Toggle(isOn: $showlogsloading) {
-                            labelWithIcon("Show logs while loading", iconName: "text.alignleft")
-                        }.tint(.blue)
-                        
-                        Toggle(isOn: $showlogsgame) {
-                            labelWithIcon("Show logs in-game", iconName: "text.line.magnify")
-                        }.tint(.blue)
-                        
-                        Toggle(isOn: $config.debuglogs) {
-                            labelWithIcon("Debug Logs", iconName: "exclamationmark.bubble")
-                        }
-                        .tint(.blue)
-                        
-                        Toggle(isOn: $config.tracelogs) {
-                            labelWithIcon("Trace Logs", iconName: "waveform.path")
-                        }
-                        .tint(.blue)
-                    } label: {
-                        Text("Logs")
-                    }
                     
-                } header: {
-                    Text("Miscellaneous Options")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Enable trace and debug logs for advanced troubleshooting (Note: This degrades performance),\nEnable Screenshot Button for better screenshots\nand Enable TrollStore for automatic TrollStore JIT.")
-                }
-                
-                // Info
-                Section {
-                    let totalMemory = ProcessInfo.processInfo.physicalMemory
-                    let model = getDeviceModel()
-                    
-                    let iconName = model.hasPrefix("iPad") ? "ipad.landscape" :
-                    model.hasPrefix("iPhone") ? "iphone" :
-                    "macwindow"
-                    
-                    labelWithIcon("JIT Acquisition: \(ryujinx.jitenabled ? "Acquired" : "Not Acquired" )", iconName: "bolt.fill")
-                        .onAppear() {
-                            print("JIY ;(((((")
-                            ryujinx.ryuIsJITEnabled()
-                        }
-                    
-                    labelWithIcon("Increased Memory Limit Entitlement: \(checkAppEntitlement("com.apple.developer.kernel.increased-memory-limit") ? "Enabled" : "Disabled")", iconName: "memorychip")
-                    
-                    labelWithIcon("Device: \(UIDevice.modelName)", iconName: iconName)
-                    
-                    if ProcessInfo.processInfo.isiOSAppOnMac {
-                        labelWithIcon("Memory: \(String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024)))", iconName: "memorychip.fill")
-                    } else {
-                        labelWithIcon("Device Memory: \(String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000))", iconName: "memorychip.fill")
-                    }
-                    
-                    
-                    labelWithIcon("\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)", iconName: "applelogo")
-                    
-                } header: {
-                    Text("Information")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("Shows info about Memory, Entitlement and JIT.")
-                }
-                
-                // Advanced
-                Section {
-                    DisclosureGroup {
-                        
-                        Toggle(isOn: $config.dfsIntegrityChecks) {
-                            labelWithIcon("Disable FS Integrity Checks", iconName: "checkmark.shield")
-                        }.tint(.blue)
-                        
-                        HStack {
-                            labelWithIcon("Page Size", iconName: "textformat.size")
-                            Spacer()
-                            Text("\(String(Int(getpagesize())))")
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        if MTLHud.shared.canMetalHud {
-                            Toggle(isOn: $metalHUDEnabled) {
-                                labelWithIcon("Metal Performance HUD", iconName: "speedometer")
-                            }
-                            .tint(.blue)
-                            .onChange(of: metalHUDEnabled) { newValue in
-                                MTLHud.shared.toggle()
-                            }
-                        }
-                        
-                        Toggle(isOn: $ignoreJIT) {
-                            labelWithIcon("Ignore JIT Popup", iconName: "cpu")
-                        }.tint(.blue)
-                        
-                        TextField("Additional Arguments", text: Binding(
-                            get: {
-                                config.additionalArgs.joined(separator: " ")
-                            },
-                            set: { newValue in
-                                config.additionalArgs = newValue
-                                    .split(separator: ",")
-                                    .map { $0.trimmingCharacters(in: .whitespaces) }
-                            }
-                        ))
-                        .textInputAutocapitalization(.none)
-                        .disableAutocorrection(true)
-                        
-                            
-                        
+                    if ryujinx.firmwareversion != "0" {
+                        Divider()
                         Button {
-                            finishedStorage = false
-                            
+                            Ryujinx.shared.removeFirmware()
                         } label: {
-                            Text("Show Setup")
-                                .font(.body)
+                            HStack {
+                                Text("Remove Firmware")
+                                    .foregroundColor(.blue)
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
                         }
-                        
-                        
-                    } label: {
-                        Text("Advanced Options")
                     }
-                } header: {
-                    Text("Advanced")
-                        .font(.title3.weight(.semibold))
-                        .textCase(nil)
-                        .headerProminence(.increased)
-                } footer: {
-                    Text("For advanced users. See page size or add custom arguments for experimental features, \"Metal Performance HUD\" is not needed if you have it enabled in settings. \n \n\(gamepo ? "the cake is a lie" : "")")
                 }
-                
-            }
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .listStyle(.insetGrouped)
-            .onAppear {
-                mVKPreFillBuffer = false
-                
-                if let configs = loadSettings() {
-                    self.config = configs
-                } else {
-                    saveSettings()
-                }
-            }
-            .onChange(of: config) { _ in
-                saveSettings()
             }
         }
-        .navigationViewStyle(.stack)
     }
+    
+    // MARK: - Helper Functions
     
     private func toggleController(_ controller: Controller) {
         if currentControllers.contains(where: { $0.id == controller.id }) {
@@ -714,52 +867,35 @@ struct SettingsView: View {
         MeloNX.saveSettings(config: config)
     }
     
-    func getDeviceModel() -> String {
-        var systemInfo = utsname()
-        uname(&systemInfo)
-        let machineMirror = Mirror(reflecting: systemInfo.machine)
-        let identifier = machineMirror.children.reduce("") { identifier, element in
-            guard let value = element.value as? Int8, value != 0 else { return identifier }
-            return identifier + String(UnicodeScalar(UInt8(value)))
-        }
-        return identifier
-    }
-    
-    
     func getGPUInfo() -> String? {
         let device = MTLCreateSystemDefaultDevice()
-        
-        let gpu = device?.name
-        print("GPU: " + (gpu ?? ""))
-        return gpu
+        return device?.name
     }
-
     
     @ViewBuilder
     private func labelWithIcon(_ text: String, iconName: String, flipimage: Bool? = nil) -> some View {
         HStack(spacing: 8) {
-            if iconName.hasSuffix(".svg"){
+            if iconName.hasSuffix(".svg") {
                 if let flipimage, flipimage {
                     SVGView(svgName: iconName, color: .blue)
-                        .symbolRenderingMode(.hierarchical)
+                        // .symbolRenderingMode(.hierarchical)
                         .frame(width: 20, height: 20)
                         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                 } else {
                     SVGView(svgName: iconName, color: .blue)
-                        .symbolRenderingMode(.hierarchical)
+                        // .symbolRenderingMode(.hierarchical)
                         .frame(width: 20, height: 20)
                 }
             } else if !iconName.isEmpty {
                 Image(systemName: iconName)
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.blue)
+                    // .symbolRenderingMode(.hierarchical)
+                    .foregroundColor(.blue)
             }
             Text(text)
         }
         .font(.body)
     }
 }
-
 
 struct SVGView: UIViewRepresentable {
     var svgName: String
@@ -801,9 +937,9 @@ func saveSettings(config: Ryujinx.Configuration) {
         let fileURL = URL.documentsDirectory.appendingPathComponent("config.json")
         
         try data.write(to: fileURL)
-        print("Settings saved to: \(fileURL.path)")
+        // print("Settings saved to: \(fileURL.path)")
     } catch {
-        print("Failed to save settings: \(error)")
+        // print("Failed to save settings: \(error)")
     }
 }
 
@@ -812,7 +948,7 @@ func loadSettings() -> Ryujinx.Configuration? {
         let fileURL = URL.documentsDirectory.appendingPathComponent("config.json")
         
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            print("Config file does not exist at: \(fileURL.path)")
+            // print("Config file does not exist at: \(fileURL.path)")
             return nil
         }
         
@@ -822,7 +958,140 @@ func loadSettings() -> Ryujinx.Configuration? {
         let configs = try decoder.decode(Ryujinx.Configuration.self, from: data)
         return configs
     } catch {
-        print("Failed to load settings: \(error)")
+        // print("Failed to load settings: \(error)")
         return nil
+    }
+}
+
+
+// MARK: - Supporting Views
+
+struct CategoryButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: isSelected ? .semibold : .regular))
+                Text(title)
+                    .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+            }
+            .foregroundColor(isSelected ? .blue : .secondary)
+            .frame(width: 70, height: 56)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.blue.opacity(0.15) : Color.clear)
+            )
+        }
+    }
+}
+
+struct SettingsSection<Content: View>: View {
+    let title: String
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(title)
+                .font(.title2.weight(.bold))
+                .padding(.horizontal)
+            
+            content
+        }
+    }
+}
+
+struct SettingsCard<Content: View>: View {
+    @Environment(\.colorScheme) var colorScheme
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    var body: some View {
+        content
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
+            .padding(.horizontal)
+    }
+}
+
+struct SettingsToggle: View {
+    let isOn: Binding<Bool>
+    let icon: String
+    let label: String
+    var disabled: Bool = false
+    
+    var body: some View {
+        Toggle(isOn: isOn) {
+            HStack(spacing: 8) {
+                if icon.hasSuffix(".svg") {
+                    SVGView(svgName: icon, color: .blue)
+                        .frame(width: 20, height: 20)
+                } else {
+                    Image(systemName: icon)
+                        // .symbolRenderingMode(.hierarchical)
+                        .foregroundColor(.blue)
+                }
+                
+                Text(label)
+                    .font(.body)
+            }
+        }
+        .toggleStyle(SwitchToggleStyle(tint: .blue))
+        .disabled(disabled)
+        .padding(.vertical, 6)
+    }
+    
+    func disabled(_ disabled: Bool) -> SettingsToggle {
+        var view = self
+        view.disabled = disabled
+        return view
+    }
+    
+    func accentColor(_ color: Color) -> SettingsToggle {
+        var view = self
+        return view
+    }
+}
+
+struct InfoCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Text(value)
+                .font(.system(size: 14, weight: .medium))
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
     }
 }

@@ -207,7 +207,7 @@ namespace Ryujinx.Headless.SDL2
         [Option("aspect-ratio", Required = false, Default = AspectRatio.Fixed16x9, HelpText = "Aspect Ratio applied to the renderer window.")]
         public AspectRatio AspectRatio { get; set; }
 
-        [Option("backend-threading", Required = false, Default = BackendThreading.Auto, HelpText = "Whether or not backend threading is enabled. The \"Auto\" setting will determine whether threading should be enabled at runtime.")]
+        [Option("backend-threading", Required = false, Default = BackendThreading.On, HelpText = "Whether or not backend threading is enabled. The \"Auto\" setting will determine whether threading should be enabled at runtime.")]
         public BackendThreading BackendThreading { get; set; }
 
         [Option("disable-macro-hle", Required = false, HelpText = "Disables high-level emulation of Macro code. Leaving this enabled improves performance but may cause graphical glitches in some games.")]

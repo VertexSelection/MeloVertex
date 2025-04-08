@@ -11,6 +11,93 @@ import GameController
 import MetalKit
 import Metal
 
+class LogCapture {
+    static let shared = LogCapture()
+
+    private var stdoutPipe: Pipe?
+    private var stderrPipe: Pipe?
+    private let originalStdout: Int32
+    private let originalStderr: Int32
+
+    var capturedLogs: [String] = [] {
+        didSet {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .newLogCaptured, object: nil)
+            }
+        }
+    }
+
+    private init() {
+        originalStdout = dup(STDOUT_FILENO)
+        originalStderr = dup(STDERR_FILENO)
+        startCapturing()
+    }
+
+    func startCapturing() {
+        stdoutPipe = Pipe()
+        stderrPipe = Pipe()
+
+        redirectOutput(to: stdoutPipe!, fileDescriptor: STDOUT_FILENO)
+        redirectOutput(to: stderrPipe!, fileDescriptor: STDERR_FILENO)
+
+        setupReadabilityHandler(for: stdoutPipe!, isStdout: true)
+        setupReadabilityHandler(for: stderrPipe!, isStdout: false)
+    }
+
+    func stopCapturing() {
+        dup2(originalStdout, STDOUT_FILENO)
+        dup2(originalStderr, STDERR_FILENO)
+
+        stdoutPipe?.fileHandleForReading.readabilityHandler = nil
+        stderrPipe?.fileHandleForReading.readabilityHandler = nil
+    }
+
+    private func redirectOutput(to pipe: Pipe, fileDescriptor: Int32) {
+        dup2(pipe.fileHandleForWriting.fileDescriptor, fileDescriptor)
+    }
+
+    private func setupReadabilityHandler(for pipe: Pipe, isStdout: Bool) {
+        pipe.fileHandleForReading.readabilityHandler = { [weak self] fileHandle in
+            let data = fileHandle.availableData
+            let originalFD = isStdout ? self?.originalStdout : self?.originalStderr
+            write(originalFD ?? STDOUT_FILENO, (data as NSData).bytes, data.count)
+
+            if let logString = String(data: data, encoding: .utf8),
+               let cleanedLog = self?.cleanLog(logString), !cleanedLog.isEmpty {
+                self?.capturedLogs.append(cleanedLog)
+            }
+        }
+    }
+
+    private func cleanLog(_ raw: String) -> String? {
+        let lines = raw.split(separator: "\n")
+        let filteredLines = lines.filter { line in
+            !line.contains("SwiftUI") &&
+            !line.contains("ForEach") &&
+            !line.contains("VStack") &&
+            !line.contains("Invalid frame dimension (negative or non-finite).")
+        }
+
+        let cleaned = filteredLines.map { line -> String in
+            if let tabRange = line.range(of: "\t") {
+                return line[tabRange.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            return line.trimmingCharacters(in: .whitespacesAndNewlines)
+        }.joined(separator: "\n")
+
+        return cleaned.isEmpty ? nil : cleaned.replacingOccurrences(of: "\n\n", with: "\n")
+    }
+
+    deinit {
+        stopCapturing()
+    }
+}
+
+
+extension Notification.Name {
+    static let newLogCaptured = Notification.Name("newLogCaptured")
+}
+
 struct Controller: Identifiable, Hashable {
     var id: String
     var name: String
@@ -46,7 +133,7 @@ class Ryujinx : ObservableObject {
     
     @Published var defMLContentSize: CGFloat?
     
-    var thread: Thread!
+    var thread: Thread = Thread { }
     
     @Published var jitenabled = false
     
@@ -150,6 +237,7 @@ class Ryujinx : ObservableObject {
         
         self.config = config
         
+        
         thread = Thread { [self] in
             
             isRunning = true
@@ -180,7 +268,35 @@ class Ryujinx : ObservableObject {
                 }
             } catch {
                 self.isRunning = false
-                Self.log("Emulation failed to start: \(error)")
+                Thread.sleep(forTimeInterval: 0.3)
+                let logs = LogCapture.shared.capturedLogs
+                let parsedLogs = extractExceptionInfo(logs)
+                if let parsedLogs {
+                    DispatchQueue.main.async {
+                        let result = Array(logs.suffix(from: parsedLogs.lineIndex))
+                        
+                        LogCapture.shared.capturedLogs = Array(LogCapture.shared.capturedLogs.prefix(upTo: parsedLogs.lineIndex))
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+                        let currentDate = Date()
+                        let dateString = dateFormatter.string(from: currentDate)
+                        let path = URL.documentsDirectory.appendingPathComponent("StackTrace").appendingPathComponent("StackTrace-\(dateString).txt").path
+                        
+                        self.saveArrayAsTextFile(strings: result, filePath: path)
+                        
+                        
+                        presentAlert(title: "MeloNX Crashed!", message: parsedLogs.exceptionType + ": " + parsedLogs.message) {
+    
+                            assert(true, parsedLogs.exceptionType)
+                        }
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        presentAlert(title: "MeloNX Crashed!", message:  "Unknown Error") {
+                            assert(true, "Exception was not detected")
+                        }
+                    }
+                }
             }
         }
         
@@ -188,8 +304,63 @@ class Ryujinx : ObservableObject {
         thread.name = "MeloNX"
         thread.start()
     }
+    
+    func saveArrayAsTextFile(strings: [String], filePath: String) {
+        let text = strings.joined(separator: "\n")
+        
+        let path = URL.documentsDirectory.appendingPathComponent("StackTrace").path
+        
+        do {
+            try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: false)
+        } catch {
+            
+        }
+        
+        do {
+            try text.write(to: URL(fileURLWithPath: filePath), atomically: true, encoding: .utf8)
+            print("File saved successfully.")
+        } catch {
+            print("Error saving file: \(error)")
+        }
+    }
+    
+    struct ExceptionInfo {
+        let exceptionType: String
+        let message: String
+        let lineIndex: Int
+    }
 
+    func extractExceptionInfo(_ logs: [String]) -> ExceptionInfo? {
+        for i in (0..<logs.count).reversed() {
+            let line = logs[i]
+            let pattern = "([\\w\\.]+Exception): ([^\\s]+(?:\\s+[^\\s]+)*)"
+            
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
+                  let match = regex.firstMatch(in: line, options: [], range: NSRange(location: 0, length: line.count)) else {
+                continue
+            }
+            
+            // Extract exception type and message if pattern matches
+            if let exceptionTypeRange = Range(match.range(at: 1), in: line),
+               let messageRange = Range(match.range(at: 2), in: line) {
+                
+                let exceptionType = String(line[exceptionTypeRange])
+                
+                var message = String(line[messageRange])
+                if let atIndex = message.range(of: "\\s+at\\s+", options: .regularExpression) {
+                    message = String(message[..<atIndex.lowerBound])
+                }
+                
+                message = message.trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                return ExceptionInfo(exceptionType: exceptionType, message: message, lineIndex: i)
+            }
+        }
+        
+        return nil
+    }
 
+    
     func stop() throws {
         guard isRunning else {
             throw RyujinxError.notRunning
@@ -219,7 +390,7 @@ class Ryujinx : ObservableObject {
             do {
                 try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
             } catch {
-                print("Failed to create roms directory: \(error)")
+                // print("Failed to create roms directory: \(error)")
             }
         }
         var games: [Game] = []
@@ -244,13 +415,13 @@ class Ryujinx : ObservableObject {
                     
                     games.append(game)
                 } catch {
-                    print(error)
+                    // print(error)
                 }
             }
 
             return games
         } catch {
-            print("Error loading games from roms folder: \(error)")
+            // print("Error loading games from roms folder: \(error)")
             return games
         }
         
@@ -402,7 +573,7 @@ class Ryujinx : ObservableObject {
     
     func installFirmware(firmwarePath: String) {
         guard let cString = firmwarePath.cString(using: .utf8) else {
-            print("Invalid firmware path")
+            // print("Invalid firmware path")
             return
         }
 
@@ -418,12 +589,12 @@ class Ryujinx : ObservableObject {
         guard let titleIdCString = titleId.cString(using: .utf8),
             let pathCString = path.cString(using: .utf8)
         else {
-            print("Invalid path")
+            // print("Invalid path")
             return []
         }
 
         let listPointer = get_dlc_nca_list(titleIdCString, pathCString)
-        print("DLC parcing success: \(listPointer.success)")
+        // print("DLC parcing success: \(listPointer.success)")
         guard listPointer.success else { return [] }
 
         let list = Array(UnsafeBufferPointer(start: listPointer.items, count: Int(listPointer.size)))
@@ -475,7 +646,7 @@ class Ryujinx : ObservableObject {
                 let guid = generateGamepadId(joystickIndex: i)
                 let name = String(cString: SDL_GameControllerName(controller))
                 
-                print("Controller \(i): \(name), GUID: \(guid ?? "")")
+                // print("Controller \(i): \(name), GUID: \(guid ?? "")")
                 
                 guard let guid else {
                     SDL_GameControllerClose(controller)
@@ -506,27 +677,27 @@ class Ryujinx : ObservableObject {
         do {
             if fileManager.fileExists(atPath: registeredFolder) {
                 try fileManager.removeItem(atPath: registeredFolder)
-                print("Folder removed successfully.")
+                // print("Folder removed successfully.")
                 let version = fetchFirmwareVersion()
                 
                 if version.isEmpty {
                     self.firmwareversion = "0"
                 } else {
-                    print("Firmware eeeeee \(version)")
+                    // print("Firmware eeeeee \(version)")
                 }
                 
             } else {
-                print("Folder does not exist.")
+                // print("Folder does not exist.")
             }
         } catch {
-            print("Error removing folder: \(error)")
+            // print("Error removing folder: \(error)")
         }
     }
     
 
 
     static func log(_ message: String) {
-        print("[Ryujinx] \(message)")
+        // print("[Ryujinx] \(message)")
     }
     
     public func updateOrientation() -> Bool {

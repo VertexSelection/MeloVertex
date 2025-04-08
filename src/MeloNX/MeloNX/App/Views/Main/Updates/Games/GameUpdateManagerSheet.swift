@@ -14,7 +14,7 @@ struct UpdateManagerSheet: View {
     @Binding var game: Game?
     @State private var isSelectingGameUpdate = false
     @State private var jsonURL: URL? = nil
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) var presentationMode
     
     // MARK: - Models
     class UpdateItem: Identifiable, ObservableObject {
@@ -51,7 +51,7 @@ struct UpdateManagerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
-                        dismiss()
+                        presentationMode.wrappedValue.dismiss()
                     }
                 }
                 
@@ -106,15 +106,26 @@ struct UpdateManagerSheet: View {
     }
     
     private func updateRow(_ update: UpdateItem) -> some View {
+        Group {
+            if #available(iOS 15, *) {
+                updateRowNew(update)
+            } else {
+                updateRowOld(update)
+            }
+        }
+    }
+    
+    @available(iOS 15, *)
+    private func updateRowNew(_ update: UpdateItem) -> some View {
         Button {
             toggleSelection(update)
         } label: {
             HStack {
                 Text(update.filename)
-                    .foregroundStyle(.primary)
+                    .foregroundColor(.primary)
                 Spacer()
                 Image(systemName: update.isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(update.isSelected ? .primary : .secondary)
+                    .foregroundColor(update.isSelected ? .primary : .secondary)
                     .imageScale(.large)
             }
             .contentShape(Rectangle())
@@ -122,6 +133,31 @@ struct UpdateManagerSheet: View {
         .buttonStyle(.plain)
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
+                if let index = updates.firstIndex(where: { $0.path == update.path }) {
+                    removeUpdate(at: IndexSet(integer: index))
+                }
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+    
+    private func updateRowOld(_ update: UpdateItem) -> some View {
+        Button {
+            toggleSelection(update)
+        } label: {
+            HStack {
+                Text(update.filename)
+                    .foregroundColor(.primary)
+                Spacer()
+                Image(systemName: update.isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(update.isSelected ? .primary : .secondary)
+                    .imageScale(.large)
+            }
+            .contentShape(Rectangle())
+        }
+        .contextMenu {
+            Button {
                 if let index = updates.firstIndex(where: { $0.path == update.path }) {
                     removeUpdate(at: IndexSet(integer: index))
                 }
@@ -246,12 +282,12 @@ struct UpdateManagerSheet: View {
         updates = updates.map { item in
             var mutableItem = item
             mutableItem.isSelected = item.path == update.path && !update.isSelected
-            print(mutableItem.isSelected)
-            print(update.isSelected)
+            // print(mutableItem.isSelected)
+            // print(update.isSelected)
             return mutableItem
         }
         
-        print(updates)
+        // print(updates)
         
         saveJSON()
     }

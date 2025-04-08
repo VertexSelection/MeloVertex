@@ -33,18 +33,32 @@ struct MeloNXUpdateSheet: View {
                 
                 
                 Spacer()
-                Button(action: {
-                    if let url = URL(string: updateInfo.download_link) {
-                        UIApplication.shared.open(url)
+                if #available(iOS 15.0, *) {
+                    Button(action: {
+                        if let url = URL(string: updateInfo.download_link) {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Text("Download Now")
+                            .font(.title3)
+                            .bold()
+                            .frame(width: 300, height: 40)
                     }
-                }) {
-                    Text("Download Now")
-                        .font(.title3)
-                        .bold()
-                        .frame(width: 300, height: 40)
+                    .buttonStyle(.borderedProminent)
+                    .frame(alignment: .bottom)
+                } else {
+                    Button(action: {
+                        if let url = URL(string: updateInfo.download_link) {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Text("Download Now")
+                            .font(.title3)
+                            .bold()
+                            .frame(width: 300, height: 40)
+                    }
+                    .frame(alignment: .bottom)
                 }
-                .buttonStyle(.borderedProminent)
-                .frame(alignment: .bottom)
             }
             .padding(.horizontal)
             .navigationTitle("Version \(updateInfo.version_number) Available!")

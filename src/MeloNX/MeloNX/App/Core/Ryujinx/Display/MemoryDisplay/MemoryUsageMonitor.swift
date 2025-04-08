@@ -35,8 +35,8 @@ class MemoryUsageMonitor: ObservableObject {
             memoryUsage = taskInfo.phys_footprint
         }
         else {
-            print("Error with task_info(): " +
-                (String(cString: mach_error_string(result), encoding: String.Encoding.ascii) ?? "unknown error"))
+            // print("Error with task_info(): " +
+                // (String(cString: mach_error_string(result), encoding: String.Encoding.ascii) ?? "unknown error"))
         }
     }
     

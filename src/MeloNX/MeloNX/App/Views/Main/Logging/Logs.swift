@@ -6,25 +6,20 @@
 //
 
 import SwiftUI
+import Combine
 
 struct LogFileView: View {
-    @State private var logs: [String] = []
+    @StateObject var logsModel = LogViewModel()
     @State private var showingLogs = false
     
     public var isfps: Bool
     
     private let fileManager = FileManager.default
-    private let maxDisplayLines = 10
-    
-    private var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
-        return formatter
-    }
+    private let maxDisplayLines = 4
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            ForEach(logs.suffix(maxDisplayLines), id: \.self) { log in
+            ForEach(logsModel.logs.suffix(maxDisplayLines), id: \.self) { log in
                 Text(log)
                     .font(.caption)
                     .foregroundColor(.white)
@@ -34,85 +29,38 @@ struct LogFileView: View {
                     .transition(.opacity)
             }
         }
-        .onAppear {
-            startLogFileWatching()
-        }
-        .onChange(of: logs) { newLogs in
-            print("Logs updated: \(newLogs.count) entries")
-        }
-    }
-    
-    private func getLatestLogFile() -> URL? {
-        let logsDirectory = URL.documentsDirectory.appendingPathComponent("Logs")
-        let currentDate = Date()
-        
-        do {
-            try fileManager.createDirectory(at: logsDirectory, withIntermediateDirectories: true)
-            
-            let logFiles = try fileManager.contentsOfDirectory(at: logsDirectory, includingPropertiesForKeys: [.creationDateKey])
-                .filter {
-                    let filename = $0.lastPathComponent
-                    guard filename.hasPrefix("MeloNX_") && filename.hasSuffix(".log") else {
-                        return false
-                    }
-                    
-                    let dateString = filename.replacingOccurrences(of: "MeloNX_", with: "").replacingOccurrences(of: ".log", with: "")
-                    guard let logDate = dateFormatter.date(from: dateString) else {
-                        return false
-                    }
-                    
-                    return Calendar.current.isDate(logDate, inSameDayAs: currentDate)
-                }
-            
-            let sortedLogFiles = logFiles.sorted {
-                $0.lastPathComponent > $1.lastPathComponent
-            }
-            
-            return sortedLogFiles.first
-        } catch {
-            print("Error finding log files: \(error)")
-            return nil
-        }
-    }
-    
-    private func readLatestLogFile() {
-        guard let logFileURL = getLatestLogFile() else {
-            print("no logs?")
-            return
-        }
-        print(logFileURL)
-        
-        do {
-            let logContents = try String(contentsOf: logFileURL)
-            let allLines = logContents.components(separatedBy: .newlines)
-            
-            DispatchQueue.global(qos: .userInteractive).async {
-                self.logs = Array(allLines)
-            }
-        } catch {
-            print("Error reading log file: \(error)")
-        }
-    }
-    
-    private func startLogFileWatching() {
-        showingLogs = true
-        
-        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
-            if showingLogs {
-                self.readLatestLogFile()
-            }
-            
-            if isfps {
-                sleep(1)
-                if get_current_fps() != 0 {
-                    stopLogFileWatching()
-                    timer.invalidate()
-                }
-            }
-        }
+        .padding()
     }
     
     private func stopLogFileWatching() {
         showingLogs = false
+    }
+}
+
+
+class LogViewModel: ObservableObject {
+    @Published var logs: [String] = []
+    private var cancellables = Set<AnyCancellable>()
+    
+    init() {
+        _ = LogCapture.shared
+        
+        NotificationCenter.default.publisher(for: .newLogCaptured)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.updateLogs()
+            }
+            .store(in: &cancellables)
+        
+        updateLogs()
+    }
+    
+    func updateLogs() {
+        logs = LogCapture.shared.capturedLogs
+    }
+    
+    func clearLogs() {
+        LogCapture.shared.capturedLogs = []
+        updateLogs()
     }
 }

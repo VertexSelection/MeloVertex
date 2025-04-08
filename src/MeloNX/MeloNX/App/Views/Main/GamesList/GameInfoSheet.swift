@@ -10,7 +10,7 @@ import SwiftUI
 struct GameInfoSheet: View {
     let game: Game
     
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
         iOSNav {
@@ -44,7 +44,7 @@ struct GameInfoSheet: View {
                                 .multilineTextAlignment(.center)
                             Text(game.developer)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(.secondary)
                         }
                         .padding(.vertical, 3)
                     }
@@ -56,7 +56,7 @@ struct GameInfoSheet: View {
                         Text("**Version**")
                         Spacer()
                         Text(game.version)
-                            .foregroundStyle(Color.secondary)
+                            .foregroundColor(Color.secondary)
                     }
                     HStack {
                         Text("**Title ID**")
@@ -69,36 +69,36 @@ struct GameInfoSheet: View {
                             }
                         Spacer()
                         Text(game.titleId)
-                            .foregroundStyle(Color.secondary)
+                            .foregroundColor(Color.secondary)
                     }
                     HStack {
                         Text("**Game Size**")
                         Spacer()
                         Text("\(fetchFileSize(for: game.fileURL) ?? 0) bytes")
-                            .foregroundStyle(Color.secondary)
+                            .foregroundColor(Color.secondary)
                     }
                     HStack {
                         Text("**File Type**")
                         Spacer()
                         Text(getFileType(game.fileURL))
-                            .foregroundStyle(Color.secondary)
+                            .foregroundColor(Color.secondary)
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("**Game URL**")
                         Text(trimGameURL(game.fileURL))
-                            .foregroundStyle(Color.secondary)
+                            .foregroundColor(Color.secondary)
                     }
                 } header: {
                     Text("Information")
                 }
-                .headerProminence(.increased)
+                // .headerProminence(.increased)
             }
             .navigationTitle(game.titleName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        dismiss()
+                        presentationMode.wrappedValue.dismiss()
                     }
                 }
             }
@@ -113,7 +113,7 @@ struct GameInfoSheet: View {
                 return size
             }
         } catch {
-            print("Error getting file size: \(error)")
+            // print("Error getting file size: \(error)")
         }
         return nil
     }

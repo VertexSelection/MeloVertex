@@ -58,7 +58,7 @@ public class Air {
     }
     
     @objc func didConnect(sender: NSNotification) {
-        print("AirKit - Connect")
+        // print("AirKit - Connect")
         self.connected = true
         guard let screen: UIScreen = sender.object as? UIScreen else { return }
         add(screen: screen) { success in
@@ -69,35 +69,35 @@ public class Air {
     
     func add(screen: UIScreen, completion: @escaping (Bool) -> ()) {
         
-        print("AirKit - Add Screen")
+        // print("AirKit - Add Screen")
         
         airScreen = screen
         
         airWindow = UIWindow(frame: airScreen!.bounds)
         
         guard let viewController: UIViewController = hostingController else {
-            print("AirKit - Add - Failed: Hosting Controller Not Found")
+            // print("AirKit - Add - Failed: Hosting Controller Not Found")
             completion(false)
             return
         }
         
         findWindowScene(for: airScreen!) { windowScene in
             guard let airWindowScene: UIWindowScene = windowScene else {
-                print("AirKit - Add - Failed: Window Scene Not Found")
+                // print("AirKit - Add - Failed: Window Scene Not Found")
                 completion(false)
                 return
             }
             self.airWindow?.rootViewController = viewController
             self.airWindow?.windowScene = airWindowScene
             self.airWindow?.isHidden = false
-            print("AirKit - Add Screen - Done")
+            // print("AirKit - Add Screen - Done")
             completion(true)
         }
         
     }
     
     func findWindowScene(for screen: UIScreen, shouldRecurse: Bool = true, completion: @escaping (UIWindowScene?) -> ())  {
-        print("AirKit - Find Window Scene")
+        // print("AirKit - Find Window Scene")
         var matchingWindowScene: UIWindowScene? = nil
         let scenes = UIApplication.shared.connectedScenes
         for scene in scenes {
@@ -120,23 +120,23 @@ public class Air {
     }
     
     @objc func didDisconnect() {
-        print("AirKit - Disconnect")
+        // print("AirKit - Disconnect")
         remove()
         connected = false
     }
     
     func remove() {
-        print("AirKit - Remove")
+        // print("AirKit - Remove")
         airWindow = nil
         airScreen = nil
     }
     
     @objc func didBecomeActive() {
-        print("AirKit - App Active")
+        // print("AirKit - App Active")
     }
     
     @objc func willResignActive() {
-        print("AirKit - App Inactive")
+        // print("AirKit - App Inactive")
         
     }
     

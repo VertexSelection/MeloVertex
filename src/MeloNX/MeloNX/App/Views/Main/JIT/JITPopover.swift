@@ -9,7 +9,7 @@ import SwiftUI
 
 struct JITPopover: View {
     var onJITEnabled: () -> Void
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.presentationMode) var presentationMode
     
     @State var isJIT: Bool = false
     var body: some View {
@@ -35,7 +35,7 @@ struct JITPopover: View {
                 
                 
                 if isJIT {
-                    dismiss()
+                    presentationMode.wrappedValue.dismiss()
                     onJITEnabled()
                     
                     Ryujinx.shared.ryuIsJITEnabled()

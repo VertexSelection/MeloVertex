@@ -1,0 +1,48 @@
+{
+  "name": "MeloNX",
+  "subtitle": "A source for the MeloNX Application",
+  "description": "Welcome to the MeloNX source! The latest download for MeloNX.",
+  "iconURL": "https://git.743378673.xyz/CycloKid/assets/media/branch/main/Melo/AppIcons/MeloNX.png",
+  "headerURL": "https://cdn.discordapp.com/attachments/1320760161836466257/1331670540447912090/melon-x-not-melo-nx-amiright-guys.png?ex=67f556d6&is=67f40556&hm=71be8f109a14f1c47d8f4965aa017bccb5617962b7a9f5cdfb936a5a8135dad7&",
+  "website": "https://MeloNX.org",
+  "tintColor": "#AE34EB",
+  "featuredApps": [
+    "com.stossy11.MeloNX"
+  ],
+  "apps": [
+      {
+          "name": "MeloNX",
+          "bundleIdentifier": "com.stossy11.MeloNX",
+          "developerName": "Stossy11",
+          "subtitle": "An NX Emulator.",
+          "localizedDescription": "MeloNX is an iOS Nintendo Switch emulator based on Ryujinx, written primarily in C#. Designed to bring accurate performance and a user-friendly interface to iOS, MeloNX makes Switch games accessible on Apple devices. Developed from the ground up, MeloNX is open-source and available on Github under the MeloNX license (Based on MIT) (requires increased memory limit)",
+          "iconURL": "https://example.com/myapp_icon.png",
+          "tintColor": "#AE34EB",
+          "category": "games",
+          "screenshots": [
+              "https://git.743378673.xyz/stossy11/screenshots/raw/branch/main/IMG_0380.PNG",
+              "https://git.743378673.xyz/stossy11/screenshots/raw/branch/main/IMG_0381.PNG"
+          ],
+          "versions": [
+            {
+              "version": "1.7.0",
+              "buildVersion": "1",
+              "date": "2025-04-8",
+              "localizedDescription": "First AltStore release!",
+              "downloadURL": "https://git.743378673.xyz/MeloNX/MeloNX/releases/download/1.7.0/MeloNX.ipa",
+              "minOSVersion": "15.0"
+            }
+          ],
+          "appPermissions": {
+            "entitlements": [
+              "com.apple.developer.kernel.increased-memory-limit"
+            ], 
+            "privacy": {
+                "NSPhotoLibraryAddUsageDescription": "MeloNX needs access to your Photo Library in order to save images."
+            }
+          },
+          "patreon": {}
+      }
+  ],
+  "news": []
+}

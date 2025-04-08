@@ -34,7 +34,7 @@ func checkMemoryPermissions(at address: UnsafeRawPointer) -> Bool {
     }
     
     if result != KERN_SUCCESS {
-        print("Failed to reach \(address)")
+        // print("Failed to reach \(address)")
         return false
     }
     

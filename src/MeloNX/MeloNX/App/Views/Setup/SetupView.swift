@@ -54,12 +54,17 @@ struct SetupView: View {
         ) { result in
             handleFirmwareImport(result: result)
         }
-        .alert(alertMessage, isPresented: $showAlert) {
-            Button("OK", role: .cancel) {}
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
-        .alert("Skip Setup?", isPresented: $showSkipAlert) {
-            Button("Skip", role: .destructive) { finished = true }
-            Button("Cancel", role: .cancel) {}
+        .alert(isPresented: $showSkipAlert) {
+            Alert(
+                title: Text("Skip Setup?"),
+                primaryButton: .destructive(Text("Skip")) {
+                    finished = true
+                },
+                secondaryButton: .cancel()
+            )
         }
         .onAppear {
             initialize()
@@ -390,7 +395,7 @@ struct SetupView: View {
               
               let iconFileName = iconFiles.last else {
 
-            print("Could not find icons in bundle")
+            // print("Could not find icons in bundle")
             return ""
         }
 

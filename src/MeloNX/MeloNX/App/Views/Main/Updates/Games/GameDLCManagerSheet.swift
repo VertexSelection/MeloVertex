@@ -46,7 +46,7 @@ struct DLCManagerSheet: View {
     @Binding var game: Game!
     @State private var isSelectingGameDLC = false
     @State private var dlcs: [DownloadableContentContainer] = []
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) var presentationMode
     
     // MARK: - Body
     var body: some View {
@@ -66,7 +66,7 @@ struct DLCManagerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
-                        dismiss()
+                        presentationMode.wrappedValue.dismiss()
                     }
                 }
                 
@@ -127,27 +127,56 @@ struct DLCManagerSheet: View {
     
     
     private func dlcRow(_ dlc: DownloadableContentContainer) -> some View {
-        Button {
-            toggleDLC(dlc)
-        } label: {
-            HStack {
-                Text(dlc.filename)
-                    .foregroundStyle(.primary)
-                Spacer()
-                Image(systemName: dlc.isEnabled ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(dlc.isEnabled ? .primary : .secondary)
-                    .imageScale(.large)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
-                if let index = dlcs.firstIndex(where: { $0.id == dlc.id }) {
-                    removeDLC(at: IndexSet(integer: index))
+        Group {
+            if #available(iOS 15.0, *) {
+                Button {
+                    toggleDLC(dlc)
+                } label: {
+                    HStack {
+                        Text(dlc.filename)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: dlc.isEnabled ? "checkmark.circle.fill" : "circle")
+                            .foregroundColor(dlc.isEnabled ? .primary : .secondary)
+                            .imageScale(.large)
+                    }
+                    .contentShape(Rectangle())
                 }
-            } label: {
-                Label("Delete", systemImage: "trash")
+                .buttonStyle(.plain)
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        if let index = dlcs.firstIndex(where: { $0.id == dlc.id }) {
+                            removeDLC(at: IndexSet(integer: index))
+                        }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+            } else {
+                Button {
+                    toggleDLC(dlc)
+                } label: {
+                    HStack {
+                        Text(dlc.filename)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: dlc.isEnabled ? "checkmark.circle.fill" : "circle")
+                            .foregroundColor(dlc.isEnabled ? .primary : .secondary)
+                            .imageScale(.large)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .contextMenu {
+                    Button {
+                        if let index = dlcs.firstIndex(where: { $0.id == dlc.id }) {
+                            removeDLC(at: IndexSet(integer: index))
+                        }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                            .foregroundColor(.red)
+                    }
+                }
             }
         }
     }
@@ -261,7 +290,7 @@ private extension DLCManagerSheet {
             
             return result
         } catch {
-            print("Error loading DLCs: \(error)")
+            // print("Error loading DLCs: \(error)")
             return []
         }
     }
@@ -300,7 +329,7 @@ extension Array where Element: AnyObject {
 
 // MARK: - URL Extension
 extension URL {
-    @available(iOS, introduced: 15.0, deprecated: 16.0, message: "Use URL.documentsDirectory on iOS 16 and above")
+    @available(iOS, introduced: 14.0, deprecated: 16.0, message: "Use URL.documentsDirectory on iOS 16 and above")
     static var documentsDirectory: URL {
         let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         return documentDirectory

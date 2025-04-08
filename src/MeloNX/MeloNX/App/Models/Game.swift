@@ -57,7 +57,7 @@ public struct Game: Identifiable, Equatable, Hashable {
             
             gameTemp.icon = UIImage(data: imageData)
         } else {
-            print("Invalid image size.")
+            // print("Invalid image size.")
         }
         return gameTemp
     }
@@ -67,7 +67,7 @@ public struct Game: Identifiable, Equatable, Hashable {
 
         let imageSize = Int(gameInfoValue.ImageSize)
         guard imageSize > 0, imageSize <= 1024 * 1024 else {
-            print("Invalid image size.")
+            // print("Invalid image size.")
             return nil
         }
 

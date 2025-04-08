@@ -80,7 +80,7 @@ struct ContentView: View {
         
         _settings = State(initialValue: defaultSettings)
         
-        print(SDL_CONTROLLER_BUTTON_LEFTSTICK.rawValue)
+        // print(SDL_CONTROLLER_BUTTON_LEFTSTICK.rawValue)
         
         initializeSDL()
     }
@@ -120,7 +120,7 @@ struct ContentView: View {
     
     private var jitErrorView: some View {
         Text("")
-            .sheet(isPresented:Binding(
+            .fullScreenCover(isPresented:Binding(
                 get: { !ryujinx.jitenabled },
                 set: { newValue in
                     ryujinx.jitenabled = newValue
@@ -131,7 +131,7 @@ struct ContentView: View {
                 JITPopover() {
                     ryujinx.jitenabled = false
                 }
-                .interactiveDismissDisabled()
+                // .interactiveDismissDisabled()
             }
     }
     
@@ -154,7 +154,7 @@ struct ContentView: View {
             }
             
             
-            print(MTLHud.shared.isEnabled)
+            // print(MTLHud.shared.isEnabled)
             
             initControllerObservers()
             
@@ -289,7 +289,7 @@ struct ContentView: View {
             queue: .main
         ) { notification in
             if let controller = notification.object as? GCController {
-                print("Controller connected: \(controller.productCategory)")
+                // print("Controller connected: \(controller.productCategory)")
                 nativeControllers[controller] = .init(controller)
                 refreshControllersList()
             }
@@ -301,7 +301,7 @@ struct ContentView: View {
             queue: .main
         ) { notification in
             if let controller = notification.object as? GCController {
-                print("Controller disconnected: \(controller.productCategory)")
+                // print("Controller disconnected: \(controller.productCategory)")
                 nativeControllers[controller]?.cleanup()
                 nativeControllers[controller] = nil
                 refreshControllersList()
@@ -355,7 +355,7 @@ struct ContentView: View {
         do {
             try ryujinx.start(with: config)
         } catch {
-            print("Error: \(error.localizedDescription)")
+            // print("Error: \(error.localizedDescription)")
         }
     }
     
@@ -366,7 +366,7 @@ struct ContentView: View {
         }
         
         if syncqsubmits {
-            setenv("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", "2", 1)
+            setenv("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", "1", 1)
         }
     }
     
@@ -389,7 +389,7 @@ struct ContentView: View {
             } else if jitStreamerEB {
                 enableJITEB()
             } else {
-                print("no JIT")
+                // print("no JIT")
             }
         }
     }

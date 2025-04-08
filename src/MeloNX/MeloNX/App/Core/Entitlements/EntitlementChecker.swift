@@ -31,12 +31,12 @@ func SecTaskCopyValuesForEntitlements(
 
 func checkAppEntitlements(_ ents: [String]) -> [String: Any] {
     guard let task = SecTaskCreateFromSelf(nil) else {
-        print("Failed to create SecTask")
+        // print("Failed to create SecTask")
         return [:]
     }
     
     guard let entitlements = SecTaskCopyValuesForEntitlements(task, ents as CFArray, nil) else {
-        print("Failed to get entitlements")
+        // print("Failed to get entitlements")
         return [:]
     }
     
@@ -45,12 +45,12 @@ func checkAppEntitlements(_ ents: [String]) -> [String: Any] {
 
 func checkAppEntitlement(_ ent: String) -> Bool {
     guard let task = SecTaskCreateFromSelf(nil) else {
-        print("Failed to create SecTask")
+        // print("Failed to create SecTask")
         return false
     }
     
     guard let entitlements = SecTaskCopyValueForEntitlement(task, ent as NSString, nil) else {
-        print("Failed to get entitlements")
+        // print("Failed to get entitlements")
         return false
     }
     
