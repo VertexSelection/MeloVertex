@@ -36,6 +36,7 @@
           ],
           "appPermissions": {
             "entitlements": [
+              "get-task-allow",
               "com.apple.developer.kernel.increased-memory-limit"
             ], 
             "privacy": {
