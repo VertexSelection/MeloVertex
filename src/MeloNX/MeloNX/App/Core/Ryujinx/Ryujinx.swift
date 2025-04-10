@@ -371,7 +371,6 @@ class Ryujinx : ObservableObject {
         self.emulationUIView = nil
         self.metalLayer = nil
         
-        stop_emulation()
         thread.cancel()
     }
 

@@ -403,10 +403,22 @@ namespace Ryujinx.Headless.SDL2
         }
 
         [UnmanagedCallersOnly(EntryPoint = "stop_emulation")]
-        public static void StopEmulation()
+        public static void StopEmulation(bool shouldPause)
         {
             if (_window != null)
             {
+                if (!shouldPause) 
+                {
+                    _window.Device.SetVolume(1);
+                    _window._isPaused = false;
+                    _window._pauseEvent.Set();
+                } 
+                else
+                {
+                    _window.Device.SetVolume(0);
+                    _window._isPaused = true;
+                    _window._pauseEvent.Reset();
+                }
             }
         }
 
@@ -886,19 +898,9 @@ namespace Ryujinx.Headless.SDL2
         {
             if (inputId == null)
             {
-                if (index == PlayerIndex.Player1)
-                {
-                    Logger.Info?.Print(LogClass.Application, $"{index} not configured, defaulting to default keyboard.");
+                Logger.Info?.Print(LogClass.Application, $"{index} not configured");
 
-                    // Default to keyboard
-                    inputId = "0";
-                }
-                else
-                {
-                    Logger.Info?.Print(LogClass.Application, $"{index} not configured");
-
-                    return null;
-                }
+                return null;
             }
 
             IGamepad gamepad;
@@ -989,12 +991,26 @@ namespace Ryujinx.Headless.SDL2
                 {   
                     bool isNintendoStyle = true; // gamepadName.Contains("Nintendo") || gamepadName.Contains("Joycons");
 
+                    ControllerType currentController; 
+                    if (index == PlayerIndex.Handheld)
+                    {
+                        currentController = ControllerType.Handheld;
+                    } 
+                    else if (gamepadName.Contains("Joycons") || gamepadName.Contains("Backbone"))
+                    {
+                        currentController = ControllerType.JoyconPair;
+                    } 
+                    else 
+                    {
+                        currentController = ControllerType.ProController;
+                    }
+
                     config = new StandardControllerInputConfig
                     {
                         Version = InputConfig.CurrentVersion,
                         Backend = InputBackendType.GamepadSDL2,
                         Id = null,
-                        ControllerType = ControllerType.JoyconPair,
+                        ControllerType = currentController,
                         DeadzoneLeft = 0.1f,
                         DeadzoneRight = 0.1f,
                         RangeLeft = 1.0f,

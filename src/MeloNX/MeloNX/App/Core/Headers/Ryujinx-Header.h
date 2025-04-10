@@ -50,7 +50,7 @@ char* installed_firmware_version();
 
 void set_native_window(void *layerPtr);
 
-void stop_emulation();
+void stop_emulation(bool shouldPause);
 
 void initialize();
 

@@ -27,7 +27,7 @@
             {
               "version": "1.7.0",
               "buildVersion": "1",
-              "date": "2025-04-8",
+              "date": "2025-04-08",
               "localizedDescription": "First AltStore release!",
               "downloadURL": "https://git.743378673.xyz/MeloNX/MeloNX/releases/download/1.7.0/MeloNX.ipa",
               "size": 79821,
@@ -40,7 +40,7 @@
               "com.apple.developer.kernel.increased-memory-limit"
             ], 
             "privacy": {
-                "NSPhotoLibraryAddUsageDescription": "MeloNX needs access to your Photo Library in order to save images."
+                "NSPhotoLibraryAddUsageDescription": "MeloNX needs access to your Photo Library in order to save screenshots."
             }
           }
       }

@@ -10,6 +10,7 @@ import GameController
 import Darwin
 import UIKit
 import MetalKit
+import CoreLocation
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String
@@ -159,16 +160,7 @@ struct ContentView: View {
             initControllerObservers()
             
             Air.play(AnyView(
-                VStack {
-                    Image(systemName: "gamecontroller")
-                        .font(.system(size: 300))
-                        .foregroundColor(.gray)
-                        .padding(.bottom, 10)
-                    
-                    Text("Select Game")
-                        .font(.system(size: 150))
-                        .bold()
-                }
+                ControllerListView(game: $game)
             ))
             
             checkJitStatus()
@@ -310,6 +302,8 @@ struct ContentView: View {
     }
     
     private func setupEmulation() {
+        refreshControllersList()
+        
         isVCA = (currentControllers.first(where: { $0 == onscreencontroller }) != nil)
         
         DispatchQueue.main.async {
@@ -327,14 +321,34 @@ struct ContentView: View {
         controllersList.removeAll(where: { $0.id == "0" || (!$0.name.starts(with: "GC - ") && $0 != onscreencontroller) })
         controllersList.mutableForEach { $0.name = $0.name.replacingOccurrences(of: "GC - ", with: "") }
 
-        currentControllers = []
         
-        if controllersList.count == 1 {
-            currentControllers.append(controllersList[0])
-        } else if (controllersList.count - 1) >= 1 {
-            for controller in controllersList {
-                if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
-                    currentControllers.append(controller)
+        if !currentControllers.isEmpty, !(currentControllers.count == 1) {
+            var currentController: [Controller] = []
+            
+            if currentController.count == 1 {
+                currentController.append(controllersList[0])
+            } else if (controllersList.count - 1) >= 1 {
+                for controller in controllersList {
+                    if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
+                        currentController.append(controller)
+                    }
+                }
+            }
+            
+            if currentController == currentControllers {
+                currentControllers = []
+                currentControllers = currentController
+            }
+        } else {
+            currentControllers = []
+            
+            if controllersList.count == 1 {
+                currentControllers.append(controllersList[0])
+            } else if (controllersList.count - 1) >= 1 {
+                for controller in controllersList {
+                    if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
+                        currentControllers.append(controller)
+                    }
                 }
             }
         }
@@ -397,10 +411,12 @@ struct ContentView: View {
     private func handleDeepLink(_ url: URL) {
         if let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
            components.host == "game" {
-            if let text = components.queryItems?.first(where: { $0.name == "id" })?.value {
-                game = ryujinx.games.first(where: { $0.titleId == text })
-            } else if let text = components.queryItems?.first(where: { $0.name == "name" })?.value {
-                game = ryujinx.games.first(where: { $0.titleName == text })
+            DispatchQueue.main.async {
+                if let text = components.queryItems?.first(where: { $0.name == "id" })?.value {
+                    game = ryujinx.games.first(where: { $0.titleId == text })
+                } else if let text = components.queryItems?.first(where: { $0.name == "name" })?.value {
+                    game = ryujinx.games.first(where: { $0.titleName == text })
+                }
             }
         }
     }
@@ -410,6 +426,139 @@ extension Array {
     @inlinable public mutating func mutableForEach(_ body: (inout Element) throws -> Void) rethrows {
         for index in self.indices {
             try body(&self[index])
+        }
+    }
+}
+
+class LocationManager: NSObject, CLLocationManagerDelegate {
+    
+    private var locationManager: CLLocationManager
+    
+    static let sharedInstance = LocationManager()
+    
+    private override init() {
+        locationManager = CLLocationManager()
+        super.init()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.pausesLocationUpdatesAutomatically = false
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        // print("wow")
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location manager failed with: \(error)")
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if manager.authorizationStatus == .denied {
+            print("Location services are disabled in settings.")
+        } else {
+            startUpdatingLocation()
+        }
+    }
+    
+    func stop() {
+        if UserDefaults.standard.bool(forKey: "location-enabled") {
+            locationManager.stopUpdatingLocation()
+        }
+    }
+    
+    func startUpdatingLocation() {
+        if UserDefaults.standard.bool(forKey: "location-enabled") {
+            locationManager.requestAlwaysAuthorization()
+            locationManager.allowsBackgroundLocationUpdates = true
+            locationManager.startUpdatingLocation()
+        }
+    }
+}
+
+
+struct ControllerListView: View {
+    @State private var selectedIndex = 0
+    @Binding var game: Game?
+    @ObservedObject private var ryujinx = Ryujinx.shared
+
+    var body: some View {
+        List(ryujinx.games.indices, id: \.self) { index in
+            let game = ryujinx.games[index]
+
+            HStack(spacing: 16) {
+                // Game Icon
+                Group {
+                    if let icon = game.icon {
+                        Image(uiImage: icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                            Image(systemName: "gamecontroller.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                .frame(width: 55, height: 55)
+                .cornerRadius(10)
+
+                // Game Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(game.titleName)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.primary)
+
+                    HStack(spacing: 4) {
+                        Text(game.developer)
+
+                        if !game.version.isEmpty && game.version != "0" {
+                            Text("•")
+                            Text("v\(game.version)")
+                        }
+                    }
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                }
+
+                Spacer()
+            }
+            .background(selectedIndex == index ? Color.blue.opacity(0.3) : .clear)
+        }
+        .onAppear(perform: setupControllerObservers)
+    }
+
+    private func setupControllerObservers() {
+        let dpadHandler: GCControllerDirectionPadValueChangedHandler = { _, _, yValue in
+            if yValue == 1.0 {
+                selectedIndex = max(0, selectedIndex - 1)
+            } else if yValue == -1.0 {
+                selectedIndex = min(ryujinx.games.count - 1, selectedIndex + 1)
+            }
+        }
+
+        for controller in GCController.controllers() {
+            print("Controller connected: \(controller.vendorName ?? "Unknown")")
+            controller.playerIndex = .index1
+
+            controller.microGamepad?.dpad.valueChangedHandler = dpadHandler
+            controller.extendedGamepad?.dpad.valueChangedHandler = dpadHandler
+
+            controller.extendedGamepad?.buttonA.pressedChangedHandler = { _, _, pressed in
+                if pressed {
+                    print("A button pressed")
+                    game = ryujinx.games[selectedIndex]
+                }
+            }
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: .GCControllerDidConnect,
+            object: nil,
+            queue: .main
+        ) { _ in
+            setupControllerObservers()
         }
     }
 }

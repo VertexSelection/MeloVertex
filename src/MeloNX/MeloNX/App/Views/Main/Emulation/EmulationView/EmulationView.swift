@@ -19,6 +19,9 @@ struct EmulationView: View {
     @Binding var startgame: Game?
     
     @Environment(\.scenePhase) var scenePhase
+    @State private var isInBackground = false
+    @AppStorage("location-enabled") var locationenabled: Bool = false
+    
     var body: some View {
         ZStack {
             if isAirplaying {
@@ -26,7 +29,7 @@ struct EmulationView: View {
                     .ignoresSafeArea()
                     .edgesIgnoringSafeArea(.all)
                     .onAppear {
-                        Air.play(AnyView(MetalView().ignoresSafeArea()))
+                        Air.play(AnyView(MetalView().ignoresSafeArea().edgesIgnoringSafeArea(.all)))
                     }
             } else {
                 MetalView() // The Emulation View
@@ -88,11 +91,25 @@ struct EmulationView: View {
             }
         }
         .onAppear {
+            LocationManager.sharedInstance.startUpdatingLocation()
             Air.shared.connectionCallbacks.append { cool in
                 DispatchQueue.main.async {
                     isAirplaying = cool
                     // print(cool)
                 }
+            }
+        }
+        .onChange(of: scenePhase) { newPhase in
+            // Detect when the app enters the background
+            if newPhase == .background {
+                stop_emulation(true)
+                isInBackground = true
+            } else if newPhase == .active {
+                stop_emulation(false)
+                isInBackground = false
+            } else if newPhase == .inactive {
+                stop_emulation(true)
+                isInBackground = true
             }
         }
     }

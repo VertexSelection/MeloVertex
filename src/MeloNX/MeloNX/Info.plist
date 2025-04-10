@@ -38,8 +38,9 @@
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>audio</string>
+		<string>location</string>
 		<string>processing</string>
+		<string>audio</string>
 	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>

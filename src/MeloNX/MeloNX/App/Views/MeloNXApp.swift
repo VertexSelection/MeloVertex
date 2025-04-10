@@ -9,6 +9,8 @@ import SwiftUI
 import UIKit
 import CryptoKit
 import UniformTypeIdentifiers
+import AVFoundation
+
 
 extension UIDocumentPickerViewController {
     @objc func fix_init(forOpeningContentTypes contentTypes: [UTType], asCopy: Bool) -> UIDocumentPickerViewController {
@@ -28,6 +30,8 @@ struct MeloNXApp: App {
     
     @State var finished = false
     @AppStorage("hasbeenfinished") var finishedStorage: Bool = false
+    
+    @AppStorage("location-enabled") var locationenabled: Bool = false
     
     var body: some Scene {
         WindowGroup {

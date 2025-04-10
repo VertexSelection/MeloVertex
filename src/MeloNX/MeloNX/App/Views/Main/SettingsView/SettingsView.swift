@@ -429,61 +429,16 @@ struct SettingsView: View {
                     Text("Controller Selection")
                         .font(.headline)
                         .foregroundColor(.primary)
-                    Divider()
                     
-                    if !currentControllers.isEmpty {
-                        ForEach(currentControllers) { controller in
-                            if currentControllers.firstIndex(of: controller) == currentControllers.count - 1 && currentControllers.count != 1 {
-                                Divider()
-                            }
-                            
-                            HStack {
-                                Image(systemName: "gamecontroller.fill")
-                                    .foregroundColor(.blue)
-                                
-                                if let index = currentControllers.firstIndex(where: { $0.id == controller.id }) {
-                                    Text("Player \(index + 1): \(controller.name)")
-                                        .lineLimit(1)
-                                }
-                                
-                                Spacer()
-                                
-                                Button {
-                                    toggleController(controller)
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            
-                            if currentControllers[0] != controller  && currentControllers.firstIndex(of: controller) == currentControllers.count - 1 {
-                                Divider()
-                            }
-                        }
-                        .onMove { from, to in
-                            currentControllers.move(fromOffsets: from, toOffset: to)
-                        }
-                        .environment(\.editMode, .constant(.active))
+                    if currentControllers.isEmpty {
+                        emptyControllersView
+                    } else {
+                        controllerListView
                     }
                     
-                    if !controllersList.filter({ !currentControllers.contains($0) }).isEmpty {
+                    if hasAvailableControllers {
                         Divider()
-                        
-                        Menu {
-                            ForEach(controllersList.filter { !currentControllers.contains($0) }) { controller in
-                                Button {
-                                    currentControllers.append(controller)
-                                } label: {
-                                    Text(controller.name)
-                                }
-                            }
-                        } label: {
-                            Label("Add Controller", systemImage: "plus.circle.fill")
-                                .foregroundColor(.blue)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.vertical, 6)
-                        }
+                        addControllerButton
                     }
                 }
             }
@@ -554,6 +509,78 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+    }
+
+    // MARK: - Controller Selection Components
+
+    private var hasAvailableControllers: Bool {
+        !controllersList.filter { !currentControllers.contains($0) }.isEmpty
+    }
+
+    private var emptyControllersView: some View {
+        HStack {
+            Text("No controllers selected (Keyboard will be used)")
+                .foregroundColor(.secondary)
+                .italic()
+            Spacer()
+        }
+        .padding(.vertical, 8)
+    }
+
+    private var controllerListView: some View {
+        VStack(spacing: 0) {
+            Divider()
+            
+            ForEach(currentControllers.indices, id: \.self) { index in
+                let controller = currentControllers[index]
+                
+                VStack(spacing: 0) {
+                    HStack {
+                        Image(systemName: "gamecontroller.fill")
+                            .foregroundColor(.blue)
+                        
+                        Text("Player \(index + 1): \(controller.name)")
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        Button {
+                            toggleController(controller)
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 8)
+                    
+                    if index < currentControllers.count - 1 {
+                        Divider()
+                    }
+                }
+            }
+            .onMove { from, to in
+                currentControllers.move(fromOffsets: from, toOffset: to)
+            }
+            .environment(\.editMode, .constant(.active))
+        }
+    }
+
+    private var addControllerButton: some View {
+        Menu {
+            ForEach(controllersList.filter { !currentControllers.contains($0) }) { controller in
+                Button {
+                    currentControllers.append(controller)
+                } label: {
+                    Text(controller.name)
+                }
+            }
+        } label: {
+            Label("Add Controller", systemImage: "plus.circle.fill")
+                .foregroundColor(.blue)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.vertical, 6)
         }
     }
     

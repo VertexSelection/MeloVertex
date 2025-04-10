@@ -724,6 +724,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				GCC_OPTIMIZATION_LEVEL = z;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -896,6 +900,16 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				MARKETING_VERSION = "$(VERSION)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
@@ -919,7 +933,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = 95J8WZ4TN8;
+				DEVELOPMENT_TEAM = 4D52P7Z7YN;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1000,6 +1014,10 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				GCC_OPTIMIZATION_LEVEL = z;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1172,9 +1190,19 @@
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
+					"$(PROJECT_DIR)/MeloNX/Dependencies/Dynamic\\ Libraries",
 				);
 				MARKETING_VERSION = "$(VERSION)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.stossy11.MeloNX;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.stossy11.MeloNX-personal";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;

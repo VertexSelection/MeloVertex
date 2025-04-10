@@ -44,6 +44,9 @@ namespace Ryujinx.Headless.SDL2
             _mainThreadActions.Enqueue(action);
         }
 
+        public bool _isPaused;
+        public ManualResetEvent _pauseEvent;
+
         public NpadManager NpadManager;
         public TouchScreenManager TouchScreenManager;
         public Switch Device;
@@ -104,6 +107,7 @@ namespace Ryujinx.Headless.SDL2
             _gpuCancellationTokenSource = new CancellationTokenSource();
             _exitEvent = new ManualResetEvent(false);
             _gpuDoneEvent = new ManualResetEvent(false);
+            _pauseEvent = new ManualResetEvent(true);
             _aspectRatio = aspectRatio;
             _enableMouse = enableMouse;
             HostUITheme = new HeadlessHostUiTheme();
@@ -298,6 +302,8 @@ namespace Ryujinx.Headless.SDL2
                         return;
                     }
 
+                    _pauseEvent.WaitOne();
+
                     _ticks += _chrono.ElapsedTicks;
 
                     _chrono.Restart();
@@ -378,7 +384,6 @@ namespace Ryujinx.Headless.SDL2
         {
             while (_isActive)
             {
-
                 UpdateFrame();
 
                 SDL_PumpEvents();
