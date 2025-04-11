@@ -302,8 +302,6 @@ struct ContentView: View {
     }
     
     private func setupEmulation() {
-        refreshControllersList()
-        
         isVCA = (currentControllers.first(where: { $0 == onscreencontroller }) != nil)
         
         DispatchQueue.main.async {
@@ -321,34 +319,14 @@ struct ContentView: View {
         controllersList.removeAll(where: { $0.id == "0" || (!$0.name.starts(with: "GC - ") && $0 != onscreencontroller) })
         controllersList.mutableForEach { $0.name = $0.name.replacingOccurrences(of: "GC - ", with: "") }
 
+        currentControllers = []
         
-        if !currentControllers.isEmpty, !(currentControllers.count == 1) {
-            var currentController: [Controller] = []
-            
-            if currentController.count == 1 {
-                currentController.append(controllersList[0])
-            } else if (controllersList.count - 1) >= 1 {
-                for controller in controllersList {
-                    if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
-                        currentController.append(controller)
-                    }
-                }
-            }
-            
-            if currentController == currentControllers {
-                currentControllers = []
-                currentControllers = currentController
-            }
-        } else {
-            currentControllers = []
-            
-            if controllersList.count == 1 {
-                currentControllers.append(controllersList[0])
-            } else if (controllersList.count - 1) >= 1 {
-                for controller in controllersList {
-                    if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
-                        currentControllers.append(controller)
-                    }
+        if controllersList.count == 1 {
+            currentControllers.append(controllersList[0])
+        } else if (controllersList.count - 1) >= 1 {
+            for controller in controllersList {
+                if controller.id != onscreencontroller.id && !currentControllers.contains(where: { $0.id == controller.id }) {
+                    currentControllers.append(controller)
                 }
             }
         }
@@ -412,6 +390,7 @@ struct ContentView: View {
         if let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
            components.host == "game" {
             DispatchQueue.main.async {
+                refreshControllersList()
                 if let text = components.queryItems?.first(where: { $0.name == "id" })?.value {
                     game = ryujinx.games.first(where: { $0.titleId == text })
                 } else if let text = components.queryItems?.first(where: { $0.name == "name" })?.value {
