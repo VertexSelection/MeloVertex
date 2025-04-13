@@ -239,26 +239,28 @@ struct GameLibraryView: View {
                     }
                     
                     // Library Section
-                    VStack(alignment: .leading) {
-                        Text("Library")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .padding(.horizontal)
-                            .padding(.top)
-                        
-                        ForEach(filteredGames) { game in
-                            GameListRow(
-                                game: game,
-                                startemu: $startemu,
-                                games: games,
-                                isViewingGameInfo: $isViewingGameInfo,
-                                isSelectingGameUpdate: $isSelectingGameUpdate,
-                                isSelectingGameDLC: $isSelectingGameDLC,
-                                gameRequirements: $gameRequirements,
-                                gameInfo: $gameInfo
-                            )
-                            .padding(.horizontal, 3)
-                            .padding(.vertical, 8)
+                    if !filteredGames.isEmpty {
+                        VStack(alignment: .leading) {
+                            Text("Library")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                                .padding(.horizontal)
+                                .padding(.top)
+                            
+                            ForEach(filteredGames) { game in
+                                GameListRow(
+                                    game: game,
+                                    startemu: $startemu,
+                                    games: games,
+                                    isViewingGameInfo: $isViewingGameInfo,
+                                    isSelectingGameUpdate: $isSelectingGameUpdate,
+                                    isSelectingGameDLC: $isSelectingGameDLC,
+                                    gameRequirements: $gameRequirements,
+                                    gameInfo: $gameInfo
+                                )
+                                .padding(.horizontal, 3)
+                                .padding(.vertical, 8)
+                            }
                         }
                     }
                 } else {
