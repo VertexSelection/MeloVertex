@@ -96,8 +96,8 @@ struct GameInfoSheet: View {
             .navigationTitle(game.titleName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Dismiss") {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }

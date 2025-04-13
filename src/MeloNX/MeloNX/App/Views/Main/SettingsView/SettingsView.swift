@@ -93,6 +93,15 @@ struct SettingsView: View {
         }
     }
     
+    var appVersion: String {
+        guard let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
+            return "Unknown"
+        }
+        return version
+    }
+    
+    @FocusState private var isArgumentsKeyboardVisible: Bool
+    
     var body: some View {
         iOSNav {
             ZStack {
@@ -145,6 +154,7 @@ struct SettingsView: View {
                         }
                         .padding(.bottom)
                     }
+                    .scrollDismissesKeyboardIfAvailable()
                 }
             }
             .navigationTitle("Settings")
@@ -187,6 +197,14 @@ struct SettingsView: View {
                     : String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000)
                 
                 Text("\(memoryText) RAM")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Text("·")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Text("Version \(appVersion)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -747,7 +765,7 @@ struct SettingsView: View {
                         .foregroundColor(.primary)
                     
                     if #available(iOS 15.0, *) {
-                        TextField("Separate arguments with commas", text: Binding(
+                        TextField("Separate arguments with commas" ,text: Binding(
                             get: {
                                 config.additionalArgs.joined(separator: ", ")
                             },
@@ -762,6 +780,14 @@ struct SettingsView: View {
                         .textInputAutocapitalization(.none)
                         .disableAutocorrection(true)
                         .padding(.vertical, 4)
+                        .toolbar {
+                            ToolbarItem(placement: .keyboard) {
+                                Button("Dismiss") {
+                                    isArgumentsKeyboardVisible = false
+                                }
+                            }
+                        }
+                        .focused($isArgumentsKeyboardVisible)
                     } else {
                         TextField("Separate arguments with commas", text: Binding(
                             get: {
@@ -1013,6 +1039,7 @@ struct CategoryButton: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isSelected ? Color.blue.opacity(0.15) : Color.clear)
             )
+            .animation(.bouncy(duration: 0.3), value: isSelected)
         }
     }
 }
@@ -1122,3 +1149,16 @@ struct InfoCard: View {
         .cornerRadius(8)
     }
 }
+
+// this code is used to enable the keyboard to be dismissed when scrolling if available on iOS 16+
+extension View {
+    @ViewBuilder
+    func scrollDismissesKeyboardIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            self.scrollDismissesKeyboard(.interactively)
+        } else {
+            self
+        }
+    }
+}
+
