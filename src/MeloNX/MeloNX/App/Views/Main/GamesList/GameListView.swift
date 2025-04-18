@@ -836,7 +836,7 @@ struct GameListRow: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .frame(width: .infinity, height: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .contentShape(Rectangle())
             .contextMenu {
@@ -1129,7 +1129,7 @@ func pullGameCompatibility(completion: @escaping (Result<[GameRequirements], Err
         return
     }
 
-    guard let url = URL(string: "https://melonx.org/api/game_entries") else {
+    guard let url = URL(string: "https://melonx.net/api/game_entries") else {
         completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
         return
     }

@@ -56,6 +56,8 @@ struct SettingsView: View {
     
     @AppStorage("HideButtons") var hideButtonsJoy = false
     
+    @AppStorage("checkForUpdate") var checkForUpdate: Bool = true
+    
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
     @State private var showControllerInfo = false
@@ -887,6 +889,9 @@ struct SettingsView: View {
                             }
                         }
                     
+                    Divider()
+                    
+                    SettingsToggle(isOn: $checkForUpdate, icon: "square.and.arrow.down", label: "Check for Updates")
                     
                     if ryujinx.firmwareversion != "0" {
                         Divider()

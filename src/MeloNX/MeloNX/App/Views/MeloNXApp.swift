@@ -32,13 +32,16 @@ struct MeloNXApp: App {
     @AppStorage("hasbeenfinished") var finishedStorage: Bool = false
     
     @AppStorage("location-enabled") var locationenabled: Bool = false
+    @AppStorage("checkForUpdate") var checkForUpdate: Bool = true
     
     var body: some Scene {
         WindowGroup {
             if finishedStorage {
                 ContentView()
                     .onAppear {
-                        checkLatestVersion()
+                        if checkForUpdate {
+                            checkLatestVersion()
+                        }
                     }
                     .sheet(isPresented: Binding(
                         get: { showOutOfDateSheet && updateInfo != nil },
@@ -73,7 +76,7 @@ struct MeloNXApp: App {
         #if DEBUG
         let urlString = "http://192.168.178.116:8000/api/latest_release"
         #else
-        let urlString = "https://melonx.org/api/latest_release"
+        let urlString = "https://melonx.net/api/latest_release"
         #endif
         
         guard let url = URL(string: urlString) else {
