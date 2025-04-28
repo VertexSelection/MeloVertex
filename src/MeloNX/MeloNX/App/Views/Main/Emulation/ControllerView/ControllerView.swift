@@ -70,11 +70,11 @@ struct ControllerView: View {
                     HStack {
                         ButtonView(button: .leftStick)
                             .padding()
-                        ButtonView(button: .start)
+                        ButtonView(button: .back)
                     }
                     
                     HStack {
-                        ButtonView(button: .back)
+                        ButtonView(button: .start)
                         ButtonView(button: .rightStick)
                             .padding()
                     }
@@ -257,148 +257,180 @@ struct ABXYView: View {
     }
 }
 
+
 struct ButtonView: View {
     var button: VirtualControllerButton
-    @State private var width: CGFloat = 45
-    @State private var height: CGFloat = 45
-    @State private var isPressed = false
+    
     @AppStorage("onscreenhandheld") var onscreenjoy: Bool = false
-    @Environment(\.presentationMode) var presentationMode
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
-    @State private var debounceTimer: Timer?
+    @Environment(\.presentationMode) var presentationMode
+    
+    @AppCodableStorage("toggleButtons") var toggleButtons = ToggleButtonsState()
+    @State private var istoggle = false
+    
+    @State private var isPressed = false
+    @State private var toggleState = false
+    
+    @State private var size: CGSize = .zero
     
     var body: some View {
-        Image(systemName: buttonText)
-            .resizable()
-            .scaledToFit()
-            .frame(width: width, height: height)
-            .foregroundColor(true ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
+        Circle()
+            .foregroundStyle(.clear.opacity(0))
+            .overlay {
+                Image(systemName: buttonConfig.iconName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size.width, height: size.height)
+                    .foregroundStyle(.white)
+                    .opacity(isPressed ? 0.6 : 1.0)
+                    .allowsHitTesting(false)
+            }
+            .frame(width: size.width, height: size.height)
             .background(
-                Group {
-                    if !button.isTrigger && button != .leftStick && button != .rightStick {
-                        Circle()
-                            .fill(true ? Color.gray.opacity(0.4) : Color.gray.opacity(0.3))
-                            .frame(width: width * 1.25, height: height * 1.25)
-                    } else if button == .leftStick || button == .rightStick {
-                        Image(systemName: buttonText)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: width * 1.25, height: height * 1.25)
-                            .foregroundColor(true ? Color.gray.opacity(0.4) : Color.gray.opacity(0.3))
-                    } else if button.isTrigger {
-                        Image(systemName: "" + String(turntobutton(buttonText)))
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: width * 1.25, height: height * 1.25)
-                            .foregroundColor(true ? Color.gray.opacity(0.4) : Color.gray.opacity(0.3))
-                    }
-                }
+                buttonBackground
             )
-            .opacity(isPressed ? 0.6 : 1.0)
             .gesture(
                 DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        handleButtonPress()
-                    }
-                    .onEnded { _ in
-                        handleButtonRelease()
-                    }
+                    .onChanged { _ in handleButtonPress() }
+                    .onEnded { _ in handleButtonRelease() }
             )
             .onAppear {
-                configureSizeForButton()
+                istoggle = (toggleButtons.toggle1 && button == .A) || (toggleButtons.toggle2 && button == .B) || (toggleButtons.toggle3 && button == .X) || (toggleButtons.toggle4 && button == .Y)
+                size = calculateButtonSize()
+            }
+            .onChange(of: controllerScale) { _ in
+                size = calculateButtonSize()
             }
     }
     
-    private func turntobutton(_ string: String) -> String {
-        var sting = string
-        if string.hasPrefix("zl") || string.hasPrefix("zr") {
-            sting = String(string.dropFirst(3))
-        } else {
-            sting = String(string.dropFirst(2))
+    private var buttonBackground: some View {
+        Group {
+            if !button.isTrigger && button != .leftStick && button != .rightStick {
+                Circle()
+                    .fill(Color.gray.opacity(0.4))
+                    .frame(width: size.width * 1.25, height: size.height * 1.25)
+            } else if button == .leftStick || button == .rightStick {
+                Image(systemName: buttonConfig.iconName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size.width * 1.25, height: size.height * 1.25)
+                    .foregroundColor(Color.gray.opacity(0.4))
+            } else if button.isTrigger {
+                Image(systemName: convertTriggerIconToButton(buttonConfig.iconName))
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size.width * 1.25, height: size.height * 1.25)
+                    .foregroundColor(Color.gray.opacity(0.4))
+            }
         }
-        sting = sting.replacingOccurrences(of: "rectangle", with: "button")
-        sting = sting.replacingOccurrences(of: ".fill", with: ".horizontal.fill")
-        
-        return sting
+    }
+    
+    private func convertTriggerIconToButton(_ iconName: String) -> String {
+        if iconName.hasPrefix("zl") || iconName.hasPrefix("zr") {
+            var converted = String(iconName.dropFirst(3))
+            converted = converted.replacingOccurrences(of: "rectangle", with: "button")
+            converted = converted.replacingOccurrences(of: ".fill", with: ".horizontal.fill")
+            return converted
+        } else {
+            var converted = String(iconName.dropFirst(2))
+            converted = converted.replacingOccurrences(of: "rectangle", with: "button")
+            converted = converted.replacingOccurrences(of: ".fill", with: ".horizontal.fill")
+            return converted
+        }
     }
     
     private func handleButtonPress() {
-        if !isPressed {
+        guard !isPressed || istoggle else { return }
+
+        if istoggle {
+            toggleState.toggle()
+            isPressed = toggleState
+            let value = toggleState ? 1 : 0
+            Ryujinx.shared.virtualController.setButtonState(Uint8(value), for: button)
+            Haptics.shared.play(.medium)
+        } else {
             isPressed = true
-            
-            debounceTimer?.invalidate()
-            
             Ryujinx.shared.virtualController.setButtonState(1, for: button)
-            
             Haptics.shared.play(.medium)
         }
     }
     
     private func handleButtonRelease() {
-        if isPressed {
-            isPressed = false
-            
-            debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in
-                Ryujinx.shared.virtualController.setButtonState(0, for: button)
-            }
+        if istoggle { return }
+
+        guard isPressed else { return }
+
+        isPressed = false
+        DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 0.05) {
+            Ryujinx.shared.virtualController.setButtonState(0, for: button)
         }
     }
     
-    private func configureSizeForButton() {
+    private func calculateButtonSize() -> CGSize {
+        let baseWidth: CGFloat
+        let baseHeight: CGFloat
+        
         if button.isTrigger {
-            width = 70
-            height = 40
+            baseWidth = 70
+            baseHeight = 40
         } else if button.isSmall {
-            width = 35
-            height = 35
+            baseWidth = 35
+            baseHeight = 35
+        } else {
+            baseWidth = 45
+            baseHeight = 45
         }
         
-        // Adjust for iPad
-        if UIDevice.current.systemName.contains("iPadOS") {
-            width *= 1.2
-            height *= 1.2
-        }
+        let deviceMultiplier = UIDevice.current.userInterfaceIdiom == .pad ? 1.2 : 1.0
+        let scaleMultiplier = CGFloat(controllerScale)
         
-        width *= CGFloat(controllerScale)
-        height *= CGFloat(controllerScale)
+        return CGSize(
+            width: baseWidth * deviceMultiplier * scaleMultiplier,
+            height: baseHeight * deviceMultiplier * scaleMultiplier
+        )
     }
     
-    private var buttonText: String {
+    // Centralized button configuration
+    private var buttonConfig: ButtonConfiguration {
         switch button {
         case .A:
-            return "a.circle.fill"
+            return ButtonConfiguration(iconName: "a.circle.fill")
         case .B:
-            return "b.circle.fill"
+            return ButtonConfiguration(iconName: "b.circle.fill")
         case .X:
-            return "x.circle.fill"
+            return ButtonConfiguration(iconName: "x.circle.fill")
         case .Y:
-            return "y.circle.fill"
+            return ButtonConfiguration(iconName: "y.circle.fill")
         case .leftStick:
-            return "l.joystick.press.down.fill"
+            return ButtonConfiguration(iconName: "l.joystick.press.down.fill")
         case .rightStick:
-            return "r.joystick.press.down.fill"
+            return ButtonConfiguration(iconName: "r.joystick.press.down.fill")
         case .dPadUp:
-            return "arrowtriangle.up.circle.fill"
+            return ButtonConfiguration(iconName: "arrowtriangle.up.circle.fill")
         case .dPadDown:
-            return "arrowtriangle.down.circle.fill"
+            return ButtonConfiguration(iconName: "arrowtriangle.down.circle.fill")
         case .dPadLeft:
-            return "arrowtriangle.left.circle.fill"
+            return ButtonConfiguration(iconName: "arrowtriangle.left.circle.fill")
         case .dPadRight:
-            return "arrowtriangle.right.circle.fill"
+            return ButtonConfiguration(iconName: "arrowtriangle.right.circle.fill")
         case .leftTrigger:
-            return "zl.rectangle.roundedtop.fill"
+            return ButtonConfiguration(iconName: "zl.rectangle.roundedtop.fill")
         case .rightTrigger:
-            return "zr.rectangle.roundedtop.fill"
+            return ButtonConfiguration(iconName: "zr.rectangle.roundedtop.fill")
         case .leftShoulder:
-            return "l.rectangle.roundedbottom.fill"
+            return ButtonConfiguration(iconName: "l.rectangle.roundedbottom.fill")
         case .rightShoulder:
-            return "r.rectangle.roundedbottom.fill"
+            return ButtonConfiguration(iconName: "r.rectangle.roundedbottom.fill")
         case .start:
-            return "plus.circle.fill"
+            return ButtonConfiguration(iconName: "plus.circle.fill")
         case .back:
-            return "minus.circle.fill"
+            return ButtonConfiguration(iconName: "minus.circle.fill")
         case .guide:
-            return "house.circle.fill"
+            return ButtonConfiguration(iconName: "house.circle.fill")
         }
+    }
+    
+    struct ButtonConfiguration {
+        let iconName: String
     }
 }

@@ -87,40 +87,48 @@ class MeloMTKView: MTKView {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
         
+        let disabled = UserDefaults.standard.bool(forKey: "disableTouch")
+        
         setAspectRatio(Ryujinx.shared.config?.aspectRatio ?? .fixed16x9)
         
-        for touch in touches {
-            let location = touch.location(in: self)
-            if scaleToTargetResolution(location) == nil {
-                ignoredTouches.insert(touch)
-                continue
+        if !disabled {
+            for touch in touches {
+                let location = touch.location(in: self)
+                if scaleToTargetResolution(location) == nil {
+                    ignoredTouches.insert(touch)
+                    continue
+                }
+                
+                activeTouches.append(touch)
+                let index = activeTouches.firstIndex(of: touch)!
+                
+                let scaledLocation = scaleToTargetResolution(location)!
+                // // print("Touch began at: \(scaledLocation) and \(self.aspectRatio)")
+                touch_began(Float(scaledLocation.x), Float(scaledLocation.y), Int32(index))
             }
-
-            activeTouches.append(touch)
-            let index = activeTouches.firstIndex(of: touch)!
-            
-            let scaledLocation = scaleToTargetResolution(location)!
-            // // print("Touch began at: \(scaledLocation) and \(self.aspectRatio)")
-            touch_began(Float(scaledLocation.x), Float(scaledLocation.y), Int32(index))
         }
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
         
+        let disabled = UserDefaults.standard.bool(forKey: "disableTouch")
+        
         setAspectRatio(Ryujinx.shared.config?.aspectRatio ?? .fixed16x9)
         
-        for touch in touches {
-            if ignoredTouches.contains(touch) {
-                ignoredTouches.remove(touch)
-                continue
-            }
-
-            if let index = activeTouches.firstIndex(of: touch) {
-                activeTouches.remove(at: index)
+        if !disabled {
+            for touch in touches {
+                if ignoredTouches.contains(touch) {
+                    ignoredTouches.remove(touch)
+                    continue
+                }
                 
-                // // print("Touch ended for index \(index)")
-                touch_ended(Int32(index))
+                if let index = activeTouches.firstIndex(of: touch) {
+                    activeTouches.remove(at: index)
+                    
+                    // // print("Touch ended for index \(index)")
+                    touch_ended(Int32(index))
+                }
             }
         }
     }
@@ -128,26 +136,30 @@ class MeloMTKView: MTKView {
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesMoved(touches, with: event)
         
+        let disabled = UserDefaults.standard.bool(forKey: "disableTouch")
+        
         setAspectRatio(Ryujinx.shared.config?.aspectRatio ?? .fixed16x9)
         
-        for touch in touches {
-            if ignoredTouches.contains(touch) {
-                continue
-            }
-
-            let location = touch.location(in: self)
-            guard let scaledLocation = scaleToTargetResolution(location) else {
-                if let index = activeTouches.firstIndex(of: touch) {
-                    activeTouches.remove(at: index)
-                    // // print("Touch left active area, removed index \(index)")
-                    touch_ended(Int32(index))
+        if !disabled {
+            for touch in touches {
+                if ignoredTouches.contains(touch) {
+                    continue
                 }
-                continue
-            }
-            
-            if let index = activeTouches.firstIndex(of: touch) {
-                // // print("Touch moved to: \(scaledLocation)")
-                touch_moved(Float(scaledLocation.x), Float(scaledLocation.y), Int32(index))
+                
+                let location = touch.location(in: self)
+                guard let scaledLocation = scaleToTargetResolution(location) else {
+                    if let index = activeTouches.firstIndex(of: touch) {
+                        activeTouches.remove(at: index)
+                        // // print("Touch left active area, removed index \(index)")
+                        touch_ended(Int32(index))
+                    }
+                    continue
+                }
+                
+                if let index = activeTouches.firstIndex(of: touch) {
+                    // // print("Touch moved to: \(scaledLocation)")
+                    touch_moved(Float(scaledLocation.x), Float(scaledLocation.y), Int32(index))
+                }
             }
         }
     }

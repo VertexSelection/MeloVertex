@@ -34,10 +34,15 @@ struct MeloNXApp: App {
     @AppStorage("location-enabled") var locationenabled: Bool = false
     @AppStorage("checkForUpdate") var checkForUpdate: Bool = true
     
+    @AppStorage("runOnMainThread") var runOnMainThread = false
+    
+    @AppStorage("autoJIT") var autoJIT = false
+    
     var body: some Scene {
         WindowGroup {
             if finishedStorage {
                 ContentView()
+                    .withFileImporter()
                     .onAppear {
                         if checkForUpdate {
                             checkLatestVersion()
@@ -59,10 +64,8 @@ struct MeloNXApp: App {
             } else {
                 SetupView(finished: $finished)
                     .onChange(of: finished) { newValue in
-                        withAnimation {
-                            withAnimation {
-                                finishedStorage = newValue
-                            }
+                        withAnimation(.easeOut) {
+                            finishedStorage = newValue
                         }
                     }
             }

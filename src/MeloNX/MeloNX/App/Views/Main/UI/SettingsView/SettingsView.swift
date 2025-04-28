@@ -57,6 +57,13 @@ struct SettingsView: View {
     @AppStorage("HideButtons") var hideButtonsJoy = false
     
     @AppStorage("checkForUpdate") var checkForUpdate: Bool = true
+
+    @AppStorage("disableTouch") var disableTouch = false
+    
+    @AppStorage("runOnMainThread") var runOnMainThread = false
+    
+    @AppCodableStorage("toggleButtons") var toggleButtons = ToggleButtonsState()
+
     
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
@@ -480,6 +487,16 @@ struct SettingsView: View {
                     Divider()
                     
                     SettingsToggle(isOn: $swapBandA, icon: "rectangle.2.swap", label: "Swap Face Buttons (Physical Controller)")
+                    
+                    Divider()
+                    
+                    DisclosureGroup("Toggle Buttons") {
+                        SettingsToggle(isOn: $toggleButtons.toggle1, icon: "circle.grid.cross.right.filled", label: "Toggle A")
+                        SettingsToggle(isOn: $toggleButtons.toggle2, icon: "circle.grid.cross.down.filled", label: "Toggle B")
+                        SettingsToggle(isOn: $toggleButtons.toggle3, icon: "circle.grid.cross.up.filled", label: "Toggle X")
+                        SettingsToggle(isOn: $toggleButtons.toggle4, icon: "circle.grid.cross.left.filled", label: "Toggle Y")
+                    }
+                    .padding(.vertical, 6)
                 }
             }
             
@@ -727,6 +744,10 @@ struct SettingsView: View {
             // Advanced toggles card
             SettingsCard {
                 VStack(spacing: 4) {
+                    SettingsToggle(isOn: $runOnMainThread, icon: "square.stack.3d.up", label: "Run Core on Main Thread")
+                    
+                    Divider()
+                    
                     SettingsToggle(isOn: $config.dfsIntegrityChecks, icon: "checkmark.shield", label: "Disable FS Integrity Checks")
                     
                     Divider()
@@ -837,8 +858,13 @@ struct SettingsView: View {
         SettingsSection(title: "Miscellaneous Options") {
             SettingsCard {
                 VStack(spacing: 4) {
+                    // Disable Touch card
+                    SettingsToggle(isOn: $disableTouch, icon: "rectangle.and.hand.point.up.left.filled", label: "Disable Touch")
+                    
+                    Divider()
+                    
                     // Screenshot button card
-                    SettingsToggle(isOn: $ssb, icon: "square.and.arrow.up", label: "Screenshot Button")
+                    SettingsToggle(isOn: $ssb, icon: "arrow.left.circle", label: "Exit Button")
                     
                     Divider()
                     

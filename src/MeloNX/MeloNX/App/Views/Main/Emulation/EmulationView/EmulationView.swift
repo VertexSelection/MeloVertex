@@ -65,27 +65,26 @@ struct EmulationView: View {
                         Spacer()
                     }
                     
-                    Spacer()
                     
                     if ssb {
                         HStack {
                             
-                            Button {
-                                if let screenshot = Ryujinx.shared.emulationUIView?.screenshot() {
-                                    UIImageWriteToSavedPhotosAlbum(screenshot, nil, nil, nil)
+                            Image(systemName: "arrow.left.circle")
+                                .resizable()
+                                .frame(width: 50, height: 50)
+                                .onTapGesture {
+                                    startgame = nil
+                                    stop_emulation()
+                                    try? Ryujinx.shared.stop()
                                 }
-                            } label: {
-                                Image(systemName: "square.and.arrow.up")
-                            }
-                            .frame(width: UIDevice.current.systemName.contains("iPadOS") ? 60 * 1.2 : 45, height: UIDevice.current.systemName.contains("iPadOS") ? 60 * 1.2 : 45)
-                            .padding()
+                                .padding()
                             
                             Spacer()
-                            
-                            
-                            
+    
                         }
                     }
+                    
+                    Spacer()
                     
                 }
             }
@@ -102,13 +101,13 @@ struct EmulationView: View {
         .onChange(of: scenePhase) { newPhase in
             // Detect when the app enters the background
             if newPhase == .background {
-                stop_emulation(true)
+                pause_emulation(true)
                 isInBackground = true
             } else if newPhase == .active {
-                stop_emulation(false)
+                pause_emulation(false)
                 isInBackground = false
             } else if newPhase == .inactive {
-                stop_emulation(true)
+                pause_emulation(true)
                 isInBackground = true
             }
         }

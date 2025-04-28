@@ -119,7 +119,7 @@ struct iOSNav<Content: View>: View {
 
 
 class Ryujinx : ObservableObject {
-    private var isRunning = false
+    @Published var isRunning = false
     
     let virtualController = VirtualController()
     
@@ -145,6 +145,22 @@ class Ryujinx : ObservableObject {
     
     private init() {
         self.games = loadGames()
+    }
+    
+    func runloop(_ cool: @escaping () -> Void) {
+        if UserDefaults.standard.bool(forKey: "runOnMainThread") {
+            RunLoop.main.perform {
+                cool()
+            }
+        } else {
+            thread = Thread {
+                cool()
+            }
+            
+            thread.qualityOfService = .userInteractive
+            thread.name = "MeloNX"
+            thread.start()
+        }
     }
     
     public struct Configuration : Codable, Equatable {
@@ -238,7 +254,7 @@ class Ryujinx : ObservableObject {
         self.config = config
         
         
-        thread = Thread { [self] in
+        runloop { [self] in
             
             isRunning = true
             
@@ -299,10 +315,6 @@ class Ryujinx : ObservableObject {
                 }
             }
         }
-        
-        thread.qualityOfService = .userInteractive
-        thread.name = "MeloNX"
-        thread.start()
     }
     
     func saveArrayAsTextFile(strings: [String], filePath: String) {
@@ -374,10 +386,6 @@ class Ryujinx : ObservableObject {
         thread.cancel()
     }
 
-    var running: Bool {
-        return isRunning
-    }
-    
     
     func loadGames() -> [Game] {
         let fileManager = FileManager.default
@@ -467,6 +475,7 @@ class Ryujinx : ObservableObject {
         args.append(contentsOf: ["--system-region", config.regioncode.rawValue])
         
         args.append(contentsOf: ["--aspect-ratio", config.aspectRatio.rawValue])
+        
         
         if config.nintendoinput {
             args.append("--correct-controller")

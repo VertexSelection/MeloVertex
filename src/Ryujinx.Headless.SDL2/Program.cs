@@ -286,16 +286,6 @@ namespace Ryujinx.Headless.SDL2
             {
                 _contentManager = new ContentManager(_virtualFileSystem);
             }
-
-            if (_accountManager == null)
-            {
-                _accountManager = new AccountManager(_libHacHorizonManager.RyujinxClient, "");
-            }
-
-            if (_userChannelPersistence == null)
-            {
-                _userChannelPersistence = new UserChannelPersistence();
-            }
         }
 
         static void Main(string[] args)
@@ -402,8 +392,8 @@ namespace Ryujinx.Headless.SDL2
             return String.Empty;
         }
 
-        [UnmanagedCallersOnly(EntryPoint = "stop_emulation")]
-        public static void StopEmulation(bool shouldPause)
+        [UnmanagedCallersOnly(EntryPoint = "pause_emulation")]
+        public static void PauseEmulation(bool shouldPause)
         {
             if (_window != null)
             {
@@ -419,6 +409,15 @@ namespace Ryujinx.Headless.SDL2
                     _window._isPaused = true;
                     _window._pauseEvent.Reset();
                 }
+            }
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "stop_emulation")]
+        public static void StopEmulation()
+        {
+            if (_window != null)
+            {
+                _window.Exit();
             }
         }
 
@@ -1134,42 +1133,22 @@ namespace Ryujinx.Headless.SDL2
 
         static void Load(Options option)
         {
+            _libHacHorizonManager = new LibHacHorizonManager();
+            _libHacHorizonManager.InitializeFsServer(_virtualFileSystem);
+            _libHacHorizonManager.InitializeArpServer();
+            _libHacHorizonManager.InitializeBcatServer();
+            _libHacHorizonManager.InitializeSystemClients();
 
-            if (_virtualFileSystem == null)
+            _contentManager = new ContentManager(_virtualFileSystem);
+
+            _accountManager = new AccountManager(_libHacHorizonManager.RyujinxClient, option.UserProfile);
+
+            _userChannelPersistence = new UserChannelPersistence();
+
+            _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
+
+            if (OperatingSystem.IsIOS()) 
             {
-               _virtualFileSystem = VirtualFileSystem.CreateInstance();
-            }
-
-            if (_libHacHorizonManager == null)
-            {
-                _libHacHorizonManager = new LibHacHorizonManager();
-                _libHacHorizonManager.InitializeFsServer(_virtualFileSystem);
-                _libHacHorizonManager.InitializeArpServer();
-                _libHacHorizonManager.InitializeBcatServer();
-                _libHacHorizonManager.InitializeSystemClients();
-            }
-
-            if (_contentManager == null)
-            {
-                _contentManager = new ContentManager(_virtualFileSystem);
-            }
-
-            if (_accountManager == null)
-            {
-                _accountManager = new AccountManager(_libHacHorizonManager.RyujinxClient, option.UserProfile);
-            }
-
-            if (_userChannelPersistence == null)
-            {
-                _userChannelPersistence = new UserChannelPersistence();
-            }
-
-            if (_inputManager == null)
-            {
-                _inputManager = new InputManager(new SDL2KeyboardDriver(), new SDL2GamepadDriver());
-            }
-
-            if (OperatingSystem.IsIOS()) {
                 Logger.Info?.Print(LogClass.Application, $"Current Device: {option.DisplayName} ({option.DeviceModel}) {Environment.OSVersion.Version}");
                 Logger.Info?.Print(LogClass.Application, $"Increased Memory Limit: {option.MemoryEnt}");
             }

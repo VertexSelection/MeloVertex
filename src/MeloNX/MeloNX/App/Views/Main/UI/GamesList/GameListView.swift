@@ -78,10 +78,7 @@ struct GameLibraryView: View {
                     
                     // Game list
                     if Ryujinx.shared.games.isEmpty {
-                        EmptyGameLibraryView(
-                            isSelectingGameFile: $isSelectingGameFile,
-                            isImporting: $isImporting
-                        )
+                        EmptyGameLibraryView(isSelectingGameFile: $isSelectingGameFile)
                     } else {
                         gameListView
                             .animation(.easeInOut(duration: 0.3), value: searchText)
@@ -174,11 +171,29 @@ struct GameLibraryView: View {
             .onChange(of: searchText) { _ in
                 isSearching = !searchText.isEmpty
             }
-            .fileImporter(isPresented: $isImporting, allowedContentTypes: [.folder, .nsp, .xci, .zip, .item]) { result in
-                handleFileImport(result: result)
+            .onChange(of: isImporting) { newValue in
+                if newValue {
+                    FileImporterManager.shared.importFiles(types: [.nsp, .xci, .item]) { result in
+                        isImporting = false
+                        handleRunningGame(result: result)
+                    }
+                }
             }
-            .fileImporter(isPresented: $firmwareInstaller, allowedContentTypes: [.item]) { result in
-                handleFirmwareImport(result: result)
+            .onChange(of: isSelectingGameFile) { newValue in
+                if newValue {
+                    FileImporterManager.shared.importFiles(types: [.nsp, .xci, .item]) { result in
+                        isImporting = false
+                        handleAddingGame(result: result)
+                    }
+                }
+            }
+            .onChange(of: firmwareInstaller) { newValue in
+                if newValue {
+                    FileImporterManager.shared.importFiles(types: [.folder, .zip]) { result in
+                        isImporting = false
+                        handleFirmwareImport(result: result)
+                    }
+                }
             }
             .sheet(isPresented: $isSelectingGameUpdate) {
                 UpdateManagerSheet(game: $gameInfo)
@@ -361,68 +376,72 @@ struct GameLibraryView: View {
     
     // MARK: - Import Handlers
     
-    private func handleFileImport(result: Result<URL, Error>) {
-        if isSelectingGameFile {
-            switch result {
-            case .success(let url):
-                guard url.startAccessingSecurityScopedResource() else {
-                    // print("Failed to access security-scoped resource")
-                    return
-                }
-                defer { url.stopAccessingSecurityScopedResource() }
-                
-                do {
-                    let fileManager = FileManager.default
-                    let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-                    let romsDirectory = documentsDirectory.appendingPathComponent("roms")
-                    
-                    if !fileManager.fileExists(atPath: romsDirectory.path) {
-                        try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
-                    }
-                    
-                    let destinationURL = romsDirectory.appendingPathComponent(url.lastPathComponent)
-                    try fileManager.copyItem(at: url, to: destinationURL)
-                    
-                    Ryujinx.shared.games = Ryujinx.shared.loadGames()
-                } catch {
-                    // print("Error copying game file: \(error)")
-                }
-            case .failure(let err):
-                print("File import failed: \(err.localizedDescription)")
+    private func handleAddingGame(result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first, url.startAccessingSecurityScopedResource() else {
+                // print("Failed to access security-scoped resource")
+                return
             }
-        } else {
-            switch result {
-            case .success(let url):
-                guard url.startAccessingSecurityScopedResource() else {
-                    // print("Failed to access security-scoped resource")
-                    return
+            defer { url.stopAccessingSecurityScopedResource() }
+            
+            do {
+                let fileManager = FileManager.default
+                let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+                let romsDirectory = documentsDirectory.appendingPathComponent("roms")
+                
+                if !fileManager.fileExists(atPath: romsDirectory.path) {
+                    try fileManager.createDirectory(at: romsDirectory, withIntermediateDirectories: true, attributes: nil)
                 }
                 
-                do {
-                    let handle = try FileHandle(forReadingFrom: url)
-                    let fileExtension = (url.pathExtension as NSString).utf8String
-                    let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
-                    
-                    let gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
-                    
-                    let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: url)
-                    
-                    DispatchQueue.main.async {
-                        startemu = game
-                    }
-                } catch {
-                    // print(error)
-                }
+                let destinationURL = romsDirectory.appendingPathComponent(url.lastPathComponent)
+                try fileManager.copyItem(at: url, to: destinationURL)
                 
-            case .failure(let err):
-                print("File import failed: \(err.localizedDescription)")
+                Ryujinx.shared.games = Ryujinx.shared.loadGames()
+            } catch {
+                // print("Error copying game file: \(error)")
             }
+        case .failure(let err):
+            print("File import failed: \(err.localizedDescription)")
         }
     }
     
-    private func handleFirmwareImport(result: Result<URL, Error>) {
+    private func handleRunningGame(result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first, url.startAccessingSecurityScopedResource() else {
+                // print("Failed to access security-scoped resource")
+                return
+            }
+            
+            do {
+                let handle = try FileHandle(forReadingFrom: url)
+                let fileExtension = (url.pathExtension as NSString).utf8String
+                let extensionPtr = UnsafeMutablePointer<CChar>(mutating: fileExtension)
+                
+                let gameInfo = get_game_info(handle.fileDescriptor, extensionPtr)
+                
+                let game = Game.convertGameInfoToGame(gameInfo: gameInfo, url: url)
+                
+                DispatchQueue.main.async {
+                    startemu = game
+                }
+            } catch {
+                // print(error)
+            }
+            
+        case .failure(let err):
+            print("File import failed: \(err.localizedDescription)")
+        }
+    }
+    
+    private func handleFirmwareImport(result: Result<[URL], Error>) {
         switch result {
         case .success(let url):
+            guard let url = url.first else {
+                return
+            }
+            
             do {
                 let fun = url.startAccessingSecurityScopedResource()
                 let path = url.path
@@ -527,7 +546,6 @@ extension Game: Codable {
 // MARK: - Empty Library View
 struct EmptyGameLibraryView: View {
     @Binding var isSelectingGameFile: Bool
-    @Binding var isImporting: Bool
     
     var body: some View {
         VStack(spacing: 24) {
@@ -550,7 +568,6 @@ struct EmptyGameLibraryView: View {
             
             Button {
                 isSelectingGameFile = true
-                isImporting = true
             } label: {
                 Label("Add Game", systemImage: "plus")
                     .font(.headline)
