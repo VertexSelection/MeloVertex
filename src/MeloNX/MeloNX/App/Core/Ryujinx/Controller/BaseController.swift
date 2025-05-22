@@ -7,7 +7,7 @@
 
 //──────────────────────────────────────────────────────────────────────── MARK:- Base Controller Protocol
 
-/// One motion source == one DSU *slot* (0-7).
+/// Base Controller with motion related functions
 protocol BaseController: AnyObject {
     func tryRegisterMotion(slot: UInt8)
     func tryGetMotionProvider() -> DSUMotionProvider?
