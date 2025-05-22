@@ -332,6 +332,25 @@ struct ContentView: View {
         }
     }
     
+    private func registerMotionForMatchingControllers() {
+        // Loop through currentControllers with index
+        for (index, controller) in currentControllers.enumerated() {
+            let slot = UInt8(index)
+            
+            // Check native controllers
+            for (_, nativeController) in nativeControllers where nativeController.controllername == String("GC - \(controller.name)") && nativeController.tryGetMotionProvider() == nil {
+                nativeController.tryRegisterMotion(slot: slot)
+                continue
+            }
+            
+            // Check virtual controller if active
+            if Ryujinx.shared.virtualController.controllername == controller.name && Ryujinx.shared.virtualController.tryGetMotionProvider() == nil {
+                Ryujinx.shared.virtualController.tryRegisterMotion(slot: slot)
+                continue
+            }
+        }
+    }
+    
     private func start(displayid: UInt32) {
         guard let game else { return }
         
@@ -340,8 +359,15 @@ struct ContentView: View {
         
         configureEnvironmentVariables()
         
+        registerMotionForMatchingControllers()
+        
         if config.inputids.isEmpty {
             config.inputids.append("0")
+        }
+        
+        // Local DSU loopback to ryujinx per input id
+        for _ in config.inputids {
+            config.inputDSUServers.append("127.0.0.1:26760")
         }
         
         do {

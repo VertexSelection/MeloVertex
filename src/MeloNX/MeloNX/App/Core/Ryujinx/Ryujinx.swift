@@ -166,6 +166,7 @@ class Ryujinx : ObservableObject {
     public struct Configuration : Codable, Equatable {
         var gamepath: String
         var inputids: [String]
+        var inputDSUServers: [String]
         var resscale: Float
         var debuglogs: Bool
         var tracelogs: Bool
@@ -193,6 +194,7 @@ class Ryujinx : ObservableObject {
 
         init(gamepath: String,
              inputids: [String] = [],
+             inputDSUServers: [String] = [],
              debuglogs: Bool = false,
              tracelogs: Bool = false,
              listinputids: Bool = false,
@@ -219,6 +221,7 @@ class Ryujinx : ObservableObject {
         ) {
             self.gamepath = gamepath
             self.inputids = inputids
+            self.inputDSUServers = inputDSUServers
             self.debuglogs = debuglogs
             self.tracelogs = tracelogs
             self.listinputids = listinputids
@@ -550,6 +553,17 @@ class Ryujinx : ObservableObject {
                     args.append(contentsOf: ["\(index == 0 ? "--input-id-handheld" : "--input-id-\(index + 1)")", inputId])
                 } else {
                     args.append(contentsOf: ["--input-id-\(index + 1)", inputId])
+                }
+            }
+        }
+        
+        // Append the input dsu servers (limit to 8 (used to be 4) just in case)
+        if !config.inputDSUServers.isEmpty {
+            config.inputDSUServers.prefix(8).enumerated().forEach { index, inputDSUServer in
+                if config.handHeldController {
+                    args.append(contentsOf: ["\(index == 0 ? "--input-dsu-server-handheld" : "--input-dsu-server-\(index + 1)")", inputDSUServer])
+                } else {
+                    args.append(contentsOf: ["--input-dsu-server-\(index + 1)", inputDSUServer])
                 }
             }
         }

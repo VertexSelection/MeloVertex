@@ -8,10 +8,11 @@
 import CoreHaptics
 import GameController
 
-class NativeController: Hashable {
+class NativeController: Hashable, BaseController {
     private var instanceID: SDL_JoystickID = -1
     private var controller: OpaquePointer?
     private var nativeController: GCController
+    private var controllerMotionProvider: ControllerMotionProvider?
     private let controllerHaptics: CHHapticEngine?
 
     public var controllername: String { "GC - \(nativeController.vendorName ?? "Unknown")" }
@@ -25,6 +26,20 @@ class NativeController: Hashable {
 
     deinit {
         cleanup()
+    }
+    
+    internal func tryRegisterMotion(slot: UInt8) {
+        // Setup Motion
+        let dsuServer = DSUServer.shared
+        
+        controllerMotionProvider = ControllerMotionProvider(controller: nativeController, slot: slot)
+        if let provider = controllerMotionProvider {
+            dsuServer.register(provider)
+        }
+    }
+    
+    internal func tryGetMotionProvider() -> DSUMotionProvider? {
+        return controllerMotionProvider
     }
 
     private func setupHandheldController() {
