@@ -7,7 +7,7 @@
 //
 
 import CoreMotion
-import GameController           // ‹GCController›
+import GameController           // GCController
 
 //──────────────────────────────────────────────────────────────────────── MARK:- Providers
 
@@ -76,7 +76,7 @@ final class DeviceMotionProvider: DSUMotionProvider {
         let ay = Float(m.gravity.y + m.userAcceleration.y)
         let az = Float(m.gravity.z + m.userAcceleration.z)
 
-        // Rotate axes to match Cemuhook’s "landscape-left as neutral" convention
+        // Rotate axes to match Cemuhook's "landscape-left as neutral" convention
         let a: SIMD3<Float>
         let g: SIMD3<Float>
 
@@ -97,7 +97,7 @@ final class DeviceMotionProvider: DSUMotionProvider {
             return nil
         }
 
-        // Convert gyro rad/s → °/s here so the server doesn’t have to.
+        // Convert gyro rad/s → °/s here so the server doesn't have to.
         let gDeg = g * (180 / .pi)
 
         return DSUMotionSample(timestampUS: currentUS(),

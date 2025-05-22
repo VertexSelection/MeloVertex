@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import CocoaAsyncSocket         // ‹GCDAsyncUdpSocket›
+import CocoaAsyncSocket         // GCDAsyncUdpSocket
 import zlib                     // CRC-32
 
 //──────────────────────────────────────────────────────────────────────── MARK:- DSU Motion protocol
