@@ -13,13 +13,29 @@ class NativeController: Hashable {
     private var controller: OpaquePointer?
     private var nativeController: GCController
     private let controllerHaptics: CHHapticEngine?
+    private let rumbleController: RumbleController?
 
     public var controllername: String { "GC - \(nativeController.vendorName ?? "Unknown")" }
 
     init(_ controller: GCController) {
         nativeController = controller
         controllerHaptics = nativeController.haptics?.createEngine(withLocality: .default)
-        try? controllerHaptics?.start()
+        
+        // Make sure the haptic engine exists before attempting to start it or initialize the controller.
+        if let hapticsEngine = controllerHaptics {
+            do {
+                try hapticsEngine.start()
+                rumbleController = RumbleController(engine: hapticsEngine, rumbleMultiplier: 3.0)
+                
+                // print("CHHapticEngine started and RumbleController initialized.")
+            } catch {
+                // print("Error starting CHHapticEngine: \(error.localizedDescription)")
+                rumbleController = nil
+            }
+        } else {
+            // print("CHHapticEngine is nil. Cannot initialize RumbleController.")
+            rumbleController = nil
+        }
         setupHandheldController()
     }
 
@@ -55,7 +71,7 @@ class NativeController: Hashable {
                     // print("Rumble with \(lowFreq), \(highFreq)")
                     guard let userdata else { return 0 }
                     let _self = Unmanaged<NativeController>.fromOpaque(userdata).takeUnretainedValue()
-                    VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq), engine: _self.controllerHaptics)
+                    _self.rumbleController?.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq))
                     return 0
                 },
                 RumbleTriggers: { userdata, leftRumble, rightRumble in
@@ -145,42 +161,6 @@ class NativeController: Hashable {
             updateAxisValue(value: scaledValue, forAxis: axis)
         }
     }
-
-    static func rumble(lowFreq: Float, highFreq: Float) {
-        do {
-            // Low-frequency haptic pattern
-            let lowFreqPattern = try CHHapticPattern(events: [
-                CHHapticEvent(eventType: .hapticTransient, parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: lowFreq),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
-                ], relativeTime: 0, duration: 0.2)
-            ], parameters: [])
-
-            // High-frequency haptic pattern
-            let highFreqPattern = try CHHapticPattern(events: [
-                CHHapticEvent(eventType: .hapticTransient, parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: highFreq),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 1.0)
-                ], relativeTime: 0.2, duration: 0.2)
-            ], parameters: [])
-
-            // Create and start the haptic engine
-            let engine = try CHHapticEngine()
-            try engine.start()
-
-            // Create and play the low-frequency player
-            let lowFreqPlayer = try engine.makePlayer(with: lowFreqPattern)
-            try lowFreqPlayer.start(atTime: 0)
-
-            // Create and play the high-frequency player after a short delay
-            let highFreqPlayer = try engine.makePlayer(with: highFreqPattern)
-            try highFreqPlayer.start(atTime: 0.2)
-
-        } catch {
-            // print("Error creating haptic patterns: \(error)")
-        }
-    }
-
 
     func updateAxisValue(value: Sint16, forAxis axis: SDL_GameControllerAxis) {
         guard controller != nil else { return }
