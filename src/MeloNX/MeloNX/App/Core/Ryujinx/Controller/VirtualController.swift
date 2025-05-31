@@ -69,7 +69,7 @@ class VirtualController : BaseController {
                 button_mask: 0,
                 axis_mask: 0,
                 name: controllername.withCString { $0 },
-                userdata: nil,
+                userdata: Unmanaged.passUnretained(self).toOpaque(),
                 Update: { userdata in
                     // Update joystick state here
                 },
