@@ -75,7 +75,7 @@ namespace ARMeilleure.Translation
             FunctionTable = new AddressTable<ulong>(for64Bits ? _levels64Bit : _levels32Bit);
             Stubs = new TranslatorStubs(FunctionTable);
 
-            FunctionTable.Fill = (ulong)Stubs.SlowDispatchStub;
+            FunctionTable.Fill = (ulong)Stubs.DispatchStub;
         }
 
         public IPtcLoadState LoadDiskCache(string titleIdText, string displayVersion, bool enabled)

@@ -13,7 +13,7 @@ class MemoryUsageMonitor: ObservableObject {
     private var timer: Timer?
     
     init() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
             self?.updateMemoryUsage()
         }
     }
@@ -32,6 +32,7 @@ class MemoryUsageMonitor: ObservableObject {
         }
         
         if result == KERN_SUCCESS {
+            memoryUsage = 0
             memoryUsage = taskInfo.phys_footprint
         }
         else {
@@ -46,7 +47,6 @@ class MemoryUsageMonitor: ObservableObject {
         formatter.countStyle = .memory
         return formatter.string(fromByteCount: Int64(bytes))
     }
-
 }
 
 

@@ -1241,7 +1241,7 @@ namespace Ryujinx.Graphics.Vulkan
 
                         int vbSize = vertexBuffer.Buffer.Size;
 
-                        if ((Gd.Vendor == Vendor.Amd || !OperatingSystem.IsIOSVersionAtLeast(17)) && !Gd.IsMoltenVk && vertexBuffer.Stride > 0)
+                        if (Gd.Vendor == Vendor.Amd && !Gd.IsMoltenVk && vertexBuffer.Stride > 0)
                         {
                             // AMD has a bug where if offset + stride * count is greater than
                             // the size, then the last attribute will have the wrong value.

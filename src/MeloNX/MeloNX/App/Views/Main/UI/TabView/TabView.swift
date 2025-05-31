@@ -11,7 +11,6 @@ import UniformTypeIdentifiers
 
 struct MainTabView: View {
     @Binding var startemu: Game?
-    @Binding var config: Ryujinx.Configuration
     @Binding var MVKconfig: [MoltenVKSettings]
     @Binding var controllersList: [Controller]
     @Binding var currentControllers: [Controller]
@@ -25,7 +24,8 @@ struct MainTabView: View {
                     Label("Games", systemImage: "gamecontroller.fill")
                 }
             
-            SettingsView(config: $config, MoltenVKSettings: $MVKconfig, controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
+            // SettingsView(config: $config, MoltenVKSettings: $MVKconfig, controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
+            SettingsViewNew(MoltenVKSettings: $MVKconfig, controllersList: $controllersList, currentControllers: $currentControllers, onscreencontroller: $onscreencontroller)
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }

@@ -28,6 +28,8 @@ struct MeloNXApp: App {
     @State var showOutOfDateSheet = false
     @State var updateInfo: LatestVersionResponse? = nil
     
+    @StateObject var metalHudEnabler = MTLHud.shared
+    
     @State var finished = false
     @AppStorage("hasbeenfinished") var finishedStorage: Bool = false
     
@@ -47,6 +49,10 @@ struct MeloNXApp: App {
                         if checkForUpdate {
                             checkLatestVersion()
                         }
+                        
+                        print(metalHudEnabler.canMetalHud)
+                        
+                        UserDefaults.standard.set(false, forKey: "lockInApp")
                     }
                     .sheet(isPresented: Binding(
                         get: { showOutOfDateSheet && updateInfo != nil },
