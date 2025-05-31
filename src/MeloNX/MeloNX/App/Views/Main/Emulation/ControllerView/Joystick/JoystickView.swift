@@ -16,7 +16,7 @@ struct JoystickController: View {
     @State var position: CGPoint = CGPoint(x: 0, y: 0)
     var dragDiameter: CGFloat {
         var selfs = CGFloat(160)
-        selfs *= controllerScale
+        // selfs *= controllerScale
         if UIDevice.current.systemName.contains("iPadOS") {
             return selfs * 1.2
         }
@@ -28,9 +28,6 @@ struct JoystickController: View {
         VStack {
             Joystick(position: $position, joystickSize: dragDiameter * 0.2, boundarySize: dragDiameter, showBackground: $showBackground)
                 .onChange(of: position) { newValue in
-                    let scaledX = Float(newValue.x)
-                    let scaledY = Float(newValue.y) // my dumbass broke this by having -y instead of y :/
-                    // print("Joystick Position: (\(scaledX), \(scaledY))")
                     
                     if iscool != nil {
                         Ryujinx.shared.virtualController.thumbstickMoved(.right, x: newValue.x, y: newValue.y)

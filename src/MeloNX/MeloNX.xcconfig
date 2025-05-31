@@ -9,5 +9,3 @@
 // https://help.apple.com/xcode/#/dev745c5c974
 
 VERSION = 1.7.0
-
-DOTNET = /usr/local/share/dotnet/dotnet

@@ -280,11 +280,10 @@ struct UpdateManagerSheet: View {
         print("toggle selection \(update.path)")
         
         updates = updates.map { item in
-            var mutableItem = item
-            mutableItem.isSelected = item.path == update.path && !update.isSelected
+            item.isSelected = item.path == update.path && !update.isSelected
             // print(mutableItem.isSelected)
             // print(update.isSelected)
-            return mutableItem
+            return item
         }
         
         // print(updates)

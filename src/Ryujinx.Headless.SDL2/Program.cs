@@ -93,6 +93,7 @@ using Ryujinx.Input.HLE;
 using Silk.NET.Vulkan;
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 using SDL2;
 
@@ -1161,7 +1162,7 @@ namespace Ryujinx.Headless.SDL2
             _libHacHorizonManager.InitializeBcatServer();
             _libHacHorizonManager.InitializeSystemClients();
 
-            _contentManager = new ContentManager(_virtualFileSystem);
+            // _contentManager = new ContentManager(_virtualFileSystem);
 
             _accountManager = new AccountManager(_libHacHorizonManager.RyujinxClient, option.UserProfile);
 
@@ -1223,9 +1224,14 @@ namespace Ryujinx.Headless.SDL2
 
                 return;
             }
+            
 
-            if (option.InputPath == "MiiMaker") {
-                string contentPath = _contentManager.GetInstalledContentPath(0x0100000000001009, StorageId.BuiltInSystem, NcaContentType.Program);
+            Match match = Regex.Match(option.InputPath, @"0x[0-9A-Fa-f]+");
+            if (match.Success)
+            {
+                string hexStr = match.Value.Substring(2);
+                ulong id = Convert.ToUInt64(hexStr, 16);
+                string contentPath = _contentManager.GetInstalledContentPath(id, StorageId.BuiltInSystem, NcaContentType.Program);
 
                 option.InputPath = contentPath;
             }

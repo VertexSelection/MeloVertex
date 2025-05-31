@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct Joystick: View {
+    @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
+    
     @Binding var position: CGPoint
     @State var joystickSize: CGFloat
     var boundarySize: CGFloat
@@ -17,6 +19,7 @@ struct Joystick: View {
     @Binding var showBackground: Bool
     
     let sensitivity: CGFloat = 1.5
+    
 
     var dragGesture: some Gesture {
         DragGesture()
@@ -56,12 +59,14 @@ struct Joystick: View {
             Circle()
                 .fill(Color.clear.opacity(0))
                 .frame(width: boundarySize, height: boundarySize)
+                .scaleEffect(controllerScale)
             
             if showBackground {
                 Circle()
                     .fill(Color.gray.opacity(0.4))
                     .frame(width: boundarySize, height: boundarySize)
                     .animation(.easeInOut(duration: 0.1), value: showBackground)
+                    .scaleEffect(controllerScale)
             }
             
             Circle()
@@ -74,6 +79,7 @@ struct Joystick: View {
                 )
                 .offset(offset)
                 .gesture(dragGesture)
+                .scaleEffect(controllerScale)
         }
         .frame(width: boundarySize, height: boundarySize)
         .onChange(of: showBackground) { newValue in

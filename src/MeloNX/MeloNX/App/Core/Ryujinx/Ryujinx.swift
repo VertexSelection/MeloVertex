@@ -10,6 +10,7 @@ import SwiftUI
 import GameController
 import MetalKit
 import Metal
+import Darwin
 
 class LogCapture {
     static let shared = LogCapture()
@@ -117,6 +118,11 @@ struct iOSNav<Content: View>: View {
     }
 }
 
+func threadEntry(_ arg: () -> Void) -> UnsafeMutableRawPointer? {
+    arg()
+    return nil
+}
+
 
 class Ryujinx : ObservableObject {
     @Published var isRunning = false
@@ -128,12 +134,12 @@ class Ryujinx : ObservableObject {
     @Published var isPortrait = false
     @Published var firmwareversion = "0"
     @Published var emulationUIView: MeloMTKView? = nil
-    @Published var config: Ryujinx.Configuration? = nil
+    @Published var config: Ryujinx.Arguments? = nil
     @Published var games: [Game] = []
     
     @Published var defMLContentSize: CGFloat?
     
-    var thread: Thread = Thread { }
+    var thread: pthread_t? = nil
     
     @Published var jitenabled = false
     
@@ -142,8 +148,8 @@ class Ryujinx : ObservableObject {
     }
     
     static let shared = Ryujinx()
-    
-    private init() {
+
+    func addGames() {
         self.games = loadGames()
     }
     
@@ -153,46 +159,64 @@ class Ryujinx : ObservableObject {
                 cool()
             }
         } else {
-            thread = Thread {
-                cool()
+            // Box the closure
+            let boxed = Unmanaged.passRetained(ClosureBox(cool)).toOpaque()
+
+            var thread: pthread_t?
+            let result = pthread_create(&thread, nil, { arg in
+                let unmanaged = Unmanaged<ClosureBox>.fromOpaque(arg)
+                let box = unmanaged.takeRetainedValue()
+                box.closure()
+                return nil
+            }, boxed)
+
+            if result == 0 {
+                pthread_detach(thread!)
+            } else {
+                print("Failed to create thread: \(result)")
+                Unmanaged<ClosureBox>.fromOpaque(boxed).release()
             }
-            
-            thread.qualityOfService = .userInteractive
-            thread.name = "MeloNX"
-            thread.start()
+        }
+    }
+
+    private class ClosureBox {
+        let closure: () -> Void
+        init(_ closure: @escaping () -> Void) {
+            self.closure = closure
         }
     }
     
-    public struct Configuration : Codable, Equatable {
+    public class Arguments : Observable, Codable, Equatable {
         var gamepath: String
         var inputids: [String]
         var inputDSUServers: [String]
-        var resscale: Float
-        var debuglogs: Bool
-        var tracelogs: Bool
-        var nintendoinput: Bool
-        var enableInternet: Bool
-        var listinputids: Bool
-        var aspectRatio: AspectRatio
-        var memoryManagerMode: String
-        var disableShaderCache: Bool
-        var hypervisor: Bool
-        var disableDockedMode: Bool
-        var enableTextureRecompression: Bool
-        var additionalArgs: [String]
-        var maxAnisotropy: Float
-        var macroHLE: Bool
-        var ignoreMissingServices: Bool
-        var expandRam: Bool
-        var dfsIntegrityChecks: Bool
-        var disablePTC: Bool
-        var disablevsync: Bool
-        var language: SystemLanguage
-        var regioncode: SystemRegionCode
-        var handHeldController: Bool
+        var resscale: Float = 1.0
+        var debuglogs: Bool = false
+        var tracelogs: Bool = false
+        var nintendoinput: Bool = true
+        var enableInternet: Bool = false
+        var listinputids: Bool = false
+        var aspectRatio: AspectRatio = .fixed16x9
+        var memoryManagerMode: String = "HostMappedUnsafe"
+        var disableShaderCache: Bool = false
+        var hypervisor: Bool = false
+        var disableDockedMode: Bool = false
+        var enableTextureRecompression: Bool = true
+        var additionalArgs: [String] = []
+        var maxAnisotropy: Float = 1.0
+        var macroHLE: Bool = true
+        var ignoreMissingServices: Bool = false
+        var expandRam: Bool = false
+        var dfsIntegrityChecks: Bool = false
+        var disablePTC: Bool = false
+        var disablevsync: Bool = false
+        var language: SystemLanguage = .americanEnglish
+        var regioncode: SystemRegionCode = .usa
+        var handHeldController: Bool = true
+        var backendMultithreading: Bool = true
         
-
-        init(gamepath: String,
+        
+        init(gamepath: String = "",
              inputids: [String] = [],
              inputDSUServers: [String] = [],
              debuglogs: Bool = false,
@@ -217,7 +241,8 @@ class Ryujinx : ObservableObject {
              disablevsync: Bool = false,
              language: SystemLanguage = .americanEnglish,
              regioncode: SystemRegionCode = .usa,
-             handHeldController: Bool = false
+             handHeldController: Bool = false,
+             backendMultithreading: Bool = true
         ) {
             self.gamepath = gamepath
             self.inputids = inputids
@@ -245,16 +270,70 @@ class Ryujinx : ObservableObject {
             self.language = language
             self.regioncode = regioncode
             self.handHeldController = handHeldController
+            self.backendMultithreading = backendMultithreading
+        }
+        
+        
+        static func == (lhs: Arguments, rhs: Arguments) -> Bool {
+            return lhs.resscale == rhs.resscale &&
+                   lhs.debuglogs == rhs.debuglogs &&
+                   lhs.tracelogs == rhs.tracelogs &&
+                   lhs.nintendoinput == rhs.nintendoinput &&
+                   lhs.enableInternet == rhs.enableInternet &&
+                   lhs.listinputids == rhs.listinputids &&
+                   lhs.aspectRatio == rhs.aspectRatio &&
+                   lhs.memoryManagerMode == rhs.memoryManagerMode &&
+                   lhs.disableShaderCache == rhs.disableShaderCache &&
+                   lhs.hypervisor == rhs.hypervisor &&
+                   lhs.disableDockedMode == rhs.disableDockedMode &&
+                   lhs.enableTextureRecompression == rhs.enableTextureRecompression &&
+                   lhs.additionalArgs == rhs.additionalArgs &&
+                   lhs.maxAnisotropy == rhs.maxAnisotropy &&
+                   lhs.macroHLE == rhs.macroHLE &&
+                   lhs.ignoreMissingServices == rhs.ignoreMissingServices &&
+                   lhs.expandRam == rhs.expandRam &&
+                   lhs.dfsIntegrityChecks == rhs.dfsIntegrityChecks &&
+                   lhs.disablePTC == rhs.disablePTC &&
+                   lhs.disablevsync == rhs.disablevsync &&
+                   lhs.language == rhs.language &&
+                   lhs.regioncode == rhs.regioncode &&
+                   lhs.handHeldController == rhs.handHeldController
         }
     }
 
     
-    func start(with config: Configuration) throws {
+    func start(with config: Arguments) throws {
         guard !isRunning else {
             throw RyujinxError.alreadyRunning
         }
         
         self.config = config
+        
+        
+        if UserDefaults.standard.bool(forKey: "lockInApp") {
+            let cool = Thread {
+                while true {
+                    if UserDefaults.standard.bool(forKey: "lockInApp") {
+                        if let workspaceClass = NSClassFromString("LSApplicationWorkspace") as? NSObject.Type,
+                           let workspace = workspaceClass.perform(NSSelectorFromString("defaultWorkspace"))?.takeUnretainedValue() {
+                            
+                            let selector = NSSelectorFromString("openApplicationWithBundleID:")
+                            
+                            if workspace.responds(to: selector) {
+                                workspace.perform(selector, with: Bundle.main.bundleIdentifier ?? "")
+                            } else {
+                                print("Selector not found or not responding.")
+                            }
+                        } else {
+                            print("Could not get LSApplicationWorkspace class.")
+                        }
+                    }
+                }
+            }
+            
+            cool.qualityOfService = .userInteractive
+            cool.start()
+        }
         
         
         runloop { [self] in
@@ -383,10 +462,12 @@ class Ryujinx : ObservableObject {
 
         isRunning = false
         
+        UserDefaults.standard.set(false, forKey: "lockInApp")
+        
         self.emulationUIView = nil
         self.metalLayer = nil
         
-        thread.cancel()
+        
     }
 
     
@@ -434,10 +515,9 @@ class Ryujinx : ObservableObject {
             // print("Error loading games from roms folder: \(error)")
             return games
         }
-        
     }
 
-    private func buildCommandLineArgs(from config: Configuration) -> [String] {
+    private func buildCommandLineArgs(from config: Arguments) -> [String] {
         var args: [String] = []
         
         // Add the game path
@@ -479,6 +559,14 @@ class Ryujinx : ObservableObject {
         
         args.append(contentsOf: ["--aspect-ratio", config.aspectRatio.rawValue])
         
+        // args.append(contentsOf: ["--system-timezone", TimeZone.current.identifier])
+        
+        args.append(contentsOf: ["--system-time-offset", String(TimeZone.current.secondsFromGMT())])
+        
+        if !config.backendMultithreading {
+            args.append(contentsOf: ["--backend-multithreading", "Off"])
+        }
+
         
         if config.nintendoinput {
             args.append("--correct-controller")

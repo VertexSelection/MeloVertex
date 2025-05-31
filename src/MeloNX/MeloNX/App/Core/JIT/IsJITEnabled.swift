@@ -20,6 +20,14 @@ func isJITEnabled() -> Bool {
     return csops(pid: getpid(), ops: 0, useraddr: &flags, usersize: Int32(MemoryLayout.size(ofValue: flags))) == 0 && (flags & Int(CS_DEBUGGED)) != 0 ? allocateTest() : false
 }
 
+func checkDebugged() -> Bool {
+    var flags: Int = 0
+    if checkAppEntitlement("dynamic-codesigning") {
+        return true
+    }
+    return csops(pid: getpid(), ops: 0, useraddr: &flags, usersize: Int32(MemoryLayout.size(ofValue: flags))) == 0 && (flags & Int(CS_DEBUGGED)) != 0
+}
+
 func checkMemoryPermissions(at address: UnsafeRawPointer) -> Bool {
     var region: vm_address_t = vm_address_t(UInt(bitPattern: address))
     var regionSize: vm_size_t = 0
@@ -53,6 +61,7 @@ func allocateTest() -> Bool {
     }
     
     memcpy(jitMemory, code, code.count)
+    
     
     if mprotect(jitMemory, pageSize, PROT_READ | PROT_EXEC) != 0 {
         return false

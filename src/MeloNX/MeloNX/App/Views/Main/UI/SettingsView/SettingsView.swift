@@ -7,9 +7,206 @@
 
 import SwiftUI
 import SwiftSVG
+import UIKit
 
-struct SettingsView: View {
-    @Binding var config: Ryujinx.Configuration
+
+class SplitViewController: UISplitViewController {
+    private let sidebarViewController: UIViewController
+    private let contentViewController: UIViewController
+    
+    init(sidebarViewController: UIViewController, contentViewController: UIViewController) {
+        self.sidebarViewController = sidebarViewController
+        self.contentViewController = contentViewController
+        super.init(style: .doubleColumn)
+        
+        self.preferredDisplayMode = .oneBesideSecondary
+        self.preferredSplitBehavior = .tile
+        self.presentsWithGesture = true
+        
+        self.setViewController(sidebarViewController, for: .primary)
+        self.setViewController(contentViewController, for: .secondary)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        self.primaryBackgroundStyle = .sidebar
+        
+        let displayModeButtonItem = self.displayModeButtonItem
+        contentViewController.navigationItem.leftBarButtonItem = displayModeButtonItem
+    }
+    
+    func showSidebar() {
+        self.preferredDisplayMode = .oneBesideSecondary
+    }
+    
+    func hideSidebar() {
+        self.preferredDisplayMode = .secondaryOnly
+    }
+    
+    func toggleSidebar() {
+        if self.displayMode == .oneBesideSecondary {
+            self.preferredDisplayMode = .secondaryOnly
+        } else {
+            self.preferredDisplayMode = .oneBesideSecondary
+        }
+    }
+}
+
+struct SidebarView<Content: View>: View {
+    var sidebar: () -> AnyView
+    var content: () -> Content
+    @Binding var showSidebar: Bool
+    
+    init(sidebar: @escaping () -> AnyView, content: @escaping () -> Content, showSidebar: Binding<Bool>) {
+        self.sidebar = sidebar
+        self.content = content
+        self._showSidebar = showSidebar
+    }
+    
+    var body: some View {
+        SidebarViewRepresentable(
+            sidebar: sidebar(),
+            content: content(),
+            showSidebar: $showSidebar
+        )
+    }
+}
+
+struct SidebarViewRepresentable<Sidebar: View, Content: View>: UIViewControllerRepresentable {
+    var sidebar: Sidebar
+    var content: Content
+    @Binding var showSidebar: Bool
+    
+    func makeUIViewController(context: Context) -> SplitViewController {
+        let sidebarVC = UIHostingController(rootView: sidebar)
+        let contentVC = UINavigationController(rootViewController: UIHostingController(rootView: content))
+        
+        let splitVC = SplitViewController(sidebarViewController: sidebarVC, contentViewController: contentVC)
+        splitVC.setOverrideTraitCollection(
+            UITraitCollection(horizontalSizeClass: .regular),
+            forChild: splitVC
+        )
+        return splitVC
+    }
+    
+    func updateUIViewController(_ uiViewController: SplitViewController, context: Context) {
+        if let sidebarVC = uiViewController.viewController(for: .primary) as? UIHostingController<Sidebar> {
+            sidebarVC.rootView = sidebar
+        }
+        if let navController = uiViewController.viewController(for: .secondary) as? UINavigationController,
+           let contentVC = navController.topViewController as? UIHostingController<Content> {
+            contentVC.rootView = content
+        }
+        
+        if showSidebar {
+            uiViewController.showSidebar()
+        } else {
+            uiViewController.hideSidebar()
+        }
+    }
+    
+    static func dismantleUIViewController(_ uiViewController: SplitViewController, coordinator: Coordinator) {
+    }
+}
+
+class SettingsManager: ObservableObject {
+    @Published var config: Ryujinx.Arguments {
+        didSet {
+            debouncedSave()
+        }
+    }
+    
+    private var saveWorkItem: DispatchWorkItem?;
+    
+    public static var shared = SettingsManager()
+    
+    private init() {
+        self.config = SettingsManager.loadSettings() ?? Ryujinx.Arguments()
+    }
+    
+    func debouncedSave() {
+        saveWorkItem?.cancel()
+        
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            self.saveSettings()
+        }
+        
+        saveWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
+    }
+    
+    func saveSettings() {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(config)
+            
+            let fileURL = URL.documentsDirectory.appendingPathComponent("config.json")
+            
+            try data.write(to: fileURL)
+            print("Settings saved successfully")
+        } catch {
+            print("Failed to save settings: \(error)")
+        }
+    }
+    
+    static func loadSettings() -> Ryujinx.Arguments? {
+        do {
+            let fileURL = URL.documentsDirectory.appendingPathComponent("config.json")
+            
+            guard FileManager.default.fileExists(atPath: fileURL.path) else {
+                print("Config file does not exist, creating new config")
+                return nil
+            }
+            
+            let data = try Data(contentsOf: fileURL)
+            
+            let decoder = JSONDecoder()
+            let configs = try decoder.decode(Ryujinx.Arguments.self, from: data)
+            return configs
+        } catch {
+            print("Failed to load settings: \(error)")
+            return nil
+        }
+    }
+    
+    func loadSettings() {
+        do {
+            let fileURL = URL.documentsDirectory.appendingPathComponent("config.json")
+            
+            guard FileManager.default.fileExists(atPath: fileURL.path) else {
+                print("Config file does not exist, creating new config")
+                saveSettings()
+                return
+            }
+            
+            let data = try Data(contentsOf: fileURL)
+            
+            let decoder = JSONDecoder()
+            let configs = try decoder.decode(Ryujinx.Arguments.self, from: data)
+            
+            self.config = configs
+        } catch {
+            print("Failed to load settings: \(error)")
+        }
+    }
+}
+
+
+
+struct SettingsViewNew: View {
+    @StateObject private var settingsManager = SettingsManager.shared
+    
+    private var config: Binding<Ryujinx.Arguments> {
+        $settingsManager.config
+    }
+    
     @Binding var MoltenVKSettings: [MoltenVKSettings]
     
     @Binding var controllersList: [Controller]
@@ -30,8 +227,7 @@ struct SettingsView: View {
     ]
     
     @AppStorage("RyuDemoControls") var ryuDemo: Bool = false
-    @AppStorage("MTL_HUD_ENABLED") var metalHUDEnabled: Bool = false
-    
+
     @AppStorage("showScreenShotButton") var ssb: Bool = false
     
     @AppStorage("MVK_CONFIG_PREFILL_METAL_COMMAND_BUFFERS") var mVKPreFillBuffer: Bool = false
@@ -45,11 +241,15 @@ struct SettingsView: View {
     
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
     
+    @AppStorage("On-ScreenControllerOpacity") var controllerOpacity: Double = 1.0
+    
     @AppStorage("hasbeenfinished") var finishedStorage: Bool = false
     
     @AppStorage("showlogsloading") var showlogsloading: Bool = true
     
     @AppStorage("showlogsgame") var showlogsgame: Bool = false
+    
+    @AppStorage("toggleGreen") var toggleGreen: Bool = false
     
     @AppStorage("stick-button") var stickButton = false
     @AppStorage("waitForVPN") var waitForVPN = false
@@ -60,10 +260,17 @@ struct SettingsView: View {
 
     @AppStorage("disableTouch") var disableTouch = false
     
+    @AppStorage("disableTouch") var blackScreen = false
+    
+    @AppStorage("location-enabled") var locationenabled: Bool = false
+    
     @AppStorage("runOnMainThread") var runOnMainThread = false
     
     @AppCodableStorage("toggleButtons") var toggleButtons = ToggleButtonsState()
-
+    
+    let totalMemory = ProcessInfo.processInfo.physicalMemory
+    
+    @AppStorage("lockInApp") var restartApp = false
     
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
@@ -77,10 +284,25 @@ struct SettingsView: View {
     
     @State private var selectedCategory: SettingsCategory = .graphics
     
+    @StateObject var metalHudEnabler = MTLHud.shared
+    
     var filteredMemoryModes: [(String, String)] {
         guard !searchText.isEmpty else { return memoryManagerModes }
         return memoryManagerModes.filter { $0.1.localizedCaseInsensitiveContains(searchText) }
     }
+    
+    var appVersion: String {
+        guard let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
+            return "Unknown"
+        }
+        return version
+    }
+    
+    @FocusState private var isArgumentsKeyboardVisible: Bool
+    
+    
+    @State private var selectedView = "Data Management"
+    @State private var sidebar = true
     
     enum SettingsCategory: String, CaseIterable, Identifiable {
         case graphics = "Graphics"
@@ -102,16 +324,132 @@ struct SettingsView: View {
         }
     }
     
-    var appVersion: String {
-        guard let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
-            return "Unknown"
+    var body: some View {
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            iOSSettings
+        } else {
+            iPadOSSettings
+                .ignoresSafeArea()
+                .edgesIgnoringSafeArea(.all)
         }
-        return version
     }
     
-    @FocusState private var isArgumentsKeyboardVisible: Bool
+    var iPadOSSettings: some View {
+        VStack {
+            SidebarView(
+                sidebar: {
+                    AnyView(
+                        ScrollView(.vertical) {
+                            VStack {
+                                VStack(spacing: 16) {
+                                    HStack {
+                                        Circle()
+                                            .fill(ryujinx.jitenabled ? Color.green : Color.red)
+                                            .frame(width: 12, height: 12)
+                                        
+                                        Text(ryujinx.jitenabled ? "JIT Enabled" : "JIT Not Acquired")
+                                            .font(.subheadline.weight(.medium))
+                                            .foregroundColor(ryujinx.jitenabled ? .green : .red)
+                                        
+                                        Spacer()
+                                        
+                                        let memoryText = ProcessInfo.processInfo.isiOSAppOnMac
+                                            ? String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024))
+                                            : String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000)
+                                        
+                                        Text("\(memoryText) RAM")
+                                            .font(.subheadline.weight(.medium))
+                                            .foregroundColor(.secondary)
+                                        
+                                    }
+                                    
+                                    InfoCard(
+                                        title: "Device",
+                                        value: UIDevice.modelName,
+                                        icon: deviceIcon,
+                                        color: .blue
+                                    )
+                                    
+                                    InfoCard(
+                                        title: "System",
+                                        value: "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)",
+                                        icon: "applelogo",
+                                        color: .gray
+                                    )
+                                    
+                                    InfoCard(
+                                        title: "Increased Memory Limit",
+                                        value: checkAppEntitlement("com.apple.developer.kernel.increased-memory-limit") ? "Enabled" : "Disabled",
+                                        icon: "memorychip.fill",
+                                        color: .orange
+                                    )
+                                }
+                                .padding()
+                                
+                                Divider()
+                                
+                                ForEach(SettingsCategory.allCases, id: \.id) { key in
+                                    HStack {
+                                        Rectangle()
+                                            .frame(width: 2.5, height: 35)
+                                            .foregroundStyle(selectedCategory == key ? Color.accentColor : Color.clear)
+                                        Text(key.rawValue) // Fix here
+                                        Spacer()
+                                    }
+                                    .foregroundStyle(selectedCategory == key ? Color.accentColor : Color.primary)
+                                    .padding(5)
+                                    .background(
+                                        Color(uiColor: .secondarySystemBackground).opacity(selectedCategory == key ? 1 : 0)
+                                    )
+                                    .background(
+                                        Rectangle()
+                                            .stroke(selectedCategory == key ? .teal : .clear, lineWidth: 2.5)
+                                    )
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        withAnimation(.smooth) {
+                                            selectedCategory = key // Uncommented and fixed
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                        }
+                    )
+                },
+                content: {
+                    ScrollView {
+                        switch selectedCategory {
+                        case .graphics:
+                            graphicsSettings
+                        case .input:
+                            inputSettings
+                        case .system:
+                            systemSettings
+                        case .advanced:
+                            advancedSettings
+                        case .misc:
+                            miscSettings
+                        }
+                    }
+                },
+                showSidebar: $sidebar
+            )
+            .onAppear {
+                mVKPreFillBuffer = false
+                
+                
+                if let configs = SettingsManager.loadSettings() {
+                    settingsManager.loadSettings()
+                } else {
+                    settingsManager.saveSettings()
+                }
+            }
+        }
+    }
     
-    var body: some View {
+    
+    var iOSSettings: some View {
         iOSNav {
             ZStack {
                 // Background color
@@ -141,7 +479,6 @@ struct SettingsView: View {
                     // Settings content
                     ScrollView {
                         VStack(spacing: 24) {
-                            // Device Info Card
                             deviceInfoCard
                                 .padding(.horizontal)
                                 .padding(.top)
@@ -172,14 +509,11 @@ struct SettingsView: View {
             .onAppear {
                 mVKPreFillBuffer = false
                 
-                if let configs = loadSettings() {
-                    self.config = configs
+                if let configs = SettingsManager.loadSettings() {
+                    settingsManager.loadSettings()
                 } else {
-                    saveSettings()
+                    settingsManager.saveSettings()
                 }
-            }
-            .onChange(of: config) { _ in
-                saveSettings()
             }
         }
     }
@@ -200,7 +534,6 @@ struct SettingsView: View {
                 
                 Spacer()
                 
-                let totalMemory = ProcessInfo.processInfo.physicalMemory
                 let memoryText = ProcessInfo.processInfo.isiOSAppOnMac
                     ? String(format: "%.0f GB", Double(totalMemory) / (1024 * 1024 * 1024))
                     : String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000)
@@ -317,7 +650,7 @@ struct SettingsView: View {
                     }
                     
                     VStack(spacing: 8) {
-                        Slider(value: $config.resscale, in: 0.1...3.0, step: 0.05)
+                        Slider(value: config.resscale, in: 0.1...3.0, step: 0.05)
                         
                         HStack {
                             Text("0.1x")
@@ -326,7 +659,7 @@ struct SettingsView: View {
                             
                             Spacer()
                             
-                            Text("\(config.resscale, specifier: "%.2f")x")
+                            Text("\(settingsManager.config.resscale, specifier: "%.2f")x")
                                 .font(.headline)
                                 .foregroundColor(.blue)
                             
@@ -364,7 +697,7 @@ struct SettingsView: View {
                     }
                     
                     VStack(spacing: 8) {
-                        Slider(value: $config.maxAnisotropy, in: 0...16.0, step: 0.1)
+                        Slider(value: config.maxAnisotropy, in: 0...16.0, step: 0.1)
                         
                         HStack {
                             Text("Off")
@@ -373,7 +706,7 @@ struct SettingsView: View {
                             
                             Spacer()
                             
-                            Text("\(config.maxAnisotropy, specifier: "%.1f")x")
+                            Text("\(settingsManager.config.maxAnisotropy, specifier: "%.1f")x")
                                 .font(.headline)
                                 .foregroundColor(.blue)
                             
@@ -390,23 +723,23 @@ struct SettingsView: View {
             // Toggle options card
             SettingsCard {
                 VStack(spacing: 4) {
-                    SettingsToggle(isOn: $config.disableShaderCache, icon: "memorychip", label: "Shader Cache")
+                    SettingsToggle(isOn: config.disableShaderCache, icon: "memorychip", label: "Shader Cache")
                     
                     Divider()
                     
-                    SettingsToggle(isOn: $config.disablevsync, icon: "arrow.triangle.2.circlepath", label: "Disable VSync")
+                    SettingsToggle(isOn: config.disablevsync, icon: "arrow.triangle.2.circlepath", label: "Disable VSync")
                     
                     Divider()
                     
-                    SettingsToggle(isOn: $config.enableTextureRecompression, icon: "rectangle.compress.vertical", label: "Texture Recompression")
+                    SettingsToggle(isOn: config.enableTextureRecompression, icon: "rectangle.compress.vertical", label: "Texture Recompression")
                     
                     Divider()
                     
-                    SettingsToggle(isOn: $config.disableDockedMode, icon: "dock.rectangle", label: "Docked Mode")
+                    SettingsToggle(isOn: config.disableDockedMode, icon: "dock.rectangle", label: "Docked Mode")
                     
                     Divider()
                     
-                    SettingsToggle(isOn: $config.macroHLE, icon: "gearshape", label: "Macro HLE")
+                    SettingsToggle(isOn: config.macroHLE, icon: "gearshape", label: "Macro HLE")
                     
                     Divider()
                     
@@ -421,7 +754,7 @@ struct SettingsView: View {
                         .font(.headline)
                     
                     if (horizontalSizeClass == .regular && verticalSizeClass == .regular) || (horizontalSizeClass == .regular && verticalSizeClass == .compact) {
-                        Picker(selection: $config.aspectRatio) {
+                        Picker(selection: config.aspectRatio) {
                             ForEach(AspectRatio.allCases, id: \.self) { ratio in
                                 Text(ratio.displayName).tag(ratio)
                             }
@@ -430,7 +763,7 @@ struct SettingsView: View {
                         }
                         .pickerStyle(.segmented)
                     } else {
-                        Picker(selection: $config.aspectRatio) {
+                        Picker(selection: config.aspectRatio) {
                             ForEach(AspectRatio.allCases, id: \.self) { ratio in
                                 Text(ratio.displayName).tag(ratio)
                             }
@@ -473,7 +806,7 @@ struct SettingsView: View {
             // On-screen controls card
             SettingsCard {
                 VStack(spacing: 4) {
-                    SettingsToggle(isOn: $config.handHeldController, icon: "formfitting.gamecontroller", label: "Player 1 to Handheld")
+                    SettingsToggle(isOn: config.handHeldController, icon: "formfitting.gamecontroller", label: "Player 1 to Handheld")
                     
                     Divider()
                     
@@ -503,45 +836,97 @@ struct SettingsView: View {
             // Controller scale card
             SettingsCard {
                 VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        labelWithIcon("On-Screen Controller Scale", iconName: "magnifyingglass")
-                            .font(.headline)
-                        Spacer()
-                        Button {
-                            showControllerInfo.toggle()
-                        } label: {
-                            Image(systemName: "info.circle")
-                                .foregroundColor(.secondary)
+                    Text("On-Screen Controller")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Group {
+                        HStack {
+                            labelWithIcon("Scale", iconName: "magnifyingglass")
+                                .font(.headline)
+                            Spacer()
+                            Button {
+                                showControllerInfo.toggle()
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .alert(isPresented: $showControllerInfo) {
+                                Alert(
+                                    title: Text("On-Screen Controller Scale"),
+                                    message: Text("Adjust the On-Screen Controller size."),
+                                    dismissButton: .default(Text("OK"))
+                                )
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .alert(isPresented: $showControllerInfo) {
-                            Alert(
-                                title: Text("On-Screen Controller Scale"),
-                                message: Text("Adjust the On-Screen Controller size."),
-                                dismissButton: .default(Text("OK"))
-                            )
+                        
+                        VStack(spacing: 8) {
+                            Slider(value: $controllerScale, in: 0.1...3.0, step: 0.05)
+                            
+                            HStack {
+                                Text("Smaller")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                
+                                Spacer()
+                                
+                                Text("\(controllerScale, specifier: "%.2f")x")
+                                    .font(.headline)
+                                    .foregroundColor(.blue)
+                                
+                                Spacer()
+                                
+                                Text("Larger")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                     
-                    VStack(spacing: 8) {
-                        Slider(value: $controllerScale, in: 0.1...3.0, step: 0.05)
-                        
+                    Divider()
+                    
+                    Group {
                         HStack {
-                            Text("Smaller")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            
-                            Spacer()
-                            
-                            Text("\(controllerScale, specifier: "%.2f")x")
+                            labelWithIcon("Opacity", iconName: "magnifyingglass")
                                 .font(.headline)
-                                .foregroundColor(.blue)
-                            
                             Spacer()
+                            Button {
+                                showControllerInfo.toggle()
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .alert(isPresented: $showControllerInfo) {
+                                Alert(
+                                    title: Text("On-Screen Controller Opacity"),
+                                    message: Text("Adjust the On-Screen Controller transparency."),
+                                    dismissButton: .default(Text("OK"))
+                                )
+                            }
+                        }
+                        
+                        VStack(spacing: 8) {
+                            Slider(value: $controllerOpacity, in: 0.1...1.0, step: 0.05)
                             
-                            Text("Larger")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                            HStack {
+                                Text("More Transparent")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                
+                                Spacer()
+                                
+                                Text("\(controllerOpacity, specifier: "%.2f")x")
+                                    .font(.headline)
+                                    .foregroundColor(.blue)
+                                
+                                Spacer()
+                                
+                                Text("Less Transparent")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 }
@@ -632,7 +1017,7 @@ struct SettingsView: View {
                         labelWithIcon("System Language", iconName: "character.bubble")
                             .font(.headline)
                         
-                        Picker(selection: $config.language) {
+                        Picker(selection: config.language) {
                             ForEach(SystemLanguage.allCases, id: \.self) { language in
                                 Text(language.displayName).tag(language)
                             }
@@ -650,7 +1035,7 @@ struct SettingsView: View {
                         labelWithIcon("Region", iconName: "globe")
                             .font(.headline)
                         
-                        Picker(selection: $config.regioncode) {
+                        Picker(selection: config.regioncode) {
                             ForEach(SystemRegionCode.allCases, id: \.self) { region in
                                 Text(region.displayName).tag(region)
                             }
@@ -676,7 +1061,7 @@ struct SettingsView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         
-                        Picker(selection: $config.memoryManagerMode) {
+                        Picker(selection: config.memoryManagerMode) {
                             ForEach(filteredMemoryModes, id: \.0) { key, displayName in
                                 Text(displayName).tag(key)
                             }
@@ -688,7 +1073,7 @@ struct SettingsView: View {
                     
                     Divider()
                     
-                    SettingsToggle(isOn: $config.disablePTC, icon: "cpu", label: "Disable PTC")
+                    SettingsToggle(isOn: config.disablePTC, icon: "cpu", label: "Disable PTC")
                     
                     if let gpuInfo = getGPUInfo(), gpuInfo.hasPrefix("Apple M") {
                         Divider()
@@ -697,22 +1082,9 @@ struct SettingsView: View {
                             SettingsToggle(isOn: .constant(false), icon: "bolt", label: "Hypervisor")
                                 .disabled(true)
                         } else if checkAppEntitlement("com.apple.private.hypervisor") {
-                            SettingsToggle(isOn: $config.hypervisor, icon: "bolt", label: "Hypervisor")
+                            SettingsToggle(isOn: config.hypervisor, icon: "bolt", label: "Hypervisor")
                         }
                     }
-                }
-            }
-            
-            // Memory hacks card
-            SettingsCard {
-                VStack(spacing: 4) {
-                    SettingsToggle(isOn: $config.expandRam, icon: "exclamationmark.bubble", label: "Expand Guest RAM (6GB)")
-                        .accentColor(.red)
-                    
-                    Divider()
-                    
-                    SettingsToggle(isOn: $config.ignoreMissingServices, icon: "waveform.path", label: "Ignore Missing Services")
-                        .accentColor(.red)
                 }
             }
         }
@@ -733,11 +1105,11 @@ struct SettingsView: View {
                     
                     Divider()
                     
-                    SettingsToggle(isOn: $config.debuglogs, icon: "exclamationmark.bubble", label: "Debug Logs")
+                    SettingsToggle(isOn: config.debuglogs, icon: "exclamationmark.bubble", label: "Debug Logs")
                     
                     Divider()
                     
-                    SettingsToggle(isOn: $config.tracelogs, icon: "waveform.path", label: "Trace Logs")
+                    SettingsToggle(isOn: config.tracelogs, icon: "waveform.path", label: "Trace Logs")
                 }
             }
             
@@ -748,15 +1120,16 @@ struct SettingsView: View {
                     
                     Divider()
                     
-                    SettingsToggle(isOn: $config.dfsIntegrityChecks, icon: "checkmark.shield", label: "Disable FS Integrity Checks")
+                    SettingsToggle(isOn: config.dfsIntegrityChecks, icon: "checkmark.shield", label: "Disable FS Integrity Checks")
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: config.backendMultithreading, icon: "inset.filled.rectangle.and.person.filled", label: "Backend Multithreading")
                     
                     Divider()
                     
                     if MTLHud.shared.canMetalHud {
-                        SettingsToggle(isOn: $metalHUDEnabled, icon: "speedometer", label: "Metal Performance HUD")
-                            .onChange(of: metalHUDEnabled) { newValue in
-                                MTLHud.shared.toggle()
-                            }
+                        SettingsToggle(isOn: $metalHudEnabler.metalHudEnabled, icon: "speedometer", label: "Metal Performance HUD")
                         
                         Divider()
                     }
@@ -775,8 +1148,23 @@ struct SettingsView: View {
                                 .foregroundColor(.blue)
                             Spacer()
                         }
-                        .padding(.vertical, 8)
+                        .padding(8)
                     }
+                    
+                }
+            }
+            
+            // Memory hacks card
+            SettingsCard {
+                VStack(spacing: 4) {
+                    SettingsToggle(isOn: config.expandRam, icon: "exclamationmark.bubble", label: "Expand Guest RAM")
+                        .accentColor(.red)
+                        .disabled(totalMemory < 5723)
+                    
+                    Divider()
+                    
+                    SettingsToggle(isOn: config.ignoreMissingServices, icon: "waveform.path", label: "Ignore Missing Services")
+                        .accentColor(.red)
                 }
             }
             
@@ -787,45 +1175,40 @@ struct SettingsView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                     
+                    let binding = Binding(
+                        get: {
+                            config.additionalArgs.wrappedValue.joined(separator: ", ")
+                        },
+                        set: { newValue in
+                            settingsManager.config.additionalArgs = newValue
+                                .split(separator: ",")
+                                .map { $0.trimmingCharacters(in: .whitespaces) }
+                        }
+                    )
+                    
+                    
                     if #available(iOS 15.0, *) {
-                        TextField("Separate arguments with commas" ,text: Binding(
-                            get: {
-                                config.additionalArgs.joined(separator: ", ")
-                            },
-                            set: { newValue in
-                                config.additionalArgs = newValue
-                                    .split(separator: ",")
-                                    .map { $0.trimmingCharacters(in: .whitespaces) }
-                            }
-                        ))
-                        .font(.system(.body, design: .monospaced))
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .padding(.vertical, 4)
-                        .toolbar {
-                            ToolbarItem(placement: .keyboard) {
-                                Button("Dismiss") {
-                                    isArgumentsKeyboardVisible = false
+
+                        TextField("Separate arguments with commas", text: binding)
+                            .font(.system(.body, design: .monospaced))
+                            .textFieldStyle(.roundedBorder)
+                            .textInputAutocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .padding(.vertical, 4)
+                            .toolbar {
+                                ToolbarItem(placement: .keyboard) {
+                                    Button("Dismiss") {
+                                        isArgumentsKeyboardVisible = false
+                                    }
                                 }
                             }
-                        }
-                        .focused($isArgumentsKeyboardVisible)
+                            .focused($isArgumentsKeyboardVisible)
                     } else {
-                        TextField("Separate arguments with commas", text: Binding(
-                            get: {
-                                config.additionalArgs.joined(separator: ", ")
-                            },
-                            set: { newValue in
-                                config.additionalArgs = newValue
-                                    .split(separator: ",")
-                                    .map { $0.trimmingCharacters(in: .whitespaces) }
-                            }
-                        ))
-                        .font(.system(.body, design: .monospaced))
-                        .textFieldStyle(.roundedBorder)
-                        .disableAutocorrection(true)
-                        .padding(.vertical, 4)
+                        TextField("Separate arguments with commas", text: binding)
+                            .font(.system(.body, design: .monospaced))
+                            .textFieldStyle(.roundedBorder)
+                            .disableAutocorrection(true)
+                            .padding(.vertical, 4)
                     }
                 }
             }
@@ -858,27 +1241,55 @@ struct SettingsView: View {
         SettingsSection(title: "Miscellaneous Options") {
             SettingsCard {
                 VStack(spacing: 4) {
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        SettingsToggle(isOn: $toggleGreen, icon: "arrow.clockwise", label: "Toggle Color Green when \"ON\"")
+                        
+                        Divider()
+                    }
+                    
+                    
                     // Disable Touch card
                     SettingsToggle(isOn: $disableTouch, icon: "rectangle.and.hand.point.up.left.filled", label: "Disable Touch")
                     
                     Divider()
                     
-                    // Screenshot button card
+                    if colorScheme == .light {
+                        SettingsToggle(isOn: $disableTouch, icon: "iphone.slash", label: "Black Screen when using AirPlay")
+                        
+                        Divider()
+                    }
+                    
+                    // Exit button card
                     SettingsToggle(isOn: $ssb, icon: "arrow.left.circle", label: "Exit Button")
                     
                     Divider()
                     
+                    // Restarts app when it crashes card
+                    SettingsToggle(isOn: $restartApp, icon: "arrow.clockwise", label: "Lock in App")
+                    
+                    Divider()
+                    
+                    
+                    // Location to keep app in Background
+                    SettingsToggle(isOn: $locationenabled, icon: "location.viewfinder", label: "Keep app in background")
+                    
+                    Divider()
+                    
+                    
                     // JIT options
                     if #available(iOS 17.0.1, *) {
-                        SettingsToggle(isOn: $stikJIT, icon: "bolt.heart", label: "StikJIT")
+                        let checked = stikJITorStikDebug()
+                        let stikJIT = checked == 1 ? "StikDebug" : checked == 2 ? "StikJIT" : "StikDebug"
+                        
+                        SettingsToggle(isOn: $stikJIT, icon: "bolt.heart", label: stikJIT)
                             .contextMenu {
                                 Button {
                                     if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                                        let mainWindow = windowScene.windows.last {
-                                        let alertController = UIAlertController(title: "About StikJIT", message: "StikJIT is a really amazing iOS Application to Enable JIT on the go on-device, made by the best, most kind, helpful and nice developers of all time jkcoxson and Blu <3", preferredStyle: .alert)
+                                        let alertController = UIAlertController(title: "About \(stikJIT)", message: "\(stikJIT) is a really amazing iOS Application to Enable JIT on the go on-device, made by the best, most kind, helpful and nice developers of all time jkcoxson and Blu <3", preferredStyle: .alert)
                                         
                                         let learnMoreButton = UIAlertAction(title: "Learn More", style: .default) {_ in
-                                            UIApplication.shared.open(URL(string: "https://github.com/0-Blu/StikJIT")!)
+                                            UIApplication.shared.open(URL(string: "https://github.com/StephenDev0/StikJIT")!)
                                         }
                                         alertController.addAction(learnMoreButton)
                                         
@@ -947,9 +1358,6 @@ struct SettingsView: View {
         }
     }
     
-    func saveSettings() {
-        MeloNX.saveSettings(config: config)
-    }
     
     func getGPUInfo() -> String? {
         let device = MTLCreateSystemDefaultDevice()
@@ -1012,7 +1420,7 @@ struct SVGView: UIViewRepresentable {
     }
 }
 
-func saveSettings(config: Ryujinx.Configuration) {
+func saveSettings(config: Ryujinx.Arguments) {
     do {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
@@ -1027,7 +1435,7 @@ func saveSettings(config: Ryujinx.Configuration) {
     }
 }
 
-func loadSettings() -> Ryujinx.Configuration? {
+func loadSettings() -> Ryujinx.Arguments? {
     do {
         let fileURL = URL.documentsDirectory.appendingPathComponent("config.json")
         
@@ -1039,7 +1447,7 @@ func loadSettings() -> Ryujinx.Configuration? {
         let data = try Data(contentsOf: fileURL)
         
         let decoder = JSONDecoder()
-        let configs = try decoder.decode(Ryujinx.Configuration.self, from: data)
+        let configs = try decoder.decode(Ryujinx.Arguments.self, from: data)
         return configs
     } catch {
         // print("Failed to load settings: \(error)")
@@ -1104,42 +1512,82 @@ struct SettingsCard<Content: View>: View {
     }
     
     var body: some View {
-        content
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            content
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal)
+        } else {
+            VStack {
+                Divider()
+                content
+                Divider()
+            }
             .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            .padding(.horizontal)
+        }
     }
 }
 
 struct SettingsToggle: View {
-    let isOn: Binding<Bool>
+    @Binding var isOn: Bool
     let icon: String
     let label: String
     var disabled: Bool = false
+    @AppStorage("toggleGreen") var toggleGreen: Bool = false
     
     var body: some View {
-        Toggle(isOn: isOn) {
-            HStack(spacing: 8) {
-                if icon.hasSuffix(".svg") {
-                    SVGView(svgName: icon, color: .blue)
-                        .frame(width: 20, height: 20)
-                } else {
-                    Image(systemName: icon)
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            Toggle(isOn: $isOn) {
+                HStack(spacing: 8) {
+                    if icon.hasSuffix(".svg") {
+                        SVGView(svgName: icon, color: .blue)
+                            .frame(width: 20, height: 20)
+                    } else {
+                        Image(systemName: icon)
                         // .symbolRenderingMode(.hierarchical)
-                        .foregroundColor(.blue)
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Text(label)
+                        .font(.body)
                 }
-                
-                Text(label)
-                    .font(.body)
+            }
+            .toggleStyle(SwitchToggleStyle(tint: .blue))
+            .disabled(disabled)
+            .padding(.vertical, 6)
+        } else {
+            Group {
+                HStack(spacing: 8) {
+                    HStack {
+                        if icon.hasSuffix(".svg") {
+                            SVGView(svgName: icon, color: .blue)
+                                .frame(width: 20, height: 20)
+                        } else {
+                            Image(systemName: icon)
+                            // .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(.blue)
+                        }
+                        
+                        Text(label)
+                            .font(.body)
+                    }
+                    
+                    Spacer()
+                    
+                    
+                    Text(isOn ? "ON" : "Off")
+                        .foregroundStyle(isOn ? (toggleGreen ? .green : .blue) : .blue)
+                }
+                .padding()
+                .onTapGesture {
+                    isOn.toggle()
+                }
             }
         }
-        .toggleStyle(SwitchToggleStyle(tint: .blue))
-        .disabled(disabled)
-        .padding(.vertical, 6)
     }
     
     func disabled(_ disabled: Bool) -> SettingsToggle {

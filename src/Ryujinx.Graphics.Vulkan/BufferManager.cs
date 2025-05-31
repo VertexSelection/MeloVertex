@@ -106,6 +106,8 @@ namespace Ryujinx.Graphics.Vulkan
             var externalMemoryBuffer = new ExternalMemoryBufferCreateInfo
             {
                 SType = StructureType.ExternalMemoryBufferCreateInfo,
+                // For MoltenVK 1.3
+                // ExternalMemoryHandleTypeFlagsExt.MtlBufferBitExt
                 HandleTypes = ExternalMemoryHandleTypeFlags.HostAllocationBitExt,
             };
 
@@ -675,5 +677,11 @@ namespace Ryujinx.Graphics.Vulkan
         {
             Dispose(true);
         }
+    }
+
+    public static class ExternalMemoryHandleTypeFlagsExt
+    {
+        public const ExternalMemoryHandleTypeFlags MtlBufferBitExt = (ExternalMemoryHandleTypeFlags)0x00010000;
+        public const ExternalMemoryHandleTypeFlags MtlHeapBitExt = (ExternalMemoryHandleTypeFlags)0x00040000;
     }
 }
