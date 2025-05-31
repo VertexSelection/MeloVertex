@@ -26,7 +26,7 @@ class NativeController: Hashable, BaseController {
         if let hapticsEngine = controllerHaptics {
             do {
                 try hapticsEngine.start()
-                rumbleController = RumbleController(engine: hapticsEngine, rumbleMultiplier: 3.0)
+                rumbleController = RumbleController(engine: hapticsEngine, rumbleMultiplier: 2.5)
                 
                 // print("CHHapticEngine started and RumbleController initialized.")
             } catch {
