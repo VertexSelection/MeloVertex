@@ -11,7 +11,6 @@ import Darwin
 import UIKit
 import MetalKit
 import CoreLocation
-import StosJIT
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String

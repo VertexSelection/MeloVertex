@@ -14,7 +14,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
-#include <StosJIT/idevice.h>
+#include <StosJIT/StosJIT-Swift.h>
 
 #ifdef __cplusplus
 extern "C" {
