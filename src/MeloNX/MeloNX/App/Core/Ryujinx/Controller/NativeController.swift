@@ -50,7 +50,7 @@ class NativeController: Hashable, BaseController {
         // Setup Motion
         let dsuServer = DSUServer.shared
         
-        if nativeController.vendorName == "Joy-Con (l/R)" {
+        if nativeController.vendorName?.lowercased() == "Joy-Con (l/R)".lowercased() {
             deviceMotionProvider = DeviceMotionProvider(slot: slot)
             if let provider = deviceMotionProvider {
                 dsuServer.register(provider)
