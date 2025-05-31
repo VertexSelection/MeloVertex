@@ -1071,7 +1071,7 @@ namespace Ryujinx.Headless.SDL2
                         {
                             StrongRumble = 1f,
                             WeakRumble = 1f,
-                            EnableRumble = false,
+                            EnableRumble = true,
                         },
                     };
 

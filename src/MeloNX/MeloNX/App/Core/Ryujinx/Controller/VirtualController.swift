@@ -12,11 +12,29 @@ import UIKit
 class VirtualController : BaseController {
     private var instanceID: SDL_JoystickID = -1
     private var controller: OpaquePointer?
+    private let hapticEngine: CHHapticEngine?
+    private let rumbleController: RumbleController?
     private var deviceMotionProvider: DeviceMotionProvider?
     
     public let controllername = "MeloNX Touch Controller"
     
     init() {
+        // Setup Haptics
+        hapticEngine = try? CHHapticEngine()
+        if let hapticsEngine = hapticEngine {
+            do {
+                try hapticsEngine.start()
+                rumbleController = RumbleController(engine: hapticsEngine, rumbleMultiplier: 2.0)
+                
+                // print("CHHapticEngine started and RumbleController initialized.")
+            } catch {
+                // print("Error starting CHHapticEngine: \(error.localizedDescription)")
+                rumbleController = nil
+            }
+        } else {
+            // print("CHHapticEngine is nil. Cannot initialize RumbleController.")
+            rumbleController = nil
+        }
         setupVirtualController()
     }
     
@@ -51,7 +69,7 @@ class VirtualController : BaseController {
                 button_mask: 0,
                 axis_mask: 0,
                 name: controllername.withCString { $0 },
-                userdata: nil,
+                userdata: Unmanaged.passUnretained(self).toOpaque(),
                 Update: { userdata in
                     // Update joystick state here
                 },
@@ -61,7 +79,9 @@ class VirtualController : BaseController {
                 Rumble: { userdata, lowFreq, highFreq in
                     // print("Rumble with \(lowFreq), \(highFreq)")
                     if UIDevice.current.userInterfaceIdiom == .phone {
-                        VirtualController.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq))
+                        guard let userdata else { return 0 }
+                        let _self = Unmanaged<VirtualController>.fromOpaque(userdata).takeUnretainedValue()
+                        _self.rumbleController?.rumble(lowFreq: Float(lowFreq), highFreq: Float(highFreq))
                     }
                     return 0
                 },
@@ -92,52 +112,6 @@ class VirtualController : BaseController {
             return
         }
     }
-    
-    static func rumble(lowFreq: Float, highFreq: Float, engine: CHHapticEngine? = nil) {
-        do {
-            let lowFreqPattern = try CHHapticPattern(events: [
-                CHHapticEvent(eventType: .hapticTransient, parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: lowFreq),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
-                ], relativeTime: 0, duration: 0.2)
-            ], parameters: [])
-
-            
-            let highFreqPattern = try CHHapticPattern(events: [
-                CHHapticEvent(eventType: .hapticTransient, parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: highFreq),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 1.0)
-                ], relativeTime: 0.2, duration: 0.2)
-            ], parameters: [])
-
-            var engine = engine
-
-            if engine == nil {
-                if hapticEngine == nil {
-                    hapticEngine = try CHHapticEngine()
-                    try hapticEngine?.start()
-                }
-
-                engine = hapticEngine
-            }
-
-            guard let engine else {
-                return // print("Error creating haptic patterns: hapticEngine is nil")
-            }
-
-            let lowFreqPlayer = try engine.makePlayer(with: lowFreqPattern)
-            try lowFreqPlayer.start(atTime: 0)
-            
-            let highFreqPlayer = try engine.makePlayer(with: highFreqPattern)
-            try highFreqPlayer.start(atTime: 0)
-
-        } catch {
-            // print("Error creating haptic patterns: \(error)")
-        }
-    }
-
-    private static var hapticEngine: CHHapticEngine?
-
     
     func updateAxisValue(value: Sint16, forAxis axis: SDL_GameControllerAxis) {
         guard controller != nil else { return }
