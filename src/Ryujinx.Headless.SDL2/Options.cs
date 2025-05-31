@@ -99,6 +99,33 @@ namespace Ryujinx.Headless.SDL2
         [Option("input-id-handheld", Required = false, HelpText = "Set the input id in use for the Handheld Player.")]
         public string InputIdHandheld { get; set; }
 
+        [Option("input-dsu-server-1", Required = false, HelpText = "Set the input DSU server:port in use for Player 1.")]
+        public string InputDSUServer1 { get; set; }
+
+        [Option("input-dsu-server-2", Required = false, HelpText = "Set the input DSU server:port in use for Player 2.")]
+        public string InputDSUServer2 { get; set; }
+
+        [Option("input-dsu-server-3", Required = false, HelpText = "Set the input DSU server:port in use for Player 3.")]
+        public string InputDSUServer3 { get; set; }
+
+        [Option("input-dsu-server-4", Required = false, HelpText = "Set the input DSU server:port in use for Player 4.")]
+        public string InputDSUServer4 { get; set; }
+
+        [Option("input-dsu-server-5", Required = false, HelpText = "Set the input DSU server:port in use for Player 5.")]
+        public string InputDSUServer5 { get; set; }
+
+        [Option("input-dsu-server-6", Required = false, HelpText = "Set the input DSU server:port in use for Player 6.")]
+        public string InputDSUServer6 { get; set; }
+
+        [Option("input-dsu-server-7", Required = false, HelpText = "Set the input DSU server:port in use for Player 7.")]
+        public string InputDSUServer7 { get; set; }
+
+        [Option("input-dsu-server-8", Required = false, HelpText = "Set the input DSU server:port in use for Player 8.")]
+        public string InputDSUServer8 { get; set; }
+
+        [Option("input-dsu-server-handheld", Required = false, HelpText = "Set the input DSU server:port in use for the Handheld Player.")]
+        public string InputDSUServerHandheld { get; set; }
+
         [Option("enable-keyboard", Required = false, Default = false, HelpText = "Enable or disable keyboard support (Independent from controllers binding).")]
         public bool EnableKeyboard { get; set; }
 
