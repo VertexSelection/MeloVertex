@@ -894,7 +894,7 @@ namespace Ryujinx.Headless.SDL2
             return gameInfo;
         }
 
-        private static InputConfig HandlePlayerConfiguration(string inputProfileName, string inputId, PlayerIndex index, Options option)
+        private static InputConfig HandlePlayerConfiguration(string inputProfileName, string inputId, string inputDSUServer, PlayerIndex index, Options option)
         {
             if (inputId == null)
             {
@@ -1074,6 +1074,28 @@ namespace Ryujinx.Headless.SDL2
                             EnableRumble = false,
                         },
                     };
+
+                    // Setup DSU Motion
+                    if (config is StandardControllerInputConfig standardConfig && !string.IsNullOrWhiteSpace(inputDSUServer))
+                    {
+                        var serverString = inputDSUServer.Trim();
+
+                        var parts = serverString.Split(new[] { ':' }, 2);
+                        if (parts.Length == 2 && int.TryParse(parts[1], out var port))
+                        {
+                            var slot = index == PlayerIndex.Handheld ? 0 : (int)index;
+                            standardConfig.Motion = new CemuHookMotionConfigController
+                            {
+                                MotionBackend = MotionInputBackendType.CemuHook,
+                                EnableMotion = true,
+                                Sensitivity = 100,
+                                GyroDeadzone = 1,
+                                Slot = slot,
+                                DsuServerHost = parts[0],
+                                DsuServerPort = port,
+                            };
+                        }
+                    }
                 }
             }
             else
@@ -1218,9 +1240,9 @@ namespace Ryujinx.Headless.SDL2
             _enableKeyboard = option.EnableKeyboard;
             _enableMouse = option.EnableMouse;
 
-            static void LoadPlayerConfiguration(string inputProfileName, string inputId, PlayerIndex index, Options option)
+            static void LoadPlayerConfiguration(string inputProfileName, string inputId, string inputDSUServer, PlayerIndex index, Options option)
             {
-                InputConfig inputConfig = HandlePlayerConfiguration(inputProfileName, inputId, index, option);
+                InputConfig inputConfig = HandlePlayerConfiguration(inputProfileName, inputId, inputDSUServer, index, option);
 
                 if (inputConfig != null)
                 {
@@ -1228,15 +1250,15 @@ namespace Ryujinx.Headless.SDL2
                 }
             }
 
-            LoadPlayerConfiguration(option.InputProfile1Name, option.InputId1, PlayerIndex.Player1, option);
-            LoadPlayerConfiguration(option.InputProfile2Name, option.InputId2, PlayerIndex.Player2, option);
-            LoadPlayerConfiguration(option.InputProfile3Name, option.InputId3, PlayerIndex.Player3, option);
-            LoadPlayerConfiguration(option.InputProfile4Name, option.InputId4, PlayerIndex.Player4, option);
-            LoadPlayerConfiguration(option.InputProfile5Name, option.InputId5, PlayerIndex.Player5, option);
-            LoadPlayerConfiguration(option.InputProfile6Name, option.InputId6, PlayerIndex.Player6, option);
-            LoadPlayerConfiguration(option.InputProfile7Name, option.InputId7, PlayerIndex.Player7, option);
-            LoadPlayerConfiguration(option.InputProfile8Name, option.InputId8, PlayerIndex.Player8, option);
-            LoadPlayerConfiguration(option.InputProfileHandheldName, option.InputIdHandheld, PlayerIndex.Handheld, option);
+            LoadPlayerConfiguration(option.InputProfile1Name, option.InputId1, option.InputDSUServer1, PlayerIndex.Player1, option);
+            LoadPlayerConfiguration(option.InputProfile2Name, option.InputId2, option.InputDSUServer2, PlayerIndex.Player2, option);
+            LoadPlayerConfiguration(option.InputProfile3Name, option.InputId3, option.InputDSUServer3, PlayerIndex.Player3, option);
+            LoadPlayerConfiguration(option.InputProfile4Name, option.InputId4, option.InputDSUServer4, PlayerIndex.Player4, option);
+            LoadPlayerConfiguration(option.InputProfile5Name, option.InputId5, option.InputDSUServer5, PlayerIndex.Player5, option);
+            LoadPlayerConfiguration(option.InputProfile6Name, option.InputId6, option.InputDSUServer6, PlayerIndex.Player6, option);
+            LoadPlayerConfiguration(option.InputProfile7Name, option.InputId7, option.InputDSUServer7, PlayerIndex.Player7, option);
+            LoadPlayerConfiguration(option.InputProfile8Name, option.InputId8, option.InputDSUServer8, PlayerIndex.Player8, option);
+            LoadPlayerConfiguration(option.InputProfileHandheldName, option.InputIdHandheld, option.InputDSUServerHandheld, PlayerIndex.Handheld, option);
 
             if (_inputConfiguration.Count == 0)
             {

@@ -9,14 +9,29 @@ import Foundation
 import CoreHaptics
 import UIKit
 
-class VirtualController {
+class VirtualController : BaseController {
     private var instanceID: SDL_JoystickID = -1
     private var controller: OpaquePointer?
+    private var deviceMotionProvider: DeviceMotionProvider?
     
     public let controllername = "MeloNX Touch Controller"
     
     init() {
         setupVirtualController()
+    }
+    
+    internal func tryRegisterMotion(slot: UInt8) {
+        // Setup Motion
+        let dsuServer = DSUServer.shared
+        
+        deviceMotionProvider = DeviceMotionProvider(slot: slot)
+        if let provider = deviceMotionProvider {
+            dsuServer.register(provider)
+        }
+    }
+    
+    internal func tryGetMotionProvider() -> DSUMotionProvider? {
+        return deviceMotionProvider
     }
     
     private func setupVirtualController() {
