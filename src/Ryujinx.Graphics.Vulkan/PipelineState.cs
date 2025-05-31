@@ -409,7 +409,7 @@ namespace Ryujinx.Graphics.Vulkan
                 {
                     SType = StructureType.PipelineVertexInputStateCreateInfo,
                     VertexAttributeDescriptionCount = VertexAttributeDescriptionsCount,
-                    PVertexAttributeDescriptions = isMoltenVk ? pVertexAttributeDescriptions2 : pVertexAttributeDescriptions,
+                    PVertexAttributeDescriptions = pVertexAttributeDescriptions2, // isMoltenVk ? pVertexAttributeDescriptions2 : pVertexAttributeDescriptions,
                     VertexBindingDescriptionCount = VertexBindingDescriptionsCount,
                     PVertexBindingDescriptions = pVertexBindingDescriptions,
                 };
@@ -521,6 +521,7 @@ namespace Ryujinx.Graphics.Vulkan
 
                 uint blendEnables = 0;
 
+                
                 if (gd.IsMoltenVk && Internal.AttachmentIntegerFormatMask != 0)
                 {
                     // Blend can't be enabled for integer formats, so let's make sure it is disabled.

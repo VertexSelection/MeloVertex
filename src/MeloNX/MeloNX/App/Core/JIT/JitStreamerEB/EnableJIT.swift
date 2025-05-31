@@ -118,6 +118,7 @@ func presentAlert(title: String, message: String, completion: (() -> Void)? = ni
     }
 }
 
+
 struct LaunchApp: Codable {
     let success: Bool
     let message: String

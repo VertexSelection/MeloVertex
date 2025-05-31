@@ -45,23 +45,25 @@ struct ControllerView: View {
                 HStack(spacing: 30) {
                     VStack(spacing: 15) {
                         ShoulderButtonsViewLeft()
+                            .padding(.vertical)
                         ZStack {
                             JoystickController(showBackground: $hideDpad)
-                            if !hideDpad {
-                                DPadView()
-                                    .animation(.easeInOut(duration: 0.2), value: hideDpad)
-                            }
+                            DPadView()
+                                .opacity(hideDpad ? 0 : 1)
+                                .allowsHitTesting(!hideDpad)
+                                .animation(.easeInOut(duration: 0.2), value: hideDpad)
                         }
                     }
                     
                     VStack(spacing: 15) {
                         ShoulderButtonsViewRight()
+                            .padding(.vertical)
                         ZStack {
                             JoystickController(iscool: true, showBackground: $hideABXY)
-                            if !hideABXY {
-                                ABXYView()
-                                    .animation(.easeInOut(duration: 0.2), value: hideABXY)
-                            }
+                            ABXYView()
+                                .opacity(hideABXY ? 0 : 1)
+                                .allowsHitTesting(!hideABXY)
+                                .animation(.easeInOut(duration: 0.2), value: hideABXY)
                         }
                     }
                 }
@@ -90,12 +92,13 @@ struct ControllerView: View {
             HStack {
                 VStack(spacing: 20) {
                     ShoulderButtonsViewLeft()
+                        .padding(.vertical)
                     ZStack {
                         JoystickController(showBackground: $hideDpad)
-                        if !hideDpad {
-                            DPadView()
-                                .animation(.easeInOut(duration: 0.2), value: hideDpad)
-                        }
+                        DPadView()
+                            .opacity(hideDpad ? 0 : 1)
+                            .allowsHitTesting(!hideDpad)
+                            .animation(.easeInOut(duration: 0.2), value: hideDpad)
                     }
                 }
                 
@@ -107,12 +110,13 @@ struct ControllerView: View {
                 
                 VStack(spacing: 20) {
                     ShoulderButtonsViewRight()
+                        .padding(.vertical)
                     ZStack {
                         JoystickController(iscool: true, showBackground: $hideABXY)
-                        if !hideABXY {
-                            ABXYView()
-                                .animation(.easeInOut(duration: 0.2), value: hideABXY)
-                        }
+                        ABXYView()
+                            .opacity(hideABXY ? 0 : 1)
+                            .allowsHitTesting(!hideABXY)
+                            .animation(.easeInOut(duration: 0.2), value: hideABXY)
                     }
                 }
             }
@@ -282,7 +286,7 @@ struct ButtonView: View {
                     .scaledToFit()
                     .frame(width: size.width, height: size.height)
                     .foregroundStyle(.white)
-                    .opacity(isPressed ? 0.6 : 1.0)
+                    .opacity(isPressed ? 0.6 : 0.8)
                     .allowsHitTesting(false)
             }
             .frame(width: size.width, height: size.height)

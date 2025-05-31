@@ -25,6 +25,8 @@ namespace Ryujinx.Cpu.LightningJit
 
         private readonly AddressTable<ulong> _functionTable;
         private readonly NoWxCache _noWxCache;
+        private readonly WriteZeroCache _writeZeroCache;
+
         private readonly GetFunctionAddressDelegate _getFunctionAddressRef;
         private readonly IntPtr _getFunctionAddress;
         private readonly Lazy<IntPtr> _dispatchStub;
@@ -85,6 +87,26 @@ namespace Ryujinx.Cpu.LightningJit
 
             _functionTable = functionTable;
             _noWxCache = noWxCache;
+            _getFunctionAddressRef = NativeInterface.GetFunctionAddress;
+            _getFunctionAddress = Marshal.GetFunctionPointerForDelegate(_getFunctionAddressRef);
+            _slowDispatchStub = new(GenerateSlowDispatchStub, isThreadSafe: true);
+            _dispatchStub = new(GenerateDispatchStub, isThreadSafe: true);
+            _dispatchLoop = new(GenerateDispatchLoop, isThreadSafe: true);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TranslatorStubs"/> class with the specified
+        /// <see cref="Translator"/> instance.
+        /// </summary>
+        /// <param name="functionTable">Function table used to store pointers to the functions that the guest code will call</param>
+        /// <param name="writeZeroCache">Cache used on iOS versions that need a debugger to make a debug map</param>
+        /// <exception cref="ArgumentNullException"><paramref name="translator"/> is null</exception>
+        public TranslatorStubs(AddressTable<ulong> functionTable, WriteZeroCache writeZeroCache)
+        {
+            ArgumentNullException.ThrowIfNull(functionTable);
+
+            _functionTable = functionTable;
+            _writeZeroCache = writeZeroCache;
             _getFunctionAddressRef = NativeInterface.GetFunctionAddress;
             _getFunctionAddress = Marshal.GetFunctionPointerForDelegate(_getFunctionAddressRef);
             _slowDispatchStub = new(GenerateSlowDispatchStub, isThreadSafe: true);
@@ -360,6 +382,10 @@ namespace Ryujinx.Cpu.LightningJit
             if (_noWxCache != null)
             {
                 return _noWxCache.MapPageAligned(code);
+            }
+            else if (_writeZeroCache != null) 
+            {
+                return _writeZeroCache.MapPageAligned(code);
             }
             else
             {

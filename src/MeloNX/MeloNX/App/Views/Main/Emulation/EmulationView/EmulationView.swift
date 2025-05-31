@@ -14,6 +14,10 @@ struct EmulationView: View {
     @AppStorage("showScreenShotButton") var ssb: Bool = false
     @AppStorage("showlogsgame") var showlogsgame: Bool = false
     
+    @AppStorage("On-ScreenControllerOpacity") var controllerOpacity: Double = 1.0
+    
+    @AppStorage("disableTouch") var blackScreen = false
+    
     @State var isPresentedThree: Bool = false
     @State var isAirplaying = Air.shared.connected
     @Binding var startgame: Game?
@@ -31,6 +35,11 @@ struct EmulationView: View {
                     .onAppear {
                         Air.play(AnyView(MetalView().ignoresSafeArea().edgesIgnoringSafeArea(.all)))
                     }
+                
+                Color.black
+                    .ignoresSafeArea()
+                    .edgesIgnoringSafeArea(.all)
+                    .allowsHitTesting(false)
             } else {
                 MetalView() // The Emulation View
                     .ignoresSafeArea()
@@ -41,6 +50,8 @@ struct EmulationView: View {
             
             if isVCA {
                 ControllerView() // Virtual Controller
+                    .opacity(controllerOpacity)
+                    .allowsHitTesting(true)
             }
             
             Group {

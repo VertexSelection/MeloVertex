@@ -422,7 +422,7 @@ namespace Ryujinx.Graphics.Vulkan
                 features2.Features.ShaderStorageImageMultisample,
                 _physicalDevice.IsDeviceExtensionPresent(ExtConditionalRendering.ExtensionName),
                 isDynamicStateSupported,
-                features2.Features.MultiViewport && !(IsMoltenVk && Vendor == Vendor.Amd), // Workaround for AMD on MoltenVK issue
+                features2.Features.MultiViewport && !IsMoltenVk, // Workaround for AMD on MoltenVK issue
                 !IsMoltenVk ? featuresRobustness2.NullDescriptor : false,
                 supportsPushDescriptors && !IsMoltenVk,
                 propertiesPushDescriptor.MaxPushDescriptors,
@@ -785,7 +785,7 @@ namespace Ryujinx.Graphics.Vulkan
                 shaderSubgroupSize: (int)Capabilities.SubgroupSize,
                 storageBufferOffsetAlignment: (int)limits.MinStorageBufferOffsetAlignment,
                 textureBufferOffsetAlignment: (int)limits.MinTexelBufferOffsetAlignment,
-                gatherBiasPrecision: IsIntelWindows || IsAmdWindows ? (int)Capabilities.SubTexelPrecisionBits : 0,
+                gatherBiasPrecision: (int)Capabilities.SubTexelPrecisionBits, //IsIntelWindows || IsAmdWindows ? (int)Capabilities.SubTexelPrecisionBits : 0,
                 maximumGpuMemory: GetTotalGPUMemory());
         }
 

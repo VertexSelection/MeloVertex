@@ -273,7 +273,7 @@ struct GameLibraryView: View {
                                     gameRequirements: $gameRequirements,
                                     gameInfo: $gameInfo
                                 )
-                                .padding(.horizontal, 3)
+                                .padding(.horizontal)
                                 .padding(.vertical, 8)
                             }
                         }
@@ -290,7 +290,7 @@ struct GameLibraryView: View {
                             gameRequirements: $gameRequirements,
                             gameInfo: $gameInfo
                         )
-                        .padding(.horizontal, 3)
+                        .padding(.horizontal)
                         .padding(.vertical, 8)
                     }
                 }
@@ -314,12 +314,19 @@ struct GameLibraryView: View {
             } else {
                 Menu("Applets") {
                     Button {
-                        let game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "MiiMaker")!, titleName: "Mii Maker", titleId: "0", developer: "Nintendo", version: firmwareversion)
+                        let game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "0x0100000000001009")!, titleName: "Mii Maker", titleId: "0", developer: "Nintendo", version: firmwareversion)
                         self.startemu = game
                     } label: {
                         Label("Launch Mii Maker", systemImage: "person.crop.circle")
                     }
 
+                    Button {
+                        let game = Game(containerFolder: URL(string: "none")!, fileType: .item, fileURL: URL(string: "0x0100000000001000")!, titleName: "Home Menu (Broken)", titleId: "0", developer: "Nintendo", version: firmwareversion)
+                        self.startemu = game
+                    } label: {
+                        Label("Home Menu (Broken)", systemImage: "house.circle")
+                    }
+                    .foregroundStyle(.red)
                 }
             }
         }
@@ -658,6 +665,7 @@ struct GameCardView: View {
     @Binding var gameRequirements: [GameRequirements]
     @Binding var gameInfo: Game?
     @Environment(\.colorScheme) var colorScheme
+    let totalMemory = ProcessInfo.processInfo.physicalMemory
     
     var gameRequirement: GameRequirements? {
         gameRequirements.first(where: { $0.game_id == game.titleId })
@@ -729,7 +737,17 @@ struct GameCardView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.blue)
+                            .background(req.memoryInt <= Int(String(format: "%.0f", Double(totalMemory) / 1_000_000_000)) ?? 0 ? Color.blue : Color.red)
+                            .cornerRadius(4)
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        Text("0GB")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.clear)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.clear)
                             .cornerRadius(4)
                     }
                 }
@@ -796,16 +814,15 @@ struct GameListRow: View {
                         
                         HStack {
                             Text(game.developer)
-                                .font(.system(size: 14))
+                                .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.leading)
                             
                             if !game.version.isEmpty && game.version != "0" {
-                                Text("•")
-                                    .foregroundColor(.secondary)
+                                Divider().frame(width: 1, height: 15)
                                 
                                 Text("v\(game.version)")
-                                    .font(.system(size: 14))
+                                    .font(.system(size: 10))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -820,7 +837,6 @@ struct GameListRow: View {
                                 let totalMemory = ProcessInfo.processInfo.physicalMemory
                                 
                                 HStack(spacing: 4) {
-                                    // Memory requirement badge
                                     Text(gameReq.device_memory)
                                         .font(.system(size: 11, weight: .medium))
                                         .foregroundColor(.white)
@@ -830,8 +846,11 @@ struct GameListRow: View {
                                             Capsule()
                                                 .fill(gameReq.memoryInt <= Int(String(format: "%.0f", Double(totalMemory) / 1_000_000_000)) ?? 0 ? Color.blue : Color.red)
                                         )
-                                    
-                                    // Compatibility badge
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                        .layoutPriority(1)
+
                                     Text(gameReq.compatibility)
                                         .font(.system(size: 11, weight: .medium))
                                         .foregroundColor(.white)
@@ -841,6 +860,10 @@ struct GameListRow: View {
                                             Capsule()
                                                 .fill(gameReq.color)
                                         )
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                        .layoutPriority(1)
                                 }
                             }
                             

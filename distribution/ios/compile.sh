@@ -3,11 +3,13 @@
 # Define the destination directory (hardcoded)
 DESTINATION_DIR="src/MeloNX/Dependencies/Dynamic\ Libraries/Ryujinx.Headless.SDL2.dylib"
 
+dotnet clean
+
 # Restore the project 
 dotnet restore
 
 # Build the project with the specified version 
-dotnet build -c Release
+# dotnet build -c Release
 
 # Publish the project with the specified runtime and settings 
 dotnet publish -c Release -r ios-arm64 -p:ExtraDefineConstants=DISABLE_UPDATER src/Ryujinx.Headless.SDL2 --self-contained true

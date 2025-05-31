@@ -11,6 +11,7 @@ import Darwin
 import UIKit
 import MetalKit
 import CoreLocation
+import StosJIT
 
 struct MoltenVKSettings: Codable, Hashable {
     let string: String
@@ -32,11 +33,16 @@ struct ContentView: View {
     @AppStorage("isVirtualController") var isVCA: Bool = true
     
     // Settings and Configuration
-    @State private var config: Ryujinx.Configuration
+    private var config: Ryujinx.Arguments {
+        settingsManager.config
+    }
+    
+    @StateObject private var settingsManager = SettingsManager.shared
+    
     @State var settings: [MoltenVKSettings]
-    @AppStorage("useTrollStore") var useTrollStore: Bool = false
     
     // JIT
+    @AppStorage("useTrollStore") var useTrollStore: Bool = false
     @AppStorage("jitStreamerEB") var jitStreamerEB: Bool = false
     @AppStorage("stikJIT") var stikJIT: Bool = false
     
@@ -55,6 +61,9 @@ struct ContentView: View {
     private let animationDuration: Double = 1.0
     @State private var isAnimating = false
     @State var isLoading = true
+    
+    
+    // MARK: - CORE
     @StateObject var ryujinx = Ryujinx.shared
     
     // MARK: - SDL
@@ -62,14 +71,6 @@ struct ContentView: View {
 
     // MARK: - Initialization
     init() {
-        var defaultConfig = loadSettings()
-        if defaultConfig == nil {
-            saveSettings(config: .init(gamepath: ""))
-            defaultConfig = loadSettings()
-        }
-        
-        _config = State(initialValue: defaultConfig!)
-        
         let defaultSettings: [MoltenVKSettings] = [
             MoltenVKSettings(string: "MVK_USE_METAL_PRIVATE_API", value: "1"),
             MoltenVKSettings(string: "MVK_CONFIG_USE_METAL_PRIVATE_API", value: "1"),
@@ -139,7 +140,6 @@ struct ContentView: View {
     private var mainMenuView: some View {
         MainTabView(
             startemu: $game,
-            config: $config,
             MVKconfig: $settings,
             controllersList: $controllersList,
             currentControllers: $currentControllers,
@@ -155,6 +155,8 @@ struct ContentView: View {
             }
             
             
+            UserDefaults.standard.set(false, forKey: "lockInApp")
+            
             // print(MTLHud.shared.isEnabled)
             
             initControllerObservers()
@@ -162,6 +164,11 @@ struct ContentView: View {
             Air.play(AnyView(
                 ControllerListView(game: $game)
             ))
+            
+            refreshControllersList()
+            
+            
+            ryujinx.addGames()
             
             checkJitStatus()
         }
@@ -373,6 +380,8 @@ struct ContentView: View {
         if jitStreamerEB {
             jitStreamerEB = false // byee jitstreamer eb
         }
+        
+        
         if !ryujinx.jitenabled {
             if useTrollStore {
                 askForJIT()
@@ -381,7 +390,12 @@ struct ContentView: View {
             } else if jitStreamerEB {
                 enableJITEB()
             } else {
-                // print("no JIT")
+                if !allocateTest(), checkDebugged() {
+                    loop_heartbeat()
+                    sleep(5)
+                    let cool = String(cString: attach(getpid())!)
+                    print(cool)
+                }
             }
         }
     }
@@ -389,13 +403,13 @@ struct ContentView: View {
     private func handleDeepLink(_ url: URL) {
         if let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
            components.host == "game" {
-            DispatchQueue.main.async {
-                refreshControllersList()
-                if let text = components.queryItems?.first(where: { $0.name == "id" })?.value {
-                    game = ryujinx.games.first(where: { $0.titleId == text })
-                } else if let text = components.queryItems?.first(where: { $0.name == "name" })?.value {
-                    game = ryujinx.games.first(where: { $0.titleName == text })
-                }
+            
+            refreshControllersList()
+            
+            if let text = components.queryItems?.first(where: { $0.name == "id" })?.value {
+                game = ryujinx.games.first(where: { $0.titleId == text })
+            } else if let text = components.queryItems?.first(where: { $0.name == "name" })?.value {
+                game = ryujinx.games.first(where: { $0.titleName == text })
             }
         }
     }
@@ -453,7 +467,6 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         }
     }
 }
-
 
 struct ControllerListView: View {
     @State private var selectedIndex = 0

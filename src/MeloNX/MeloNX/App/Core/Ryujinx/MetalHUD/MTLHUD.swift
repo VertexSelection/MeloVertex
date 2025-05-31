@@ -6,34 +6,28 @@
 //
 
 import Foundation
+import SwiftUI
 
-
-class MTLHud {
-    
+class MTLHud: ObservableObject {
     @Published var canMetalHud: Bool = false
     
-    var isEnabled: Bool {
-        if let getenv = getenv("MTL_HUD_ENABLED") {
-            return String(cString: getenv).contains("1")
+    @AppStorage("MTL_HUD_ENABLED") var metalHudEnabled: Bool = false {
+        didSet {
+            if metalHudEnabled {
+                enable()
+            } else {
+                disable()
+            }
         }
-        return false
     }
+    
     
     static let shared = MTLHud()
     
     private init() {
-        let _ = openMetalDylib() // i'm fixing the warnings just because you said i suck at coding Autumn (propenchiefer,
-        https://youtu.be/tc65SNOTMz4 7:23)
-        if UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED") {
-            enable()
-        } else {
-            disable()
-        }
-    }
-    
-    func toggle() {
-        // print(UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED"))
-        if UserDefaults.standard.bool(forKey: "MTL_HUD_ENABLED") {
+        canMetalHud = openMetalDylib() // i'm fixing the warnings just because you said i suck at coding Autumn (propenchiefer, https://youtu.be/tc65SNOTMz4 7:23)
+        
+        if metalHudEnabled {
             enable()
         } else {
             disable()
@@ -44,14 +38,8 @@ class MTLHud {
         let path = "/usr/lib/libMTLHud.dylib"
 
         if dlopen(path, RTLD_NOW) != nil {
-            // print("Library loaded from \(path)")
-            canMetalHud = true
             return true
         } else {
-            if let error = String(validatingUTF8: dlerror()) {
-                // print("Error loading library: \(error)")
-            }
-            canMetalHud = false
             return false
         }
     }
