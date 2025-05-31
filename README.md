@@ -48,7 +48,7 @@ MeloNX works on iPhone XS/XR and later and iPad 8th Gen and later. Check out the
 
 4. **Enable JIT**  
    - Use your preferred method to enable Just-In-Time (JIT) compilation.  
-   - We reccomend using [JitStreamer](https://jkcoxson.com/jitstreamer)
+   - We reccomend using [StikDebug](https://apps.apple.com/us/app/stikdebug/id6744045754)
 
 5. **Add Necessary Files**  
 
@@ -90,7 +90,7 @@ If having Issues installing firmware (Make sure your keys are installed first)
    
 9. **Enable JIT**  
    - Use your preferred method to enable Just-In-Time (JIT) compilation. 
-   - We recommend using [JitStreamer](https://jkcoxson.com/jitstreamer)
+   - We recommend using [StikDebug](https://apps.apple.com/us/app/stikdebug/id6744045754)
    
 
 ### TrollStore
