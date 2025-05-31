@@ -17,7 +17,7 @@ class RumbleController {
     
     // The duration of each continuous haptic event.
     // We'll restart the players before this duration expires.
-    private let hapticEventDuration: TimeInterval = 7200
+    private let hapticEventDuration: TimeInterval = 20
     
     // Timer to schedule player restarts
     private var playerRestartTimer: Timer?

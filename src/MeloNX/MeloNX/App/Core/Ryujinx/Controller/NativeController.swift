@@ -13,6 +13,8 @@ class NativeController: Hashable, BaseController {
     private var controller: OpaquePointer?
     private var nativeController: GCController
     private var controllerMotionProvider: ControllerMotionProvider?
+    private var deviceMotionProvider: DeviceMotionProvider?
+    
     private let controllerHaptics: CHHapticEngine?
     private let rumbleController: RumbleController?
 
@@ -48,14 +50,25 @@ class NativeController: Hashable, BaseController {
         // Setup Motion
         let dsuServer = DSUServer.shared
         
-        controllerMotionProvider = ControllerMotionProvider(controller: nativeController, slot: slot)
-        if let provider = controllerMotionProvider {
-            dsuServer.register(provider)
+        if nativeController.vendorName == "Joy-Con (l/R)" {
+            deviceMotionProvider = DeviceMotionProvider(slot: slot)
+            if let provider = deviceMotionProvider {
+                dsuServer.register(provider)
+            }
+        } else {
+            controllerMotionProvider = ControllerMotionProvider(controller: nativeController, slot: slot)
+            if let provider = controllerMotionProvider {
+                dsuServer.register(provider)
+            }
         }
     }
     
     internal func tryGetMotionProvider() -> DSUMotionProvider? {
-        return controllerMotionProvider
+        if nativeController.vendorName == "Joy-Con (l/R)" {
+            return deviceMotionProvider
+        } else {
+            return controllerMotionProvider
+        }
     }
 
     private func setupHandheldController() {
