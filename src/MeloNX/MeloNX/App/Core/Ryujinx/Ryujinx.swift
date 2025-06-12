@@ -213,7 +213,6 @@ class Ryujinx : ObservableObject {
         var language: SystemLanguage = .americanEnglish
         var regioncode: SystemRegionCode = .usa
         var handHeldController: Bool = true
-        var backendMultithreading: Bool = true
         
         
         init(gamepath: String = "",
@@ -242,7 +241,6 @@ class Ryujinx : ObservableObject {
              language: SystemLanguage = .americanEnglish,
              regioncode: SystemRegionCode = .usa,
              handHeldController: Bool = false,
-             backendMultithreading: Bool = true
         ) {
             self.gamepath = gamepath
             self.inputids = inputids
@@ -270,7 +268,6 @@ class Ryujinx : ObservableObject {
             self.language = language
             self.regioncode = regioncode
             self.handHeldController = handHeldController
-            self.backendMultithreading = backendMultithreading
         }
         
         
@@ -571,10 +568,6 @@ class Ryujinx : ObservableObject {
         // args.append(contentsOf: ["--system-timezone", TimeZone.current.identifier])
         
         args.append(contentsOf: ["--system-time-offset", String(TimeZone.current.secondsFromGMT())])
-        
-        if !config.backendMultithreading {
-            args.append(contentsOf: ["--backend-multithreading", "Off"])
-        }
 
         
         if config.nintendoinput {
