@@ -266,6 +266,8 @@ struct SettingsViewNew: View {
     
     @AppStorage("runOnMainThread") var runOnMainThread = false
     
+    @AppStorage("oldSettingsUI") var oldSettingsUI = false
+    
     @AppCodableStorage("toggleButtons") var toggleButtons = ToggleButtonsState()
     
     let totalMemory = ProcessInfo.processInfo.physicalMemory
@@ -275,6 +277,7 @@ struct SettingsViewNew: View {
     @State private var showResolutionInfo = false
     @State private var showAnisotropicInfo = false
     @State private var showControllerInfo = false
+    @State private var showAppIconSwitcher = false
     @State private var searchText = ""
     @AppStorage("portal") var gamepo = false
     @StateObject var ryujinx = Ryujinx.shared
@@ -327,10 +330,12 @@ struct SettingsViewNew: View {
     var body: some View {
         if UIDevice.current.userInterfaceIdiom == .phone {
             iOSSettings
-        } else {
+        } else if !oldSettingsUI {
             iPadOSSettings
                 .ignoresSafeArea()
                 .edgesIgnoringSafeArea(.all)
+        } else {
+            iOSSettings
         }
     }
     
@@ -1188,7 +1193,6 @@ struct SettingsViewNew: View {
                     
                     
                     if #available(iOS 15.0, *) {
-
                         TextField("Separate arguments with commas", text: binding)
                             .font(.system(.body, design: .monospaced))
                             .textFieldStyle(.roundedBorder)
@@ -1254,13 +1258,31 @@ struct SettingsViewNew: View {
                     Divider()
                     
                     if colorScheme == .light {
-                        SettingsToggle(isOn: $disableTouch, icon: "iphone.slash", label: "Black Screen when using AirPlay")
+                        SettingsToggle(isOn: $blackScreen, icon: "iphone.slash", label: "Black Screen when using AirPlay")
                         
                         Divider()
                     }
                     
+                    Button {
+                        showAppIconSwitcher = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "app.dashed")
+                                .foregroundColor(.blue)
+                            Text("App Icon Switcher")
+                                .foregroundColor(.primary)
+                            Spacer()
+                        }
+                        .padding(.vertical, 8)
+                    }
+                    .sheet(isPresented: $showAppIconSwitcher) {
+                        AppIconSwitcherView()
+                    }
+                    
+                    Divider()
+                    
                     // Exit button card
-                    SettingsToggle(isOn: $ssb, icon: "arrow.left.circle", label: "Exit Button")
+                    SettingsToggle(isOn: $ssb, icon: "arrow.left.circle", label: "Menu Button (in-game)")
                     
                     Divider()
                     
@@ -1274,6 +1296,13 @@ struct SettingsViewNew: View {
                     SettingsToggle(isOn: $locationenabled, icon: "location.viewfinder", label: "Keep app in background")
                     
                     Divider()
+                    
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        // Old Settings UI
+                        SettingsToggle(isOn: $oldSettingsUI, icon: "ipad.landscape", label: "Non Switch-like Settings")
+                        
+                        Divider()
+                    }
                     
                     
                     // JIT options
@@ -1401,8 +1430,6 @@ struct SVGView: UIViewRepresentable {
             svgName.removeLast(4)
         }
         
-        
-        
         _ = UIView(svgNamed: svgName) { svgLayer in
             svgLayer.fillColor = UIColor(color).cgColor // Apply the provided color
             svgLayer.resizeToFit(hammock.frame)
@@ -1505,6 +1532,7 @@ struct SettingsSection<Content: View>: View {
 
 struct SettingsCard<Content: View>: View {
     @Environment(\.colorScheme) var colorScheme
+    @AppStorage("oldSettingsUI") var oldSettingsUI = false
     let content: Content
     
     init(@ViewBuilder content: () -> Content) {
@@ -1512,7 +1540,7 @@ struct SettingsCard<Content: View>: View {
     }
     
     var body: some View {
-        if UIDevice.current.userInterfaceIdiom == .phone {
+        if UIDevice.current.userInterfaceIdiom == .phone || oldSettingsUI {
             content
                 .padding()
                 .background(
@@ -1538,9 +1566,10 @@ struct SettingsToggle: View {
     let label: String
     var disabled: Bool = false
     @AppStorage("toggleGreen") var toggleGreen: Bool = false
+    @AppStorage("oldSettingsUI") var oldSettingsUI = false
     
     var body: some View {
-        if UIDevice.current.userInterfaceIdiom == .phone {
+        if UIDevice.current.userInterfaceIdiom == .phone || oldSettingsUI {
             Toggle(isOn: $isOn) {
                 HStack(spacing: 8) {
                     if icon.hasSuffix(".svg") {

@@ -85,7 +85,7 @@ namespace Ryujinx.Headless.SDL2
 
         private string _gpuDriverName;
 
-        private readonly AspectRatio _aspectRatio;
+        public AspectRatio _aspectRatio;
         private readonly bool _enableMouse;
 
         public WindowBase(
@@ -162,7 +162,7 @@ namespace Ryujinx.Headless.SDL2
 
         private void InitializeWindow()
         {
-            if (this is Ryujinx.Headless.SDL2.Vulkan.MoltenVKWindow) {
+            if (this is Vulkan.MoltenVKWindow) {
                 string message = $"Not using SDL Windows, Skipping...";
 
                 Logger.Info?.Print(LogClass.Application, message);

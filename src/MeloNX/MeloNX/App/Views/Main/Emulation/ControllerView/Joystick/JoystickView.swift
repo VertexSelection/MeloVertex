@@ -28,7 +28,6 @@ struct JoystickController: View {
         VStack {
             Joystick(position: $position, joystickSize: dragDiameter * 0.2, boundarySize: dragDiameter, showBackground: $showBackground)
                 .onChange(of: position) { newValue in
-                    
                     if iscool != nil {
                         Ryujinx.shared.virtualController.thumbstickMoved(.right, x: newValue.x, y: newValue.y)
                     } else {

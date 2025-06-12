@@ -59,6 +59,8 @@ void initialize();
 
 int main_ryujinx_sdl(int argc, char **argv);
 
+int update_settings_external(int argc, char **argv);
+
 int get_current_fps();
 
 void touch_began(float x, float y, int index);

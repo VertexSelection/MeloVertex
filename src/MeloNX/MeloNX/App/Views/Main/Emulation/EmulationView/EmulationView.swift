@@ -24,6 +24,8 @@ struct EmulationView: View {
     
     @Environment(\.scenePhase) var scenePhase
     @State private var isInBackground = false
+    @State var showSettings = false
+    @State var pauseEmu = true
     @AppStorage("location-enabled") var locationenabled: Bool = false
     
     var body: some View {
@@ -80,15 +82,47 @@ struct EmulationView: View {
                     if ssb {
                         HStack {
                             
-                            Image(systemName: "arrow.left.circle")
-                                .resizable()
-                                .frame(width: 50, height: 50)
-                                .onTapGesture {
+                            Menu {
+                                
+                                /*
+                                Button {
+                                    showSettings.toggle()
+
+                                } label: {
+                                    Label {
+                                        Text("Game Settings")
+                                    } icon: {
+                                        Image(systemName: "gearshape.circle")
+                                    }
+                                }
+                                 */
+                                
+                                Button {
+                                    pause_emulation(pauseEmu)
+                                    pauseEmu.toggle()
+                                } label: {
+                                    Label {
+                                        Text(pauseEmu ? "Pause" : "Play")
+                                    } icon: {
+                                        Image(systemName: pauseEmu ? "pause.circle" : "play.circle")
+                                    }
+                                }
+                                
+                                Button(role: .destructive) {
                                     startgame = nil
                                     stop_emulation()
                                     try? Ryujinx.shared.stop()
+                                } label: {
+                                    Label {
+                                        Text("Exit (Unstable)")
+                                    } icon: {
+                                        Image(systemName: "x.circle")
+                                    }
                                 }
-                                .padding()
+                            } label: {
+                                ExtButtonIconView(button: .guide, opacity: 0.4)
+                            }
+                            .padding()
                             
                             Spacer()
     
@@ -121,6 +155,12 @@ struct EmulationView: View {
                 pause_emulation(true)
                 isInBackground = true
             }
+        }
+        .sheet(isPresented: $showSettings) {
+            // PerGameSettingsView(titleId: startgame?.titleId ?? "", manager: InGameSettingsManager.shared)
+                // .onDisappear() {
+                    // InGameSettingsManager.shared.saveSettings()
+                // }
         }
     }
 }

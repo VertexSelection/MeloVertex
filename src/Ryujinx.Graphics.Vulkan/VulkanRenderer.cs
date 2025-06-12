@@ -785,7 +785,7 @@ namespace Ryujinx.Graphics.Vulkan
                 shaderSubgroupSize: (int)Capabilities.SubgroupSize,
                 storageBufferOffsetAlignment: (int)limits.MinStorageBufferOffsetAlignment,
                 textureBufferOffsetAlignment: (int)limits.MinTexelBufferOffsetAlignment,
-                gatherBiasPrecision: (int)Capabilities.SubTexelPrecisionBits, //IsIntelWindows || IsAmdWindows ? (int)Capabilities.SubTexelPrecisionBits : 0,
+                gatherBiasPrecision: IsIntelWindows || IsAmdWindows ? (int)Capabilities.SubTexelPrecisionBits : 0,
                 maximumGpuMemory: GetTotalGPUMemory());
         }
 

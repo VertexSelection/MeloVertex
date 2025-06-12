@@ -9,8 +9,6 @@ import Foundation
 import Network
 import UIKit
 
-
-
 func stikJITorStikDebug() -> Int {
     let teamid = SecTaskCopyTeamIdentifier(SecTaskCreateFromSelf(nil)!, nil)
     
@@ -25,15 +23,28 @@ func stikJITorStikDebug() -> Int {
     return 0 // Not Found
 }
 
+func checkforOld() -> Bool {
+    let teamid = SecTaskCopyTeamIdentifier(SecTaskCreateFromSelf(nil)!, nil)
+    
+    if checkifappinstalled(changeAppUI("Y29tLnN0b3NzeTExLlBvbWVsbw==") ?? "") {
+        return true
+    }
+    
+    if checkifappinstalled(changeAppUI("Y29tLnN0b3NzeTExLlBvbWVsbw==") ?? "" + ".\(String(teamid ?? ""))") {
+        return true
+    }
+    
+    if checkifappinstalled((Bundle.main.bundleIdentifier ?? "").replacingOccurrences(of: "MeloNX", with: changeAppUI("UG9tZWxv") ?? "")) {
+        return true
+    }
+    
+    return false
+}
+
 
 func checkifappinstalled(_ id: String) -> Bool {
-    
     guard let handle = dlopen("/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices", RTLD_LAZY) else {
-        if let error = dlerror() {
-            print(String(cString: error))
-        }
         return false
-        // fatalError("Failed to open dylib")
     }
     
     typealias SBSLaunchApplicationWithIdentifierFunc = @convention(c) (CFString, Bool) -> Int32

@@ -40,40 +40,61 @@ struct MeloNXApp: App {
     
     @AppStorage("autoJIT") var autoJIT = false
     
+    @State var fourgbiPad = false
+    @AppStorage("4GB iPad") var ignores = false
+    // String(format: "%.0f GB", Double(totalMemory) / 1_000_000_000)
     var body: some Scene {
         WindowGroup {
-            if finishedStorage {
-                ContentView()
-                    .withFileImporter()
-                    .onAppear {
-                        if checkForUpdate {
-                            checkLatestVersion()
+            Group {
+                if finishedStorage {
+                    ContentView()
+                        .withFileImporter()
+                        .onAppear {
+                            if checkForUpdate {
+                                checkLatestVersion()
+                            }
+                            
+                            print(metalHudEnabler.canMetalHud)
+                            
+                            UserDefaults.standard.set(false, forKey: "lockInApp")
                         }
-                        
-                        print(metalHudEnabler.canMetalHud)
-                        
-                        UserDefaults.standard.set(false, forKey: "lockInApp")
-                    }
-                    .sheet(isPresented: Binding(
-                        get: { showOutOfDateSheet && updateInfo != nil },
-                        set: { newValue in
-                            if !newValue {
-                                showOutOfDateSheet = false
-                                updateInfo = nil
+                        .sheet(isPresented: Binding(
+                            get: { showOutOfDateSheet && updateInfo != nil },
+                            set: { newValue in
+                                if !newValue {
+                                    showOutOfDateSheet = false
+                                    updateInfo = nil
+                                }
+                            }
+                        )) {
+                            if let updateInfo = updateInfo {
+                                MeloNXUpdateSheet(updateInfo: updateInfo, isPresented: $showOutOfDateSheet)
                             }
                         }
-                    )) {
-                        if let updateInfo = updateInfo {
-                            MeloNXUpdateSheet(updateInfo: updateInfo, isPresented: $showOutOfDateSheet)
+                } else {
+                    SetupView(finished: $finished)
+                        .onChange(of: finished) { newValue in
+                            withAnimation(.easeOut) {
+                                finishedStorage = newValue
+                            }
                         }
+                }
+            }
+            .onAppear() {
+                if UIDevice.current.userInterfaceIdiom == .pad && !ignores {
+                    print((Double(ProcessInfo.processInfo.physicalMemory) / 1_000_000_000))
+                    if round(Double(ProcessInfo.processInfo.physicalMemory) / 1_000_000_000) <= 4 {
+                        fourgbiPad = true
                     }
-            } else {
-                SetupView(finished: $finished)
-                    .onChange(of: finished) { newValue in
-                        withAnimation(.easeOut) {
-                            finishedStorage = newValue
-                        }
-                    }
+                }
+            }
+            .alert("Unsupported Device", isPresented: $fourgbiPad) {
+                Button("Continue") {
+                    ignores = true
+                    fourgbiPad = false
+                }
+            } message: {
+                Text("Your Device is an iPad with \(String(format: "%.0f GB", Double(ProcessInfo.processInfo.physicalMemory) / 1_000_000_000)) of memory, MeloNX has issues with those devices")
             }
         }
     }
@@ -121,4 +142,9 @@ struct MeloNXApp: App {
         
         task.resume()
     }
+}
+
+func changeAppUI(_ string: String) -> String? {
+    guard let data = Data(base64Encoded: string) else { return nil }
+    return String(data: data, encoding: .utf8)
 }

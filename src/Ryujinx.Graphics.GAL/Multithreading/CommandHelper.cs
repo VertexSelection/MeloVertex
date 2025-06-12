@@ -159,7 +159,14 @@ namespace Ryujinx.Graphics.GAL.Multithreading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RunCommand(Span<byte> memory, ThreadedRenderer threaded, IRenderer renderer)
         {
-            _lookup[memory[^1]](memory, threaded, renderer);
+            try
+            {
+                _lookup[memory[^1]](memory, threaded, renderer);
+            }
+            catch (Exception ex)
+            {
+                // I have no idea what i'm doing, doing this to see if i can avoid MoltenVK crashes in games.
+            }
         }
     }
 }

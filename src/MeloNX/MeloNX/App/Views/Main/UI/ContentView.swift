@@ -357,8 +357,16 @@ struct ContentView: View {
         }
     }
     
+    @StateObject private var persettings = PerGameSettingsManager.shared
     private func start(displayid: UInt32) {
         guard let game else { return }
+        var config = self.config
+        
+        persettings.loadSettings()
+        
+        if let customgame = persettings.config[game.titleId] {
+            config = customgame
+        }
         
         config.gamepath = game.fileURL.path
         config.inputids = Array(Set(currentControllers.map(\.id)))
@@ -367,9 +375,7 @@ struct ContentView: View {
         
         registerMotionForMatchingControllers()
         
-        if config.inputids.isEmpty {
-            config.inputids.append("0")
-        }
+        config.inputids.isEmpty ? config.inputids.append("0") : ()
         
         // Local DSU loopback to ryujinx per input id
         for _ in config.inputids {

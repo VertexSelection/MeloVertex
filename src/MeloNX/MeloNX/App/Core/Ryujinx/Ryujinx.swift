@@ -356,7 +356,9 @@ class Ryujinx : ObservableObject {
                     let result = main_ryujinx_sdl(Int32(args.count), &argvPtrs)
                     
                     if result != 0 {
-                        self.isRunning = false
+                        DispatchQueue.main.async {
+                            self.isRunning = false
+                        }
                         if let accessing, accessing {
                             url!.stopAccessingSecurityScopedResource()
                         }
@@ -365,7 +367,9 @@ class Ryujinx : ObservableObject {
                     }
                 }
             } catch {
-                self.isRunning = false
+                DispatchQueue.main.async {
+                    self.isRunning = false
+                }
                 Thread.sleep(forTimeInterval: 0.3)
                 let logs = LogCapture.shared.capturedLogs
                 let parsedLogs = extractExceptionInfo(logs)
@@ -384,14 +388,19 @@ class Ryujinx : ObservableObject {
                         
                         
                         presentAlert(title: "MeloNX Crashed!", message: parsedLogs.exceptionType + ": " + parsedLogs.message) {
-    
-                            assert(true, parsedLogs.exceptionType)
+                            UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                exit(0)
+                            }
                         }
                     }
                 } else {
                     DispatchQueue.main.async {
                         presentAlert(title: "MeloNX Crashed!", message:  "Unknown Error") {
-                            assert(true, "Exception was not detected")
+                            UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                exit(0)
+                            }
                         }
                     }
                 }
@@ -517,7 +526,7 @@ class Ryujinx : ObservableObject {
         }
     }
 
-    private func buildCommandLineArgs(from config: Arguments) -> [String] {
+    func buildCommandLineArgs(from config: Arguments) -> [String] {
         var args: [String] = []
         
         // Add the game path
@@ -648,11 +657,10 @@ class Ryujinx : ObservableObject {
         // Append the input dsu servers (limit to 8 (used to be 4) just in case)
         if !config.inputDSUServers.isEmpty {
             config.inputDSUServers.prefix(8).enumerated().forEach { index, inputDSUServer in
-                if config.handHeldController {
-                    args.append(contentsOf: ["\(index == 0 ? "--input-dsu-server-handheld" : "--input-dsu-server-\(index + 1)")", inputDSUServer])
-                } else {
-                    args.append(contentsOf: ["--input-dsu-server-\(index + 1)", inputDSUServer])
+                if index == 0 {
+                    args.append(contentsOf: ["--input-dsu-server-handheld", inputDSUServer])
                 }
+                args.append(contentsOf: ["--input-dsu-server-\(index + 1)", inputDSUServer])
             }
         }
         

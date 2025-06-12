@@ -21,25 +21,25 @@ namespace Ryujinx.HLE
         /// The virtual file system used by the FS service.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly VirtualFileSystem VirtualFileSystem;
+        public readonly VirtualFileSystem VirtualFileSystem;
 
         /// <summary>
         /// The manager for handling a LibHac Horizon instance.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly LibHacHorizonManager LibHacHorizonManager;
+        public readonly LibHacHorizonManager LibHacHorizonManager;
 
         /// <summary>
         /// The account manager used by the account service.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly AccountManager AccountManager;
+        public readonly AccountManager AccountManager;
 
         /// <summary>
         /// The content manager used by the NCM service.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly ContentManager ContentManager;
+        public readonly ContentManager ContentManager;
 
         /// <summary>
         /// The persistent information between run for multi-application capabilities.
@@ -51,93 +51,93 @@ namespace Ryujinx.HLE
         /// The GPU renderer to use for all GPU operations.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly IRenderer GpuRenderer;
+        public readonly IRenderer GpuRenderer;
 
         /// <summary>
         /// The audio device driver to use for all audio operations.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly IHardwareDeviceDriver AudioDeviceDriver;
+        public readonly IHardwareDeviceDriver AudioDeviceDriver;
 
         /// <summary>
         /// The handler for various UI related operations needed outside of HLE.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly IHostUIHandler HostUIHandler;
+        public readonly IHostUIHandler HostUIHandler;
 
         /// <summary>
         /// Control the memory configuration used by the emulation context.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly MemoryConfiguration MemoryConfiguration;
+        public readonly MemoryConfiguration MemoryConfiguration;
 
         /// <summary>
         /// The system language to use in the settings service.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly SystemLanguage SystemLanguage;
+        public readonly SystemLanguage SystemLanguage;
 
         /// <summary>
         /// The system region to use in the settings service.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly RegionCode Region;
+        public readonly RegionCode Region;
 
         /// <summary>
         /// Control the initial state of the vertical sync in the SurfaceFlinger service.
         /// </summary>
-        internal readonly bool EnableVsync;
+        public readonly bool EnableVsync;
 
         /// <summary>
         /// Control the initial state of the docked mode.
         /// </summary>
-        internal readonly bool EnableDockedMode;
+        public readonly bool EnableDockedMode;
 
         /// <summary>
         /// Control if the Profiled Translation Cache (PTC) should be used.
         /// </summary>
-        internal readonly bool EnablePtc;
+        public readonly bool EnablePtc;
 
         /// <summary>
         /// Control if the guest application should be told that there is a Internet connection available.
         /// </summary>
-        public bool EnableInternetAccess { internal get; set; }
+        public bool EnableInternetAccess;
 
         /// <summary>
         /// Control LibHac's integrity check level.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly IntegrityCheckLevel FsIntegrityCheckLevel;
+        public readonly IntegrityCheckLevel FsIntegrityCheckLevel;
 
         /// <summary>
         /// Control LibHac's global access logging level. Value must be between 0 and 3.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly int FsGlobalAccessLogMode;
+        public readonly int FsGlobalAccessLogMode;
 
         /// <summary>
         /// The system time offset to apply to the time service steady and local clocks.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly long SystemTimeOffset;
+        public readonly long SystemTimeOffset;
 
         /// <summary>
         /// The system timezone used by the time service.
         /// </summary>
         /// <remarks>This cannot be changed after <see cref="Switch"/> instantiation.</remarks>
-        internal readonly string TimeZone;
+        public readonly string TimeZone;
 
         /// <summary>
         /// Type of the memory manager used on CPU emulation.
         /// </summary>
-        public MemoryManagerMode MemoryManagerMode { internal get; set; }
+        public MemoryManagerMode MemoryManagerMode { get; set; }
 
         /// <summary>
         /// Control the initial state of the ignore missing services setting.
         /// If this is set to true, when a missing service is encountered, it will try to automatically handle it instead of throwing an exception.
         /// </summary>
         /// TODO: Update this again.
-        public bool IgnoreMissingServices { internal get; set; }
+        public bool IgnoreMissingServices { get; set; }
 
         /// <summary>
         /// Aspect Ratio applied to the renderer window by the SurfaceFlinger service.
@@ -152,22 +152,22 @@ namespace Ryujinx.HLE
         /// <summary>
         /// Use Hypervisor over JIT if available.
         /// </summary>
-        internal readonly bool UseHypervisor;
+        public readonly bool UseHypervisor;
 
         /// <summary>
         /// Multiplayer LAN Interface ID (device GUID)
         /// </summary>
-        public string MultiplayerLanInterfaceId { internal get; set; }
+        public string MultiplayerLanInterfaceId { get; set; }
 
         /// <summary>
         /// Multiplayer Mode
         /// </summary>
-        public MultiplayerMode MultiplayerMode { internal get; set; }
+        public MultiplayerMode MultiplayerMode { get; set; }
 
         /// <summary>
         /// An action called when HLE force a refresh of output after docked mode changed.
         /// </summary>
-        public Action RefreshInputConfig { internal get; set; }
+        public Action RefreshInputConfig { get; set; }
 
         public HLEConfiguration(VirtualFileSystem virtualFileSystem,
                                 LibHacHorizonManager libHacHorizonManager,

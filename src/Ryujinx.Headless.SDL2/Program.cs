@@ -396,7 +396,7 @@ namespace Ryujinx.Headless.SDL2
         [UnmanagedCallersOnly(EntryPoint = "pause_emulation")]
         public static void PauseEmulation(bool shouldPause)
         {
-            if (_window != null)
+            if (_window != null && _window.Device != null)
             {
                 if (!shouldPause) 
                 {
@@ -1720,6 +1720,138 @@ namespace Ryujinx.Headless.SDL2
             var span = new Span<byte>(destination, length);
             span.Clear();
             Encoding.UTF8.GetBytes(source, span);
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "update_settings_external")]
+        public static unsafe int UpdateSettingsExternal(int argCount, IntPtr* pArgs)
+        {
+            string[] args = new string[argCount];
+
+            try
+            {
+                for (int i = 0; i < argCount; i++)
+                {
+                    args[i] = Marshal.PtrToStringAnsi(pArgs[i]);
+                }
+
+                Options parsedOptions = null;
+                Parser.Default.ParseArguments<Options>(args)
+                    .WithParsed(opts => parsedOptions = opts);
+
+                if (parsedOptions == null)
+                {
+                    Console.WriteLine("Failed to parse options.");
+                    return -1;
+                }
+
+                ApplyDynamicSettings(parsedOptions);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return -1;
+            }
+
+            return 0;
+        }
+
+        private static void ApplyDynamicSettings(Options options)
+        {
+            Graphics.Gpu.GraphicsConfig.ResScale = options.ResScale;
+            Graphics.Gpu.GraphicsConfig.MaxAnisotropy = options.MaxAnisotropy;
+            Graphics.Gpu.GraphicsConfig.EnableShaderCache = !options.DisableShaderCache;
+            Graphics.Gpu.GraphicsConfig.EnableTextureRecompression = options.EnableTextureRecompression;
+            Graphics.Gpu.GraphicsConfig.EnableMacroHLE = !options.DisableMacroHLE;
+
+            if (_window != null)
+            {
+                _window.IsFullscreen = options.IsFullscreen;
+                _window.DisplayId = options.DisplayId;
+                _window.IsExclusiveFullscreen = options.IsExclusiveFullscreen;
+                _window.ExclusiveFullscreenWidth = options.ExclusiveFullscreenWidth;
+                _window.ExclusiveFullscreenHeight = options.ExclusiveFullscreenHeight;
+                _window.AntiAliasing = options.AntiAliasing;
+                _window.ScalingFilter = options.ScalingFilter;
+                _window.ScalingFilterLevel = options.ScalingFilterLevel;
+                _window._aspectRatio = options.AspectRatio;
+            }
+
+            if (_emulationContext != null)
+            {
+                _emulationContext.SetVolume(options.AudioVolume);
+
+                _emulationContext.System.State.SetLanguage(options.SystemLanguage);
+                _emulationContext.System.State.SetRegion(options.SystemRegion);
+                _emulationContext.EnableDeviceVsync = !options.DisableVSync;
+                _emulationContext.System.State.DockedMode = !options.DisableDockedMode;
+                _emulationContext.System.EnablePtc = !options.DisablePTC;
+                _emulationContext.System.FsIntegrityCheckLevel = !options.DisableFsIntegrityChecks ? IntegrityCheckLevel.ErrorOnInvalid : IntegrityCheckLevel.None;
+                _emulationContext.System.GlobalAccessLogMode = options.FsGlobalAccessLogMode;
+                _emulationContext.Configuration.IgnoreMissingServices = options.IgnoreMissingServices;
+                _emulationContext.Configuration.AspectRatio = options.AspectRatio;
+                _emulationContext.Configuration.EnableInternetAccess = options.EnableInternetAccess;
+                _emulationContext.Configuration.MemoryManagerMode = options.MemoryManagerMode;
+                _emulationContext.Configuration.MultiplayerLanInterfaceId = options.MultiplayerLanInterfaceId;
+            }
+
+            Logger.SetEnable(LogLevel.Debug, options.LoggingEnableDebug);
+            Logger.SetEnable(LogLevel.Stub, !options.LoggingDisableStub);
+            Logger.SetEnable(LogLevel.Info, !options.LoggingDisableInfo);
+            Logger.SetEnable(LogLevel.Warning, !options.LoggingDisableWarning);
+            Logger.SetEnable(LogLevel.Error, options.LoggingEnableError);
+            Logger.SetEnable(LogLevel.Trace, options.LoggingEnableTrace);
+            Logger.SetEnable(LogLevel.Guest, !options.LoggingDisableGuest);
+            Logger.SetEnable(LogLevel.AccessLog, options.LoggingEnableFsAccessLog);
+        }
+        
+
+        // Old :3
+        private static void ReplaceEmulationContextConfiguration(Switch emu, Options options)
+        {
+            var oldConfig = emu.Configuration;
+
+            var newConfig = new HLEConfiguration(
+                _virtualFileSystem,
+                _libHacHorizonManager,
+                _contentManager,
+                _accountManager,
+                _userChannelPersistence,
+                oldConfig.GpuRenderer,
+                oldConfig.AudioDeviceDriver,
+                oldConfig.MemoryConfiguration,
+                oldConfig.HostUIHandler,
+                options.SystemLanguage,
+                options.SystemRegion,
+                !options.DisableVSync,
+                !options.DisableDockedMode,
+                !options.DisablePTC,
+                options.EnableInternetAccess,
+                !options.DisableFsIntegrityChecks ? IntegrityCheckLevel.ErrorOnInvalid : IntegrityCheckLevel.None,
+                options.FsGlobalAccessLogMode,
+                options.SystemTimeOffset,
+                options.SystemTimeZone,
+                options.MemoryManagerMode,
+                options.IgnoreMissingServices,
+                options.AspectRatio,
+                options.AudioVolume,
+                options.UseHypervisor,
+                options.MultiplayerLanInterfaceId,
+                Ryujinx.Common.Configuration.Multiplayer.MultiplayerMode.LdnMitm
+            );
+
+            var configField = typeof(Switch).GetField("<Configuration>k__BackingField", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (configField != null)
+            {
+                configField.SetValue(emu, newConfig);
+            }
+
+            emu.System.State.SetLanguage(newConfig.SystemLanguage);
+            emu.System.State.SetRegion(newConfig.Region);
+            emu.EnableDeviceVsync = newConfig.EnableVsync;
+            emu.System.State.DockedMode = newConfig.EnableDockedMode;
+            emu.System.EnablePtc = newConfig.EnablePtc;
+            emu.System.FsIntegrityCheckLevel = newConfig.FsIntegrityCheckLevel;
+            emu.System.GlobalAccessLogMode = newConfig.FsGlobalAccessLogMode;
         }
     }
 }

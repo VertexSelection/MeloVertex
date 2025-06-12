@@ -4,6 +4,10 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>.DS_Store</key>
+		<data>
+		7Mfr8shT4pXWBr/plN+uNkIabdM=
+		</data>
 		<key>Headers/StosJIT-Swift.h</key>
 		<data>
 		h9vaTwhC6FlnyKmIkaxLQGlFd1g=
@@ -26,7 +30,7 @@
 		</data>
 		<key>Modules/StosJIT.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo</key>
 		<data>
-		2mJoWBgg56N+3OxKfIDMLZFNHVk=
+		nihJghwM5m7kxkQD7UvrWyHkLy8=
 		</data>
 		<key>Modules/StosJIT.swiftmodule/arm64-apple-ios.abi.json</key>
 		<data>
@@ -79,7 +83,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			sZBe57nozztJzv83RPLjKIRYGSQmeE7XYCqr63xZONM=
+			+Ehvco7cQbAaF7zufvBYTiGXFp37Hjym/Pav514sGPk=
 			</data>
 		</dict>
 		<key>Modules/StosJIT.swiftmodule/arm64-apple-ios.abi.json</key>

@@ -18,7 +18,7 @@ struct Joystick: View {
     @State private var offset: CGSize = .zero
     @Binding var showBackground: Bool
     
-    let sensitivity: CGFloat = 1.5
+    let sensitivity: CGFloat = 1.2
     
 
     var dragGesture: some Gesture {

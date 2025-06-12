@@ -186,20 +186,18 @@ namespace Ryujinx.Graphics.Vulkan
                 return sets;
             }
 
-            DescriptorSetTemplate template = program.Templates[setIndex];
-
-            DescriptorSetTemplateWriter tu = templateUpdater.Begin(template);
+            var dsc = program.GetNewDescriptorSetCollection(setIndex, out var isNew).Get(cbs);
 
             if (!_isBuffer)
             {
-                tu.Push(GetImageInfos(_gd, cbs, dummyTexture));
+                dsc.UpdateImages(0, 0, GetImageInfos(_gd, cbs, dummyTexture), DescriptorType.StorageImage);
             }
             else
             {
-                tu.Push(GetBufferViews(cbs));
+                dsc.UpdateBufferImages(0, 0, GetBufferViews(cbs), DescriptorType.StorageTexelBuffer);
             }
 
-            templateUpdater.Commit(_gd, device, sets[0]);
+            sets = dsc.GetSets();
 
             return sets;
         }

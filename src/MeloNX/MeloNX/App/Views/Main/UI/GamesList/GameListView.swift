@@ -26,6 +26,15 @@ struct GameLibraryView: View {
     @State var startgame = false
     @State var isSelectingGameFile = false
     @State var isViewingGameInfo: Bool = false
+    @State var gamePerGameSettings: Game?
+    var isShowingPerGameSettings: Binding<Bool> {
+        Binding<Bool> {
+            gamePerGameSettings != nil
+        } set: { value in
+            !value ? gamePerGameSettings = nil : ()
+        }
+
+    }
     @State var isSelectingGameUpdate: Bool = false
     @State var isSelectingGameDLC: Bool = false
     @StateObject var ryujinx = Ryujinx.shared
@@ -201,6 +210,9 @@ struct GameLibraryView: View {
             .sheet(isPresented: $isSelectingGameDLC) {
                 DLCManagerSheet(game: $gameInfo)
             }
+            .sheet(isPresented: isShowingPerGameSettings) {
+                PerGameSettingsView(titleId: gamePerGameSettings!.titleId)
+            }
             .sheet(isPresented: Binding(
                 get: { isViewingGameInfo && gameInfo != nil },
                 set: { newValue in
@@ -271,7 +283,8 @@ struct GameLibraryView: View {
                                     isSelectingGameUpdate: $isSelectingGameUpdate,
                                     isSelectingGameDLC: $isSelectingGameDLC,
                                     gameRequirements: $gameRequirements,
-                                    gameInfo: $gameInfo
+                                    gameInfo: $gameInfo,
+                                    perGameSettings: $gamePerGameSettings
                                 )
                                 .padding(.horizontal)
                                 .padding(.vertical, 8)
@@ -288,7 +301,8 @@ struct GameLibraryView: View {
                             isSelectingGameUpdate: $isSelectingGameUpdate,
                             isSelectingGameDLC: $isSelectingGameDLC,
                             gameRequirements: $gameRequirements,
-                            gameInfo: $gameInfo
+                            gameInfo: $gameInfo,
+                            perGameSettings: $gamePerGameSettings
                         )
                         .padding(.horizontal)
                         .padding(.vertical, 8)
@@ -482,6 +496,12 @@ struct GameLibraryView: View {
                 } label: {
                     Label("Game Info", systemImage: "info.circle")
                 }
+                
+                Button {
+                    gamePerGameSettings = game
+                } label: {
+                    Label("\(game.titleName) Settings", systemImage: "gear")
+                }
             }
 
             Section {
@@ -501,6 +521,12 @@ struct GameLibraryView: View {
             }
 
             Section {
+                Button(role: .destructive) {
+                    removeFromRecentGames(game)
+                } label: {
+                    Label("Remove from Recents", systemImage: "trash")
+                }
+                
                 if #available(iOS 15, *) {
                     Button(role: .destructive) {
                         deleteGame(game: game)
@@ -771,6 +797,8 @@ struct GameListRow: View {
     @Binding var isSelectingGameDLC: Bool
     @Binding var gameRequirements: [GameRequirements]
     @Binding var gameInfo: Game?
+    @StateObject private var settingsManager = PerGameSettingsManager.shared
+    @Binding var perGameSettings: Game?
     @State var gametoDelete: Game?
     @State var showGameDeleteConfirmation: Bool = false
     @Environment(\.colorScheme) var colorScheme
@@ -826,6 +854,14 @@ struct GameListRow: View {
                                     .foregroundColor(.secondary)
                             }
                         }
+                    }
+                    
+                    if $settingsManager.config.wrappedValue.contains(where: { $0.key == game.titleId }) {
+                        Image(systemName: "gearshape.circle")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .foregroundStyle(.blue)
+                            .frame(width: 20, height: 20)
                     }
                     
                     Spacer()
@@ -897,6 +933,12 @@ struct GameListRow: View {
                     } label: {
                         Label("Game Info", systemImage: "info.circle")
                     }
+                    
+                    Button {
+                        perGameSettings = game
+                    } label: {
+                        Label("\(game.titleName) Settings", systemImage: "gear")
+                    }
                 }
                 
                 Section {
@@ -959,10 +1001,7 @@ struct GameListRow: View {
                 Text("Are you sure you want to delete \(gametoDelete?.titleName ?? "this game")?")
             }
             .listRowInsets(EdgeInsets())
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6).opacity(0.5))
-            )
+            .wow(colorScheme)
         } else {
             Button(action: {
                 startemu = game
@@ -1195,4 +1234,21 @@ func pullGameCompatibility(completion: @escaping (Result<[GameRequirements], Err
     }
 
     task.resume()
+}
+
+extension View {
+    func wow(_ colorScheme: ColorScheme) -> some View {
+        if #available(iOS 26.0, *) {
+            return self
+                .glassEffect(Glass.regular, in:
+                                RoundedRectangle(cornerRadius: 12)
+                )
+        } else {
+            return self
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6).opacity(0.5))
+                )
+        }
+    }
 }
