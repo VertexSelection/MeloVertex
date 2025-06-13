@@ -1129,9 +1129,6 @@ struct SettingsViewNew: View {
                     
                     Divider()
                     
-                    SettingsToggle(isOn: config.backendMultithreading, icon: "inset.filled.rectangle.and.person.filled", label: "Backend Multithreading")
-                    
-                    Divider()
                     
                     if MTLHud.shared.canMetalHud {
                         SettingsToggle(isOn: $metalHudEnabler.metalHudEnabled, icon: "speedometer", label: "Metal Performance HUD")

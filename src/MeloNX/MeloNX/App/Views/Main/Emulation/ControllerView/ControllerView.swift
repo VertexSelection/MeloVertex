@@ -264,7 +264,6 @@ struct ABXYView: View {
 
 struct ButtonView: View {
     var button: VirtualControllerButton
-    var callback: (() -> Void)? = nil
     
     @AppStorage("onscreenhandheld") var onscreenjoy: Bool = false
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
@@ -345,29 +344,23 @@ struct ButtonView: View {
     }
     
     private func handleButtonPress() {
-        if let callback {
-            callback()
+        guard !isPressed || istoggle else { return }
+
+        if istoggle {
+            toggleState.toggle()
+            isPressed = toggleState
+            let value = toggleState ? 1 : 0
+            Ryujinx.shared.virtualController.setButtonState(Uint8(value), for: button)
+            Haptics.shared.play(.medium)
         } else {
-            guard !isPressed || istoggle else { return }
-            
-            if istoggle {
-                toggleState.toggle()
-                isPressed = toggleState
-                let value = toggleState ? 1 : 0
-                Ryujinx.shared.virtualController.setButtonState(Uint8(value), for: button)
-                Haptics.shared.play(.medium)
-            } else {
-                isPressed = true
-                Ryujinx.shared.virtualController.setButtonState(1, for: button)
-                Haptics.shared.play(.medium)
-            }
+            isPressed = true
+            Ryujinx.shared.virtualController.setButtonState(1, for: button)
+            Haptics.shared.play(.medium)
         }
     }
     
     private func handleButtonRelease() {
         if istoggle { return }
-        
-        if let callback { return }
 
         guard isPressed else { return }
 
@@ -404,23 +397,40 @@ struct ButtonView: View {
     // Centralized button configuration
     private var buttonConfig: ButtonConfiguration {
         switch button {
-        case .A: return .init(iconName: "a.circle.fill")
-        case .B: return .init(iconName: "b.circle.fill")
-        case .X: return .init(iconName: "x.circle.fill")
-        case .Y: return .init(iconName: "y.circle.fill")
-        case .leftStick: return .init(iconName: "l.joystick.press.down.fill")
-        case .rightStick: return .init(iconName: "r.joystick.press.down.fill")
-        case .dPadUp: return .init(iconName: "arrowtriangle.up.circle.fill")
-        case .dPadDown: return .init(iconName: "arrowtriangle.down.circle.fill")
-        case .dPadLeft: return .init(iconName: "arrowtriangle.left.circle.fill")
-        case .dPadRight: return .init(iconName: "arrowtriangle.right.circle.fill")
-        case .leftTrigger: return .init(iconName: "zl.rectangle.roundedtop.fill")
-        case .rightTrigger: return .init(iconName: "zr.rectangle.roundedtop.fill")
-        case .leftShoulder: return .init(iconName: "l.rectangle.roundedbottom.fill")
-        case .rightShoulder: return .init(iconName: "r.rectangle.roundedbottom.fill")
-        case .start: return .init(iconName: "plus.circle.fill")
-        case .back: return .init(iconName: "minus.circle.fill")
-        case .guide: return .init(iconName: "gearshape.fill")
+        case .A:
+            return ButtonConfiguration(iconName: "a.circle.fill")
+        case .B:
+            return ButtonConfiguration(iconName: "b.circle.fill")
+        case .X:
+            return ButtonConfiguration(iconName: "x.circle.fill")
+        case .Y:
+            return ButtonConfiguration(iconName: "y.circle.fill")
+        case .leftStick:
+            return ButtonConfiguration(iconName: "l.joystick.press.down.fill")
+        case .rightStick:
+            return ButtonConfiguration(iconName: "r.joystick.press.down.fill")
+        case .dPadUp:
+            return ButtonConfiguration(iconName: "arrowtriangle.up.circle.fill")
+        case .dPadDown:
+            return ButtonConfiguration(iconName: "arrowtriangle.down.circle.fill")
+        case .dPadLeft:
+            return ButtonConfiguration(iconName: "arrowtriangle.left.circle.fill")
+        case .dPadRight:
+            return ButtonConfiguration(iconName: "arrowtriangle.right.circle.fill")
+        case .leftTrigger:
+            return ButtonConfiguration(iconName: "zl.rectangle.roundedtop.fill")
+        case .rightTrigger:
+            return ButtonConfiguration(iconName: "zr.rectangle.roundedtop.fill")
+        case .leftShoulder:
+            return ButtonConfiguration(iconName: "l.rectangle.roundedbottom.fill")
+        case .rightShoulder:
+            return ButtonConfiguration(iconName: "r.rectangle.roundedbottom.fill")
+        case .start:
+            return ButtonConfiguration(iconName: "plus.circle.fill")
+        case .back:
+            return ButtonConfiguration(iconName: "minus.circle.fill")
+        case .guide:
+            return ButtonConfiguration(iconName: "house.circle.fill")
         }
     }
     
