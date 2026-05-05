@@ -4,9 +4,9 @@
       <img src="https://git.ryujinx.app/melonx/emu/-/raw/XC-ios-ht/src/MeloNX/MeloNX/Assets/Assets.xcassets/AppIcon.appiconset/nxgradientpng.png?ref_type=heads" alt="MeloNX Logo" width="120">
     </a>
   </p>
-  <h1 align="center">MeloNX</h1>
+  <h1 align="center">MeloVertex (MeloNX Fork)</h1>
   <p align="center">
-    MeloNX enables Nintendo Switch game emulation on iOS using Ryujinx as a base.
+    This fork fixes the keyboard and a hang bug in initial setup.
   </p>
   <p align="center">
     MeloNX is an iOS Nintendo Switch emulator based on Ryujinx, written primarily in C# and Swift. Designed to bring accurate performance and a user-friendly interface to iOS, MeloNX makes Switch games accessible on Apple devices.
@@ -31,6 +31,11 @@ Once you have hacked your Switch, backed up your keys and dumped your firmware, 
 [Keys](https://git.ryujinx.app/ryubing/ryujinx/-/wikis/Dumping/Keys)<br>
 [Games, Updates and DLC](https://git.ryujinx.app/ryubing/ryujinx/-/wikis/Dumping/Games,-Updates-&-DLC)<br>
 [Firmware](https://git.ryujinx.app/ryubing/ryujinx/-/wikis/Dumping/Firmware)
+
+# Important!
+- If the game is crashing, turn on Ignore Missing Services in Advanced Settings.
+- Don't forget to attach a script in StikDebug to MeloVertex to get JIT support.
+- This fork has different bundle ID than the original MeloNX so that it doesn't replace your existing MeloNX install. I made this fork so that you can use this fork until MeloNX Team actually fixes the original app.
 
 # Info
 - A Paid Developer account or [TrollStore](https://github.com/opa334/TrollStore) may be needed for specific devices (Read about Entitlements below)
@@ -220,6 +225,7 @@ This project makes use of code authored by the libvpx project, licensed under BS
 See [LICENSE.txt](LICENSE.txt) and [THIRDPARTY.md](distribution/legal/THIRDPARTY.md) for more details.
 
 # Credits
+- [MeloNX Team](https://git.ryujinx.app/projects/MeloNX) for MeloNX (love this emulatorbtw!)
 - [Ryujinx](https://git.ryujinx.app/ryubing/ryujinx) the base of MeloNX (Thank you Ryubing!)
 - [LibHac](https://github.com/Thealexbarney/LibHac) is used for our file-system.
 - [AmiiboAPI](https://www.amiiboapi.com) is used in our Amiibo emulation.
