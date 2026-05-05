@@ -14,6 +14,12 @@
   </p>
 </body>
 
+# Important!
+
+- If the game is crashing, turn on Ignore Missing Services in Advanced Settings.
+- Don't forget to attach a script in StikDebug to MeloVertex to get JIT support.
+- This fork has different bundle ID than the original MeloNX so that it doesn't replace your existing MeloNX install. I made this fork so that you can use this fork until MeloNX Team actually fixes the original app.
+
 # FAQ
 
 #### **Where's the prod.keys file?/Where can I download \[game]?**
@@ -32,10 +38,7 @@ Once you have hacked your Switch, backed up your keys and dumped your firmware, 
 [Games, Updates and DLC](https://git.ryujinx.app/ryubing/ryujinx/-/wikis/Dumping/Games,-Updates-&-DLC)<br>
 [Firmware](https://git.ryujinx.app/ryubing/ryujinx/-/wikis/Dumping/Firmware)
 
-# Important!
-- If the game is crashing, turn on Ignore Missing Services in Advanced Settings.
-- Don't forget to attach a script in StikDebug to MeloVertex to get JIT support.
-- This fork has different bundle ID than the original MeloNX so that it doesn't replace your existing MeloNX install. I made this fork so that you can use this fork until MeloNX Team actually fixes the original app.
+
 
 # Info
 - A Paid Developer account or [TrollStore](https://github.com/opa334/TrollStore) may be needed for specific devices (Read about Entitlements below)
