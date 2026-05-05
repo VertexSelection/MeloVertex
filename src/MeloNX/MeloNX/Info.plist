@@ -8,7 +8,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.stossy11.MeloNX</string>
+			<string>com.vertexselection.MeloVertex</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>melonx</string>
@@ -18,7 +18,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.stossy11.MeloNX-code</string>
+			<string>com.vertexselection.MeloVertex-code</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>atariemulator</string>

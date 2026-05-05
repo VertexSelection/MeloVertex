@@ -148,7 +148,7 @@ struct SetupView: View {
                                     }
                                 }
                             
-                            Text("Welcome to MeloNX")
+                            Text("Welcome to MeloVertex")
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
@@ -186,7 +186,7 @@ struct SetupView: View {
                     VStack(spacing: 20) {
                         setupStep(
                             title: "Import Keys",
-                            description: "Add your encryption keys",
+                            description: "Add your encryption keys\n(prod.keys, title.keys)",
                             systemImage: "key.fill",
                             isCompleted: keysImported,
                             action: { isImportingKeys = true }
@@ -194,7 +194,7 @@ struct SetupView: View {
                         
                         setupStep(
                             title: "Add Firmware",
-                            description: "Install Nintendo Switch firmware",
+                            description: "Install Nintendo Switch firmware\n(firmware.zip)",
                             systemImage: "square.and.arrow.down",
                             isCompleted: firmImported,
                             isEnabled: keysImported,
@@ -285,7 +285,7 @@ struct SetupView: View {
                                 }
                             }
                         
-                        Text("Welcome to MeloNX")
+                        Text("Welcome to MeloVertex!")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
@@ -304,7 +304,7 @@ struct SetupView: View {
                         
                         setupStep(
                             title: "Import Keys",
-                            description: "Add your encryption keys",
+                            description: "Add your encryption keys\n(prod.keys, title.keys)",
                             systemImage: "key.fill",
                             isCompleted: keysImported,
                             action: { isImportingKeys = true }
@@ -312,7 +312,7 @@ struct SetupView: View {
                         
                         setupStep(
                             title: "Add Firmware",
-                            description: "Install Nintendo Switch firmware",
+                            description: "Install Nintendo Switch firmware\n(firmware.zip)",
                             systemImage: "square.and.arrow.down",
                             isCompleted: firmImported,
                             isEnabled: keysImported,
@@ -326,7 +326,7 @@ struct SetupView: View {
                 VStack {
                     Button(action: { isInSetup = false }) {
                         HStack {
-                            Text("Finish Setup")
+                            Text("Let's Go!")
                                 .fontWeight(.semibold)
                         }
                         .frame(maxWidth: .infinity)
@@ -357,17 +357,21 @@ struct SetupView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack {
+            HStack(alignment: .top) {
                 Image(systemName: systemImage)
                     .foregroundColor(isCompleted ? .green : .blue)
                     .imageScale(.large)
+                    .padding(.top, 4)
                 
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.headline)
+                        .multilineTextAlignment(.leading)
                     Text(description)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 Spacer()
@@ -375,6 +379,7 @@ struct SetupView: View {
                 if isCompleted {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
+                        .padding(.top, 4)
                 }
             }
             .padding()
