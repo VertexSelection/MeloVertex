@@ -658,7 +658,7 @@
   "Never": "Never",
   "SwkbdMinCharacters": "Must be at least {0} characters long",
   "SwkbdMinRangeCharacters": "Must be {0}-{1} characters long",
-  "SoftwareKeyboard": "Software Keyboard",
+  "SoftwareKeyboard": "MeloVertex Keyboard",
   "SoftwareKeyboardModeNumeric": "Must be 0-9 or '.' only",
   "SoftwareKeyboardModeAlphabet": "Must be non CJK-characters only",
   "SoftwareKeyboardModeASCII": "Must be ASCII text only",

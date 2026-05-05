@@ -1,15 +1,23 @@
 using Ryujinx.HLE.UI;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ryujinx.Headless.SDL2
 {
     /// <summary>
-    /// Headless text processing class, right now there is no way to forward the input to it.
+    /// Headless text processing class.
+    /// On iOS this bridges inline keyboard requests to the native alert text input.
     /// </summary>
     internal class HeadlessDynamicTextInputHandler : IDynamicTextInputHandler
     {
+        private const string IosKeyboardTitle = "MeloVertex Keyboard";
+
         private bool _canProcessInput;
+        private bool _iosPromptPending;
+        private int _iosPromptToken;
+        private string _text = string.Empty;
+        private readonly object _iosPromptLock = new();
 
         public event DynamicTextChangedHandler TextChangedEvent;
         public event KeyPressedHandler KeyPressedEvent { add { } remove { } }
@@ -24,14 +32,42 @@ namespace Ryujinx.Headless.SDL2
 
             set
             {
+                bool wasEnabled = Volatile.Read(ref _canProcessInput);
                 Volatile.Write(ref _canProcessInput, value);
 
-                // Launch a task to update the text.
-                Task.Run(() =>
+                if (!value)
                 {
-                    Thread.Sleep(100);
-                    TextChangedEvent?.Invoke("MeloNX", 7, 7, false);
-                });
+                    lock (_iosPromptLock)
+                    {
+                        _iosPromptPending = false;
+                        _iosPromptToken++;
+                    }
+
+                    return;
+                }
+
+                if (wasEnabled)
+                {
+                    return;
+                }
+
+                if (OperatingSystem.IsIOS())
+                {
+                    ShowIosKeyboardPrompt();
+                }
+                else
+                {
+                    // Keep the old fallback for non-iOS headless environments.
+                    Task.Run(() =>
+                    {
+                        Thread.Sleep(100);
+
+                        if (Volatile.Read(ref _canProcessInput))
+                        {
+                            TextChangedEvent?.Invoke("MeloNX", 7, 7, false);
+                        }
+                    });
+                }
             }
         }
 
@@ -42,9 +78,62 @@ namespace Ryujinx.Headless.SDL2
             _canProcessInput = false;
         }
 
-        public void SetText(string text, int cursorBegin) { }
+        public void SetText(string text, int cursorBegin)
+        {
+            lock (_iosPromptLock)
+            {
+                _text = text ?? string.Empty;
+            }
+        }
 
-        public void SetText(string text, int cursorBegin, int cursorEnd) { }
+        public void SetText(string text, int cursorBegin, int cursorEnd)
+        {
+            lock (_iosPromptLock)
+            {
+                _text = text ?? string.Empty;
+            }
+        }
+
+        private void ShowIosKeyboardPrompt()
+        {
+            int promptToken;
+            string placeholder;
+
+            lock (_iosPromptLock)
+            {
+                if (_iosPromptPending)
+                {
+                    return;
+                }
+
+                _iosPromptPending = true;
+                promptToken = ++_iosPromptToken;
+                placeholder = _text;
+            }
+
+            AlertHelper.ShowAlertWithTextInput(IosKeyboardTitle, string.Empty, placeholder, inputText =>
+            {
+                string text = inputText ?? string.Empty;
+
+                bool shouldPublish;
+
+                lock (_iosPromptLock)
+                {
+                    shouldPublish = _iosPromptPending && promptToken == _iosPromptToken;
+                    _iosPromptPending = false;
+
+                    if (shouldPublish)
+                    {
+                        _text = text;
+                    }
+                }
+
+                if (shouldPublish && Volatile.Read(ref _canProcessInput))
+                {
+                    TextChangedEvent?.Invoke(text, text.Length, text.Length, false);
+                }
+            });
+        }
 
         public void Dispose() { }
     }

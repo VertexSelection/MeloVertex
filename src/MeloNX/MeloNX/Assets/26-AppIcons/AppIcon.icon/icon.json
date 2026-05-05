@@ -28,7 +28,7 @@
           "fill-specializations" : [
             {
               "value" : {
-                "solid" : "display-p3:0.03922,0.10588,0.13725,1.00000"
+                "solid" : "srgb:0.14069,0.11398,0.00000,1.00000"
               }
             },
             {
@@ -38,13 +38,14 @@
               }
             }
           ],
+          "glass" : true,
           "image-name" : "Star.svg",
           "name" : "Calyx",
           "position" : {
             "scale" : 1,
             "translation-in-points" : [
-              -225,
-              0
+              -230.87409999994225,
+              -0.29197217549813104
             ]
           }
         },
@@ -100,8 +101,8 @@
             {
               "value" : {
                 "linear-gradient" : [
-                  "display-p3:0.12055,0.31871,0.56008,1.00000",
-                  "display-p3:0.35738,0.75653,0.86881,1.00000"
+                  "srgb:0.65629,0.32635,0.00000,1.00000",
+                  "srgb:0.88320,0.61358,0.30419,1.00000"
                 ]
               }
             },
@@ -112,6 +113,7 @@
               }
             }
           ],
+          "hidden" : false,
           "image-name" : "Left Joy Con Rectangle.svg",
           "name" : "Left Joy Con Rectangle",
           "position" : {
@@ -189,9 +191,19 @@
             {
               "value" : {
                 "linear-gradient" : [
-                  "display-p3:0.33359,0.20918,0.36330,1.00000",
-                  "display-p3:0.23686,0.07638,0.27392,1.00000"
-                ]
+                  "srgb:0.66623,0.66259,0.66468,1.00000",
+                  "srgb:0.91244,1.00000,0.91421,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  },
+                  "stop" : {
+                    "x" : 0.5000000000000001,
+                    "y" : 1
+                  }
+                }
               }
             },
             {
@@ -201,6 +213,7 @@
               }
             }
           ],
+          "hidden" : false,
           "image-name" : "Left Joy Con Outline.svg",
           "name" : "Left Joy Con Outline",
           "position" : {
@@ -216,8 +229,8 @@
             {
               "value" : {
                 "linear-gradient" : [
-                  "display-p3:0.24898,0.35432,0.21898,1.00000",
-                  "display-p3:0.14026,0.30103,0.09711,1.00000"
+                  "srgb:0.63131,0.63007,0.62450,1.00000",
+                  "srgb:1.00000,0.99728,0.95169,1.00000"
                 ]
               }
             },
@@ -286,8 +299,8 @@
         {
           "fill" : {
             "linear-gradient" : [
-              "display-p3:0.36084,0.30591,0.81592,1.00000",
-              "display-p3:0.63525,0.21179,0.20789,1.00000"
+              "srgb:0.84618,0.47418,0.21198,1.00000",
+              "srgb:0.69025,0.24433,0.20834,1.00000"
             ],
             "orientation" : {
               "start" : {

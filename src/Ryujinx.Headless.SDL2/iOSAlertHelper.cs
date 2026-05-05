@@ -21,7 +21,8 @@ namespace Ryujinx.Headless.SDL2
 
         public static void ShowAlertWithTextInput(string title, string message, string placeholder, Action<string> onTextEntered)
         {
-            showKeyboardAlert(title, message, placeholder);
+            clearKeyboardInput();
+            showKeyboardAlert(title ?? string.Empty, message ?? string.Empty, placeholder ?? string.Empty);
 
             ThreadPool.QueueUserWorkItem(_ =>
             {
