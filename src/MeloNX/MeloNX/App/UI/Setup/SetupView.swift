@@ -9,16 +9,27 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SetupView: View {
+    private struct SetupErrorMessage: Identifiable {
+        let id = UUID()
+        let title: String
+        let message: String
+    }
+    
     @State private var isImportingKeys = false
     @State private var isImportingFirmware = false
-    @State private var showAlert = false
+    @State private var isInstallingFirmware = false
+    @State private var activeErrorMessage: SetupErrorMessage?
     @State private var showSkipAlert = false
-    @State private var alertMessage = ""
     @State private var keysImported = false
     @State private var firmImported = false
+    @State private var stagedFirmwareInstallURL: URL?
     @State private var showMainSetup = false
     @AppStorage("skippedSetup") var skippedSetup: Bool = false
     @Binding var isInSetup: Bool
+    
+    private var canFinishSetup: Bool {
+        keysImported && firmImported && !isInstallingFirmware
+    }
     
     let cool: LocalizedStringKey = "MeloNX has issues with Certificates and should not be used. Official Install Guides is [here](https://melonx.org)"
     
@@ -51,8 +62,8 @@ struct SetupView: View {
                 }
             }
         }
-        .alert(isPresented: $showAlert) {
-            Alert(title: Text(alertMessage), dismissButton: .default(Text("OK")))
+        .sheet(item: $activeErrorMessage) { modal in
+            setupErrorModalView(for: modal)
         }
         .alert(isPresented: $showSkipAlert) {
             Alert(
@@ -85,10 +96,7 @@ struct SetupView: View {
         .onAppear {
             RyujinxBridge.initialize()
             isInSetup = true
-            keysImported = Ryujinx.shared.checkIfKeysImported()
-            
-            let firmware = Ryujinx.shared.fetchFirmwareVersion()
-            firmImported = (firmware == "" ? "0" : firmware) != "0"
+            refreshSetupStatus()
         }
     }
     
@@ -197,11 +205,20 @@ struct SetupView: View {
                             description: "Install Nintendo Switch firmware\n(firmware.zip)",
                             systemImage: "square.and.arrow.down",
                             isCompleted: firmImported,
-                            isEnabled: keysImported,
+                            isEnabled: keysImported && !isInstallingFirmware,
                             action: { isImportingFirmware = true }
                         )
                         
-                        Button(action: { isInSetup = false }) {
+                        if isInstallingFirmware {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                Text("Installing firmware...")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        Button(action: attemptFinishSetup) {
                             HStack {
                                 Text("Finish Setup")
                                     .fontWeight(.semibold)
@@ -209,14 +226,14 @@ struct SetupView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(
-                                firmImported && keysImported
+                                canFinishSetup
                                     ? Color.blue
                                     : Color.blue.opacity(0.3)
                             )
                             .foregroundColor(.white)
                             .cornerRadius(12)
                         }
-                        .disabled(!(firmImported && keysImported))
+                        .disabled(!canFinishSetup)
                     }
                     .frame(maxWidth: 500)
                     .padding()
@@ -315,16 +332,25 @@ struct SetupView: View {
                             description: "Install Nintendo Switch firmware\n(firmware.zip)",
                             systemImage: "square.and.arrow.down",
                             isCompleted: firmImported,
-                            isEnabled: keysImported,
+                            isEnabled: keysImported && !isInstallingFirmware,
                             action: { isImportingFirmware = true }
                         )
+                        
+                        if isInstallingFirmware {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                Text("Installing firmware...")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                     }
                     .padding()
                 }
                 
                 // Finish Button
                 VStack {
-                    Button(action: { isInSetup = false }) {
+                    Button(action: attemptFinishSetup) {
                         HStack {
                             Text("Let's Go!")
                                 .fontWeight(.semibold)
@@ -332,14 +358,14 @@ struct SetupView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(
-                            firmImported && keysImported
+                            canFinishSetup
                                 ? Color.blue
                                 : Color.blue.opacity(0.3)
                         )
                         .foregroundColor(.white)
                         .cornerRadius(12)
                     }
-                    .disabled(!(firmImported && keysImported))
+                    .disabled(!canFinishSetup)
                     .padding()
                 }
             }
@@ -395,15 +421,13 @@ struct SetupView: View {
             let selectedFiles = try result.get()
             
             guard selectedFiles.count == 2 else {
-                alertMessage = "Please select exactly 2 key files"
-                showAlert = true
+                presentErrorModal("Please select exactly 2 key files")
                 return
             }
             
             for fileURL in selectedFiles {
                 guard fileURL.startAccessingSecurityScopedResource() else {
-                    alertMessage = "Permission denied to access file"
-                    showAlert = true
+                    presentErrorModal("Permission denied to access file")
                     return
                 }
                 
@@ -412,17 +436,17 @@ struct SetupView: View {
                 }
                 
                 let destinationURL = URL.documentsDirectory.appendingPathComponent("system").appendingPathComponent(fileURL.lastPathComponent)
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    try FileManager.default.removeItem(at: destinationURL)
+                }
                 
                 try FileManager.default.copyItem(at: fileURL, to: destinationURL)
             }
             
-            keysImported = Ryujinx.shared.checkIfKeysImported()
-            alertMessage = "Keys imported successfully"
-            showAlert = true
+            refreshSetupStatus()
             
         } catch {
-            alertMessage = "Error importing keys: \(error.localizedDescription)"
-            showAlert = true
+            presentErrorModal("Error importing keys: \(error.localizedDescription)")
         }
     }
     
@@ -431,14 +455,12 @@ struct SetupView: View {
             let selectedFiles = try result.get()
             
             guard let fileURL = selectedFiles.first else {
-                alertMessage = "No file selected"
-                showAlert = true
+                presentErrorModal("No file selected")
                 return
             }
             
             guard fileURL.startAccessingSecurityScopedResource() else {
-                alertMessage = "Permission denied to access file"
-                showAlert = true
+                presentErrorModal("Permission denied to access file")
                 return
             }
             
@@ -446,24 +468,146 @@ struct SetupView: View {
                 fileURL.stopAccessingSecurityScopedResource()
             }
             
-            
-            let (string, isErr) = RyujinxBridge.installFirmware(at: fileURL.path)
+            cleanupStagedFirmware()
+            let stagedURL = try stageFirmwareForInstallation(from: fileURL)
+            stagedFirmwareInstallURL = stagedURL
+            let (string, isErr) = RyujinxBridge.installFirmware(at: stagedURL.path)
             
             if isErr {
-                alertMessage = string
-                showAlert = true
-            } else {
-                Ryujinx.shared.firmwareversion = string
+                cleanupStagedFirmware()
+                presentErrorModal(string)
+                return
             }
-                
-            firmImported = (Ryujinx.shared.firmwareversion == "" ? "0" : Ryujinx.shared.firmwareversion) != "0"
-            alertMessage = "Firmware installed successfully"
-            showAlert = true
+
+            Ryujinx.shared.firmwareversion = string
+            isInstallingFirmware = true
+            
+            Task { @MainActor in
+                await waitForFirmwareInstallation()
+            }
             
         } catch {
-            alertMessage = "Error importing firmware: \(error.localizedDescription)"
-            showAlert = true
+            isInstallingFirmware = false
+            cleanupStagedFirmware()
+            presentErrorModal("Error importing firmware: \(error.localizedDescription)")
         }
+    }
+    
+    private func refreshSetupStatus() {
+        keysImported = Ryujinx.shared.checkIfKeysImported()
+        let firmware = Ryujinx.shared.fetchFirmwareVersion()
+        firmImported = (firmware == "" ? "0" : firmware) != "0"
+    }
+    
+    @MainActor
+    private func waitForFirmwareInstallation() async {
+        let timeoutSeconds = 1800.0
+        let pollIntervalNanoseconds: UInt64 = 500_000_000
+        let startTime = Date()
+        
+        while Date().timeIntervalSince(startTime) < timeoutSeconds {
+            refreshSetupStatus()
+            
+            if firmImported {
+                isInstallingFirmware = false
+                cleanupStagedFirmware()
+                return
+            }
+            
+            try? await Task.sleep(nanoseconds: pollIntervalNanoseconds)
+        }
+        
+        isInstallingFirmware = false
+        refreshSetupStatus()
+        
+        if !firmImported {
+            presentErrorModal("Firmware installation is taking longer than expected. Please keep MeloNX open and try again in a few minutes.")
+        }
+    }
+    
+    private func attemptFinishSetup() {
+        refreshSetupStatus()
+        
+        guard canFinishSetup else {
+            return
+        }
+        
+        isInSetup = false
+    }
+    
+    @ViewBuilder
+    private func setupErrorModalView(for modal: SetupErrorMessage) -> some View {
+        iOSNav {
+            VStack(spacing: 20) {
+                Text(modal.title)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .multilineTextAlignment(.center)
+                
+                ScrollView {
+                    Text(modal.message)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                
+                Button(action: { activeErrorMessage = nil }) {
+                    Text("OK")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+            }
+            .padding()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Close") {
+                        activeErrorMessage = nil
+                    }
+                }
+            }
+        }
+    }
+    
+    private func presentErrorModal(_ message: String) {
+        activeErrorMessage = SetupErrorMessage(
+            title: "Setup Error",
+            message: message
+        )
+    }
+    
+    private func stageFirmwareForInstallation(from sourceURL: URL) throws -> URL {
+        let fileManager = FileManager.default
+        let stagingRoot = URL.documentsDirectory.appendingPathComponent("setup-firmware-staging", isDirectory: true)
+        
+        if !fileManager.fileExists(atPath: stagingRoot.path) {
+            try fileManager.createDirectory(at: stagingRoot, withIntermediateDirectories: true)
+        }
+        
+        let stagingFolder = stagingRoot.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try fileManager.createDirectory(at: stagingFolder, withIntermediateDirectories: true)
+        
+        let stagedURL = stagingFolder.appendingPathComponent(sourceURL.lastPathComponent, isDirectory: sourceURL.hasDirectoryPath)
+        try fileManager.copyItem(at: sourceURL, to: stagedURL)
+        
+        return stagedURL
+    }
+    
+    private func cleanupStagedFirmware() {
+        guard let stagedURL = stagedFirmwareInstallURL else {
+            return
+        }
+        
+        let fileManager = FileManager.default
+        let stagingFolder = stagedURL.deletingLastPathComponent()
+        
+        if fileManager.fileExists(atPath: stagingFolder.path) {
+            try? fileManager.removeItem(at: stagingFolder)
+        }
+        
+        stagedFirmwareInstallURL = nil
     }
     
     func appIcon(in bundle: Bundle = .main) -> String {
