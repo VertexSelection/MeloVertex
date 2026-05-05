@@ -52,22 +52,72 @@ func checkifappinstalled(_ id: String) -> Bool {
     return result == 9
 } 
 
-func enableJITStik() {
+private func resolvedMeloNXBundleID() -> String? {
     let bundle = shouldAsCopy ? Bundle.main.swizzled_bundleIdentifier : Bundle.main.bundleIdentifier
-    var urlScheme: String = "stikjit://enable-jit"
-    
-    if #available(iOS 19.0, *), !ProcessInfo.processInfo.hasTXM {
-        let scriptdata = script.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        
-        urlScheme += isInLiveContainer.0 ? "?pid=\(getpid())&script-name=MeloNX" : ("?bundle-id=" + (bundle ?? Bundle.main.originalBundleID!))
-        
-        urlScheme += "&script-data=\(scriptdata)"
-    } else {
-        urlScheme += isInLiveContainer.0 ? "?pid=\(getpid())" : "?bundle-id=" + (bundle ?? Bundle.main.originalBundleID!)
+    return bundle ?? Bundle.main.originalBundleID
+}
+
+private func hasStikDebugAttachEntitlement() -> Bool {
+    checkAppEntitlement("get-task-allow") || checkAppEntitlement("dynamic-codesigning")
+}
+
+private func stikScriptDataURLSafe() -> String {
+    script
+        .replacingOccurrences(of: "+", with: "-")
+        .replacingOccurrences(of: "/", with: "_")
+        .replacingOccurrences(of: "=", with: "")
+}
+
+private func showStikDebugAttachWarning() {
+    guard let rootVC = AppDelegate.window?.rootViewController else { return }
+
+    let message = """
+    This build is missing the attach entitlement required by StikDebug.
+
+    StikDebug can only Launch this app when `get-task-allow` is not present.
+
+    Rebuild MeloVertex with the Debug entitlements profile that includes `get-task-allow`, then reinstall.
+    """
+
+    let alert = UIAlertController(title: "StikDebug JIT Unavailable", message: message, preferredStyle: .alert)
+    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    Task { @MainActor in
+        rootVC.present(alert, animated: true)
     }
-    
-    
-    if let launchURL = URL(string: urlScheme), !isJITEnabled() {
+}
+
+private func buildStikJitEnableURL() -> URL? {
+    guard let bundleID = resolvedMeloNXBundleID() else {
+        return nil
+    }
+
+    var components = URLComponents(string: "stikjit://enable-jit")
+    var items: [URLQueryItem] = []
+
+    if #available(iOS 19.0, *) {
+        // For iOS 26/TXM, including PID forces StikDebug into attach mode instead of launch-only.
+        // Keep bundle-id as metadata/fallback for tooling that still keys off identifiers.
+        items.append(URLQueryItem(name: "pid", value: String(getpid())))
+        items.append(URLQueryItem(name: "bundle-id", value: bundleID))
+        items.append(URLQueryItem(name: "script-name", value: "MeloNX"))
+        items.append(URLQueryItem(name: "script-data", value: stikScriptDataURLSafe()))
+    } else if isInLiveContainer.0 {
+        items.append(URLQueryItem(name: "pid", value: String(getpid())))
+    } else {
+        items.append(URLQueryItem(name: "bundle-id", value: bundleID))
+    }
+
+    components?.queryItems = items
+    return components?.url
+}
+
+func enableJITStik() {
+    guard hasStikDebugAttachEntitlement() else {
+        showStikDebugAttachWarning()
+        return
+    }
+
+    if let launchURL = buildStikJitEnableURL(), !isJITEnabled() {
         UIApplication.shared.open(launchURL, options: [:], completionHandler: nil)
     }
 }

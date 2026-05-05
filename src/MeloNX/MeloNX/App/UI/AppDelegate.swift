@@ -18,6 +18,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        // Start log capture as early as possible so crash diagnostics have context.
+        _ = LogCapture.shared
 
         let window = UIWindow(frame: UIScreen.main.bounds)
         // window.transform = CGAffineTransformMakeScale(0.5, 0.5);
@@ -40,4 +42,3 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return AppDelegate.orientationLock
     }
 }
-

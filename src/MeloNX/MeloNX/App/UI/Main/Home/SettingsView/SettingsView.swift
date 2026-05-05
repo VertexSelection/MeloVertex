@@ -968,18 +968,7 @@ struct SettingsViewNew: View {
                     .font(.system(.body, design: .monospaced))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                Divider()
             }
-            
-            HStack {
-                Text("In memoriam of 'Lily'")
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundColor(.secondary)
-                Image(systemName: "heart")
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundColor(.purple)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
     

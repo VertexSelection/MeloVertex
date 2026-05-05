@@ -167,20 +167,17 @@ class Ryujinx : ObservableObject {
                 Thread.sleep(forTimeInterval: 0.3)
                 let logs = LogCapture.shared.capturedLogs
                 let parsedLogs = extractExceptionInfo(logs)
+                let fallbackTail = logs.isEmpty ? ["No captured logs available."] : Array(logs.suffix(500))
                 if let parsedLogs {
                     Task { @MainActor in
-                        let result = Array(logs.suffix(from: parsedLogs.lineIndex))
+                        let extracted = Array(logs.suffix(from: parsedLogs.lineIndex))
+                        let persistedLogs = extracted.isEmpty ? fallbackTail : Array(extracted.suffix(800))
+                        let path = self.createStackTracePath()
+                        self.saveArrayAsTextFile(strings: persistedLogs, filePath: path)
+                        let fileName = URL(fileURLWithPath: path).lastPathComponent
+                        let message = "\(parsedLogs.exceptionType): \(parsedLogs.message)\n\nSaved log: \(fileName)"
                         
-                        let dateFormatter = DateFormatter()
-                        dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
-                        let currentDate = Date()
-                        let dateString = dateFormatter.string(from: currentDate)
-                        let path = URL.documentsDirectory.appendingPathComponent("StackTrace").appendingPathComponent("StackTrace-\(dateString).txt").path
-                        
-                        self.saveArrayAsTextFile(strings: result, filePath: path)
-                        
-                        
-                        presentAlert(title: "MeloNX Crashed!", message: parsedLogs.exceptionType + ": " + parsedLogs.message, imageName: "sad_mac") {
+                        presentAlert(title: "MeloNX Crashed!", message: message, imageName: "sad_mac") {
                             UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                 exit(0)
@@ -189,7 +186,12 @@ class Ryujinx : ObservableObject {
                     }
                 } else {
                     Task { @MainActor in
-                        presentAlert(title: "MeloNX Crashed!", message:  "Unknown Error", imageName: "sad_mac") {
+                        let path = self.createStackTracePath()
+                        self.saveArrayAsTextFile(strings: fallbackTail, filePath: path)
+                        let fileName = URL(fileURLWithPath: path).lastPathComponent
+                        let message = "Unknown Error\n\nSaved log: \(fileName)"
+                        
+                        presentAlert(title: "MeloNX Crashed!", message: message, imageName: "sad_mac") {
                             UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                 exit(0)
@@ -199,6 +201,13 @@ class Ryujinx : ObservableObject {
                 }
             }
         }
+    }
+    
+    func createStackTracePath() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+        let dateString = dateFormatter.string(from: Date())
+        return URL.documentsDirectory.appendingPathComponent("StackTrace").appendingPathComponent("StackTrace-\(dateString).txt").path
     }
     
     func saveArrayAsTextFile(strings: [String], filePath: String) {

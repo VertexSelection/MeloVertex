@@ -19,6 +19,10 @@ func isJITEnabled() -> Bool {
     LaunchGameHandler.succeededJIT = RyujinxBridge.initialize_dualmapped()
     
     if #available(iOS 19, *) {
+        if ProcessInfo.processInfo.hasTXM {
+            return LaunchGameHandler.succeededJIT
+        }
+
         return checkDebugged() && LaunchGameHandler.succeededJIT
     } else {
         return checkDebugged() && allocateTest()
@@ -96,4 +100,3 @@ public extension ProcessInfo {
         { if let boot = FileManager.default.filePath(atPath: "/System/Volumes/Preboot", withLength: 36), let file = FileManager.default.filePath(atPath: "\(boot)/boot", withLength: 96) { return access("\(file)/usr/standalone/firmware/FUD/Ap,TrustedExecutionMonitor.img4", F_OK) == 0 } else { return (FileManager.default.filePath(atPath: "/private/preboot", withLength: 96).map { access("\($0)/usr/standalone/firmware/FUD/Ap,TrustedExecutionMonitor.img4", F_OK) == 0 }) ?? false } }()
     }
 }
-
