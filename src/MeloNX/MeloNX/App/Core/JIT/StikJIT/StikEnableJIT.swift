@@ -53,8 +53,12 @@ func checkifappinstalled(_ id: String) -> Bool {
 } 
 
 private func resolvedMeloNXBundleID() -> String? {
+    // Use correct bundle ID for for StikDebug so that it opens MeloVertex (not MeloNX from swizzled bundle ID)
+    if let id = Bundle.main.originalBundleID {
+        return id
+    }
     let bundle = shouldAsCopy ? Bundle.main.swizzled_bundleIdentifier : Bundle.main.bundleIdentifier
-    return bundle ?? Bundle.main.originalBundleID
+    return bundle
 }
 
 private func hasStikDebugAttachEntitlement() -> Bool {
@@ -99,7 +103,7 @@ private func buildStikJitEnableURL() -> URL? {
         // Keep bundle-id as metadata/fallback for tooling that still keys off identifiers.
         items.append(URLQueryItem(name: "pid", value: String(getpid())))
         items.append(URLQueryItem(name: "bundle-id", value: bundleID))
-        items.append(URLQueryItem(name: "script-name", value: "MeloNX"))
+        items.append(URLQueryItem(name: "script-name", value: "MeloVertex"))
         items.append(URLQueryItem(name: "script-data", value: stikScriptDataURLSafe()))
     } else if isInLiveContainer.0 {
         items.append(URLQueryItem(name: "pid", value: String(getpid())))
