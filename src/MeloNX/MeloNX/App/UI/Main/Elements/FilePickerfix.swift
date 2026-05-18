@@ -179,9 +179,11 @@ extension UIDocumentPickerViewController {
             shouldMultiselect = true
         }
 
+        let containsFolder = contentTypes.contains(.folder)
+
         let picker = hook_initForOpeningContentTypes(
             shouldMultiselect ? [.item] : contentTypes,
-            asCopy: true
+            asCopy: containsFolder ? false : true
         )
 
         return picker
