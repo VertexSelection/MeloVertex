@@ -25,8 +25,8 @@
     <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageVersion Include="MsgPack.Cli" Version="1.0.1" />
     <PackageVersion Include="NetCoreServer" Version="8.0.7" />
-    <PackageVersion Include="NUnit" Version="3.13.3" />
-    <PackageVersion Include="NUnit3TestAdapter" Version="4.1.0" />
+    <PackageVersion Include="NUnit" Version="4.6.1" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="open.nat.core" Version="2.1.0.5" />
     <PackageVersion Include="OpenTK.Core" Version="4.8.2" />
     <PackageVersion Include="OpenTK.Graphics" Version="4.8.2" />
