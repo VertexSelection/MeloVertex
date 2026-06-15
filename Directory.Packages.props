@@ -29,9 +29,9 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="4.1.0" />
     <PackageVersion Include="open.nat.core" Version="2.1.0.5" />
     <PackageVersion Include="OpenTK.Core" Version="4.8.2" />
-    <PackageVersion Include="OpenTK.Graphics" Version="4.8.2" />
-    <PackageVersion Include="OpenTK.Audio.OpenAL" Version="4.8.2" />
-    <PackageVersion Include="OpenTK.Windowing.GraphicsLibraryFramework" Version="4.8.2" />
+    <PackageVersion Include="OpenTK.Graphics" Version="4.9.4" />
+    <PackageVersion Include="OpenTK.Audio.OpenAL" Version="4.9.4" />
+    <PackageVersion Include="OpenTK.Windowing.GraphicsLibraryFramework" Version="4.9.4" />
     <PackageVersion Include="Ryujinx.Audio.OpenAL.Dependencies" Version="1.21.0.1" />
     <PackageVersion Include="Ryujinx.Graphics.Nvdec.Dependencies" Version="5.0.3-build14" />
     <PackageVersion Include="Ryujinx.Graphics.Vulkan.Dependencies.MoltenVK" Version="1.2.0" />
